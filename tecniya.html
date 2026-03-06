@@ -1990,7 +1990,7 @@ p {
 <!-- NOTIFICATION PANEL -->
 <div class="notif-panel" id="notif-panel">
   <div class="notif-panel-header">
-    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;">Notificaciones</span>
+    <span style="font-family:'Inter',sans-serif;font-weight:700;font-size:0.95rem;">Notificaciones</span>
     <button onclick="markAllRead()" style="font-size:0.78rem;color:var(--accent);background:none;border:none;cursor:pointer;">Marcar todas leídas</button>
   </div>
   <div class="notif-list" id="notif-list">
@@ -2401,7 +2401,7 @@ p {
   <div class="admin-content">
     <!-- OVERVIEW -->
     <div id="admin-overview" class="admin-tab active" style="display:block;">
-      <h2 style="font-size:1.5rem;margin-bottom:24px;font-family:'Syne',sans-serif;">Dashboard Administración</h2>
+      <h2 style="font-size:1.5rem;margin-bottom:24px;font-family:'Inter',sans-serif;">Dashboard Administración</h2>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="adm-stat-users">0</div><div class="stat-label">Usuarios</div></div>
         <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="adm-stat-pros">0</div><div class="stat-label">Profesionales</div></div>
@@ -2418,7 +2418,7 @@ p {
     <!-- USERS -->
     <div id="admin-users" class="admin-tab" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;">Usuarios</h2>
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Usuarios</h2>
         <input type="text" class="search-input" style="max-width:260px;" placeholder="Buscar usuario..." oninput="filterAdminTable(this.value,'users-table')">
       </div>
       <div class="admin-table-wrap"><table class="admin-table" id="users-table">
@@ -2429,7 +2429,7 @@ p {
     <!-- PROFESSIONALS -->
     <div id="admin-pros" class="admin-tab" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;">Profesionales</h2>
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Profesionales</h2>
       </div>
       <div class="admin-table-wrap"><table class="admin-table" id="pros-table">
         <thead><tr><th>Nombre</th><th>Especialidad</th><th>Ciudad</th><th>Puntuación</th><th>Destacado</th><th>Acciones</th></tr></thead>
@@ -2438,7 +2438,7 @@ p {
     </div>
     <!-- JOBS -->
     <div id="admin-jobs" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;margin-bottom:20px;">Trabajos</h2>
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Trabajos</h2>
       <div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>ID</th><th>Cliente</th><th>Profesional</th><th>Especialidad</th><th>Estado</th><th>Fecha</th></tr></thead>
         <tbody id="jobs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
@@ -2446,7 +2446,7 @@ p {
     </div>
     <!-- SUBSCRIPTIONS -->
     <div id="admin-subs" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;margin-bottom:20px;">Suscripciones</h2>
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Suscripciones</h2>
       <div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>Profesional</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="subs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
@@ -2455,7 +2455,7 @@ p {
     <!-- ADS -->
     <div id="admin-ads" class="admin-tab" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;">Publicidades</h2>
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Publicidades</h2>
         <button class="btn btn-primary btn-sm" onclick="showModal('modal-new-ad')"><i class="fa fa-plus"></i>Nueva publicidad</button>
       </div>
       <div class="admin-table-wrap"><table class="admin-table">
@@ -2465,7 +2465,7 @@ p {
     </div>
     <!-- REVIEWS -->
     <div id="admin-reviews" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Syne',sans-serif;margin-bottom:20px;">Reseñas</h2>
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Reseñas</h2>
       <div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>Autor</th><th>Profesional</th><th>Puntuación</th><th>Comentario</th><th>Acciones</th></tr></thead>
         <tbody id="reviews-admin-tbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
@@ -2479,7 +2479,7 @@ p {
   <div class="chat-wrap">
     <div class="chat-sidebar">
       <div class="chat-sidebar-header">
-        <h3 style="font-size:1rem;font-family:'Syne',sans-serif;margin-bottom:10px;">Mensajes</h3>
+        <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:10px;">Mensajes</h3>
         <input type="text" class="chat-search" placeholder="Buscar conversación...">
       </div>
       <div class="chat-conversations" id="chat-conversations">
@@ -2529,7 +2529,7 @@ p {
 <div class="page" id="page-profile-edit">
   <div class="container" style="padding-top:40px;padding-bottom:60px;max-width:680px;">
     <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:20px;"><i class="fa fa-arrow-left"></i>Volver</button>
-    <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Syne',sans-serif;">Editar mi perfil</h2>
+    <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar mi perfil</h2>
     <div class="card">
       <div class="form-group">
         <label class="form-label">Nombre completo</label>
@@ -2556,7 +2556,7 @@ p {
 <div class="page" id="page-pro-profile-edit">
   <div class="container" style="padding-top:40px;padding-bottom:60px;max-width:720px;">
     <button class="btn btn-ghost btn-sm" onclick="goBack()" style="margin-bottom:20px;"><i class="fa fa-arrow-left"></i>Volver</button>
-    <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Syne',sans-serif;">Editar perfil profesional</h2>
+    <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar perfil profesional</h2>
     <div class="card">
       <div class="form-row">
         <div class="form-group">
@@ -2938,7 +2938,7 @@ p {
 <div class="pwa-banner pwa-banner-hidden" id="pwa-banner">
   <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;"><i class="fa fa-wrench" style="color:#fff;"></i></div>
   <div style="flex:1;">
-    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;">Instalá TECNIYA</div>
+    <div style="font-family:'Inter',sans-serif;font-weight:700;font-size:0.9rem;">Instalá TECNIYA</div>
     <div style="font-size:0.78rem;color:var(--gray);">Accedé más rápido desde tu pantalla de inicio</div>
   </div>
   <button class="btn btn-primary btn-sm" onclick="installPWA()">Instalar</button>
