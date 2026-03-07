@@ -316,38 +316,19 @@ export async function adminCancelSubscription(subId) {
   if (!confirm('¿Estás seguro de cancelar esta suscripción?')) return;
   
   const sb = getSupabase();
-
-  // Cancel the subscription
-  const { error } = await sb
-    .from('subscriptions')
-    .update({ 
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString()
-    })
-    .eq('id', subId);
+  const { error } = await sb.from('subscriptions').update({ 
+    status: 'cancelled',
+    cancelled_at: new Date().toISOString()
+  }).eq('id', subId);
   
-  if (error) {
-    showToast('Error al cancelar suscripción', 'error');
-    return;
-  }
-
-  // Get the professional_id from the subscription
-  const { data: subData } = await sb
-    .from('subscriptions')
-    .select('professional_id')
-    .eq('id', subId)
-    .single();
-
-  if (subData?.professional_id) {
-    // Remove featured flag from the professional
-    await sb
-      .from('professionals')
+  if (!error) {
+    const { error: proError } = await sb.from('professionals')
       .update({ is_featured: false })
-      .eq('user_id', subData.professional_id);
+      .eq('user_id', (await sb.from('subscriptions').select('professional_id').eq('id', subId).single()).data?.[0]?.professional_id;
+    
+    showToast('Suscripción cancelada', 'success');
+    loadAdminSubscriptions();
   }
-
-  showToast('Suscripción cancelada', 'success');
-  loadAdminSubscriptions();
 }
 
 export async function adminToggleAd(adId, active) {
@@ -414,7 +395,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Attach functions to window so inline onclick handlers work
 window.adminEditUser = adminEditUser;
 window.adminToggleBlock = adminToggleBlock;
 window.adminToggleFeatured = adminToggleFeatured;
