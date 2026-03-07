@@ -39,6 +39,7 @@ export async function submitJobRequest() {
   const { error } = await sb.from('jobs').insert({
     user_id: store.currentUser.id,
     professional_id: store.currentProIdForAction,
+    specialty: document.getElementById('job-req-specialty')?.value || 'General',
     description: desc,
     address,
     status: 'solicitado',
@@ -235,6 +236,7 @@ export async function submitRating() {
     job_id: store.currentProIdForAction.jobId,
     comment,
     avg_rating: avg,
+    rating: avg,
     puntualidad: store.ratings.puntualidad,
     calidad: store.ratings.calidad,
     precio: store.ratings.precio,

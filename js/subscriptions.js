@@ -18,8 +18,11 @@ export async function subscribePro() {
   
   const { error } = await sb.from('subscriptions').insert({
     professional_id: store.currentPro?.id,
+    user_id: store.currentUser.id,
     type: 'destacado',
     status: 'active',
+    price: 5000,
+    currency: 'ARS',
     starts_at: new Date().toISOString(),
     ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
   });

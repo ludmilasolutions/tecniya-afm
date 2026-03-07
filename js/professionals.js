@@ -33,12 +33,14 @@ export async function loadSpecialties() {
 export async function loadProfessionals() {
   const sb = getSupabase();
   try {
-    const { data, error } = await sb.from('professionals').select('*').limit(50);
+    if (!sb) throw new Error('no sb');
+    // Usar la vista que hace join con profiles para obtener full_name
+    const { data, error } = await sb.from('v_professionals_public').select('*').limit(50);
     
     if (data && data.length > 0) {
       allProfessionals = data.map(p => ({
         id: p.id,
-        name: p.full_name || 'Profesional',
+        name: p.name || p.full_name || 'Profesional',
         specialty: p.specialty,
         city: p.city,
         province: p.province,

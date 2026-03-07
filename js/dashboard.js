@@ -154,7 +154,7 @@ export async function saveProfile() {
   const phone = document.getElementById('edit-phone')?.value.trim();
   const city = document.getElementById('edit-city')?.value.trim();
   
-  const { error } = await sb.from('users').update({
+  const { error } = await sb.from('profiles').update({
     full_name: name,
     phone,
     city
@@ -188,7 +188,7 @@ export async function saveProProfile() {
     whatsapp
   }).eq('id', store.currentPro.id);
   
-  await sb.from('users').update({ full_name: name }).eq('id', store.currentUser.id);
+  await sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id);
   
   if (error) {
     showToast('Error al guardar', 'error');
