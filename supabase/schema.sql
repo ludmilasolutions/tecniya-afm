@@ -4,6 +4,28 @@
 -- =====================================================
 
 -- =====================================================
+-- LIMPIAR BASE DE DATOS EXISTENTE
+-- =====================================================
+DROP TABLE IF EXISTS public.audit_log CASCADE;
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.conversations CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
+DROP TABLE IF EXISTS public.ads CASCADE;
+DROP TABLE IF EXISTS public.addresses CASCADE;
+DROP TABLE IF EXISTS public.favorites CASCADE;
+DROP TABLE IF EXISTS public.budgets CASCADE;
+DROP TABLE IF EXISTS public.subscriptions CASCADE;
+DROP TABLE IF EXISTS public.reviews CASCADE;
+DROP TABLE IF EXISTS public.urgent_requests CASCADE;
+DROP TABLE IF EXISTS public.jobs CASCADE;
+DROP TABLE IF EXISTS public.work_photos CASCADE;
+DROP TABLE IF EXISTS public.certifications CASCADE;
+DROP TABLE IF EXISTS public.professionals CASCADE;
+DROP TABLE IF EXISTS public.cities CASCADE;
+DROP TABLE IF EXISTS public.specialties CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- =====================================================
 -- EXTENSIONS
 -- =====================================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -12,7 +34,7 @@ CREATE EXTENSION IF NOT EXISTS "postgis"; -- Para geolocalización
 -- =====================================================
 -- USERS (perfiles públicos, relacionado con auth.users)
 -- =====================================================
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
     phone TEXT,
@@ -29,7 +51,7 @@ CREATE TABLE public.profiles (
 -- =====================================================
 -- SPECIALTIES
 -- =====================================================
-CREATE TABLE public.specialties (
+CREATE TABLE IF NOT EXISTS public.specialties (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT UNIQUE NOT NULL,
     icon TEXT,
@@ -59,12 +81,13 @@ INSERT INTO public.specialties (name, icon, category) VALUES
 ('Impermeabilización', 'fa-umbrella', 'Técnico'),
 ('Soldadura', 'fa-fire-flame-curved', 'Técnico'),
 ('Techista', 'fa-house-chimney', 'Técnico'),
-('Tapicería', 'fa-couch', 'Técnico');
+('Tapicería', 'fa-couch', 'Técnico')
+ON CONFLICT (name) DO NOTHING;
 
 -- =====================================================
 -- CITIES
 -- =====================================================
-CREATE TABLE public.cities (
+CREATE TABLE IF NOT EXISTS public.cities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     province TEXT NOT NULL,
@@ -85,12 +108,13 @@ INSERT INTO public.cities (name, province, latitude, longitude, population) VALU
 ('Neuquén', 'Neuquén', -38.9516, -68.0591, 291039),
 ('La Plata', 'Buenos Aires', -34.9205, -57.9536, 193144),
 ('Mar del Plata', 'Buenos Aires', -38.0055, -57.5426, 614350),
-('San Miguel de Tucumán', 'Tucumán', -26.8305, -65.2046, 394324);
+('San Miguel de Tucumán', 'Tucumán', -26.8305, -65.2046, 394324)
+ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- PROFESSIONALS
 -- =====================================================
-CREATE TABLE public.professionals (
+CREATE TABLE IF NOT EXISTS public.professionals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     specialty_id UUID REFERENCES public.specialties(id),
@@ -129,7 +153,7 @@ CREATE INDEX idx_professionals_city ON public.professionals(city, province);
 -- =====================================================
 -- CERTIFICATIONS
 -- =====================================================
-CREATE TABLE public.certifications (
+CREATE TABLE IF NOT EXISTS public.certifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     professional_id UUID REFERENCES public.professionals(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -146,7 +170,7 @@ CREATE TABLE public.certifications (
 -- =====================================================
 -- WORK PHOTOS
 -- =====================================================
-CREATE TABLE public.work_photos (
+CREATE TABLE IF NOT EXISTS public.work_photos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     professional_id UUID REFERENCES public.professionals(id) ON DELETE CASCADE,
     title TEXT,
@@ -163,7 +187,7 @@ CREATE TABLE public.work_photos (
 -- =====================================================
 -- JOBS
 -- =====================================================
-CREATE TABLE public.jobs (
+CREATE TABLE IF NOT EXISTS public.jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     professional_id UUID REFERENCES public.profiles(id),
@@ -193,7 +217,7 @@ CREATE INDEX idx_jobs_status ON public.jobs(status);
 -- =====================================================
 -- URGENT REQUESTS
 -- =====================================================
-CREATE TABLE public.urgent_requests (
+CREATE TABLE IF NOT EXISTS public.urgent_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     specialty TEXT NOT NULL,
@@ -210,7 +234,7 @@ CREATE TABLE public.urgent_requests (
 -- =====================================================
 -- REVIEWS
 -- =====================================================
-CREATE TABLE public.reviews (
+CREATE TABLE IF NOT EXISTS public.reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -248,6 +272,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_rating ON public.reviews;
 CREATE TRIGGER trigger_update_rating
 AFTER INSERT OR UPDATE ON public.reviews
 FOR EACH ROW
@@ -256,7 +281,7 @@ EXECUTE FUNCTION update_professional_rating();
 -- =====================================================
 -- SUBSCRIPTIONS
 -- =====================================================
-CREATE TABLE public.subscriptions (
+CREATE TABLE IF NOT EXISTS public.subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     professional_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id),
@@ -277,7 +302,7 @@ CREATE TABLE public.subscriptions (
 -- =====================================================
 -- BUDGETS
 -- =====================================================
-CREATE TABLE public.budgets (
+CREATE TABLE IF NOT EXISTS public.budgets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
     professional_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -301,7 +326,7 @@ CREATE TABLE public.budgets (
 -- =====================================================
 -- FAVORITES
 -- =====================================================
-CREATE TABLE public.favorites (
+CREATE TABLE IF NOT EXISTS public.favorites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     professional_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -313,7 +338,7 @@ CREATE TABLE public.favorites (
 -- =====================================================
 -- ADDRESSES
 -- =====================================================
-CREATE TABLE public.addresses (
+CREATE TABLE IF NOT EXISTS public.addresses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     label TEXT DEFAULT 'Casa',
@@ -334,7 +359,7 @@ CREATE TABLE public.addresses (
 -- =====================================================
 -- ADS
 -- =====================================================
-CREATE TABLE public.ads (
+CREATE TABLE IF NOT EXISTS public.ads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     description TEXT,
@@ -358,7 +383,7 @@ CREATE INDEX idx_ads_level ON public.ads(level, province, city) WHERE active = t
 -- =====================================================
 -- NOTIFICATIONS
 -- =====================================================
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     type TEXT NOT NULL,
@@ -376,7 +401,7 @@ CREATE INDEX idx_notifications_created ON public.notifications(created_at DESC);
 -- =====================================================
 -- CONVERSATIONS (Chat)
 -- =====================================================
-CREATE TABLE public.conversations (
+CREATE TABLE IF NOT EXISTS public.conversations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     participant_one UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     participant_two UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -391,7 +416,7 @@ CREATE TABLE public.conversations (
 -- =====================================================
 -- MESSAGES (Chat)
 -- =====================================================
-CREATE TABLE public.messages (
+CREATE TABLE IF NOT EXISTS public.messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
     sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -408,7 +433,7 @@ CREATE INDEX idx_messages_conversation ON public.messages(conversation_id, creat
 -- =====================================================
 -- AUDIT LOG
 -- =====================================================
-CREATE TABLE public.audit_log (
+CREATE TABLE IF NOT EXISTS public.audit_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     action TEXT NOT NULL,
@@ -485,6 +510,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION handle_new_user();
@@ -505,6 +531,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_jobs_count ON public.jobs;
 CREATE TRIGGER trigger_update_jobs_count
 AFTER UPDATE ON public.jobs
 FOR EACH ROW

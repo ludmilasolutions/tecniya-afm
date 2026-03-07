@@ -10,22 +10,7 @@ const BUCKETS = {
 };
 
 export async function initStorage() {
-  const sb = getSupabase();
-  
-  for (const [name, bucket] of Object.entries(BUCKETS)) {
-    const { data, error } = await sb.storage.getBucket(bucket);
-    
-    if (error) {
-      console.log(`Creating bucket: ${bucket}`);
-      await sb.storage.createBucket(bucket, {
-        public: name === 'AVATARS' || name === 'WORK_PHOTOS' || name === 'ADS',
-        allowedMimeTypes: name === 'CERTIFICATIONS' 
-          ? ['application/pdf', 'image/jpeg', 'image/png'] 
-          : ['image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: name === 'CERTIFICATIONS' ? '10MB' : '5MB'
-      });
-    }
-  }
+  console.log('Storage initialized - buckets must be created manually in Supabase Dashboard');
 }
 
 export async function uploadAvatar(file, userId) {

@@ -32,12 +32,12 @@ export async function loadSpecialties() {
 export async function loadProfessionals() {
   const sb = getSupabase();
   try {
-    const { data, error } = await sb.from('professionals').select(`*,users(full_name,email)`).limit(50);
+    const { data, error } = await sb.from('professionals').select('*').limit(50);
     
     if (data && data.length > 0) {
       allProfessionals = data.map(p => ({
         id: p.id,
-        name: p.users?.full_name || 'Profesional',
+        name: p.full_name || 'Profesional',
         specialty: p.specialty,
         city: p.city,
         province: p.province,
@@ -54,7 +54,8 @@ export async function loadProfessionals() {
     } else {
       allProfessionals = [...MOCK_PROS];
     }
-  } catch {
+  } catch (e) {
+    console.log('Loading mock professionals:', e.message);
     allProfessionals = [...MOCK_PROS];
   }
   
