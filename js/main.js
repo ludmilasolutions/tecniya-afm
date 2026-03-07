@@ -12,6 +12,7 @@ import { setupRealtimeNotifications, setupNotifBadge, toggleNotifPanel, markAllR
 import { sendChatMsg, sendChatMsgBtn, initChatEvents } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
 import { initPWA, installPWA, generateManifest, initPWAEvents } from './pwa.js';
+import { initStorage, initUploadEvents, loadWorkPhotos, loadCertifications } from './upload.js';
 
 window.showPage = showPage;
 window.closeModal = closeModal;
@@ -109,6 +110,9 @@ export async function initApp() {
   await loadSpecialties();
   await loadAds();
   await loadProfessionals();
+  
+  initStorage();
+  initUploadEvents();
   
   animateStats();
   

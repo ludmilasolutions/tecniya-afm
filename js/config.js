@@ -1,6 +1,6 @@
 export const CONFIG = {
-  SUPABASE_URL: 'https://huzikrgtpuyafmkdrqhz.supabase.co',
-  SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1emlrcmd0cHV5YWZta2RycWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NzkwMjcsImV4cCI6MjA4ODI1NTAyN30.Xenbv4TUBzSNLe6wJ_HtlrEg-6435OvCaMeWvzw7_1Y'
+  SUPABASE_URL: 'https://dkswhmujymvsbosghrsd.supabase.co',
+  SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrc3dobXVqeW12c2Jvc2docnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4Mjc2MTIsImV4cCI6MjA4ODQwMzYxMn0.Om8EGGwy7XGm_5uqScyDxWW2xaUuloqZf-v5Yfl76cQ'
 };
 
 export const SPECIALTIES_DEFAULT = [
