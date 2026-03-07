@@ -6,21 +6,41 @@ export async function initAuth() {
   const sb = getSupabase();
   if (!sb) return;
   
+  let sessionHandled = false;
+
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      await handleSession(session);
+    // Si la URL tiene un hash de OAuth (Google login), procesarlo primero
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        sessionHandled = true;
+        await handleSession(session);
+        window.history.replaceState(null, '', window.location.pathname);
+        await redirectAfterLogin();
+      }
+    } else {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        sessionHandled = true;
+        await handleSession(session);
+        await redirectAfterLogin();
+      }
     }
     
     sb.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
+      console.log('Auth event:', event, sessionHandled);
+      if (event === 'SIGNED_IN' && session) {
+        if (sessionHandled) { sessionHandled = false; return; } // evitar doble llamada
         await handleSession(session);
-      } else {
+        window.history.replaceState(null, '', window.location.pathname);
+        await redirectAfterLogin();
+      } else if (event === 'SIGNED_OUT') {
+        sessionHandled = false;
         handleLogout();
       }
     });
   } catch (e) {
-    console.log('Supabase init:', e.message);
+    console.log('Supabase init error:', e.message);
   }
 }
 
