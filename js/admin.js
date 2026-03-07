@@ -322,7 +322,7 @@ export async function adminCancelSubscription(subId) {
   }).eq('id', subId);
   
   if (!error) {
-    const { data: sub } = await sb.from('subscriptions').select('professional_id').eq('id', subId).single();
+    const { data: sub } = await sb.from('subscriptions').select('professional_id').eq('id', subId).maybeSingle();
     if (sub?.professional_id) {
       await sb.from('professionals').update({ is_featured: false }).eq('user_id', sub.professional_id);
     }

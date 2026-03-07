@@ -50,7 +50,7 @@ export async function checkSubscription() {
       .select('*')
       .eq('professional_id', store.currentPro.id)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
     
     if (data) {
       const endDate = new Date(data.ends_at);

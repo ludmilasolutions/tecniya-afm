@@ -28,7 +28,7 @@ export async function handleSession(session) {
   const sb = getSupabase();
   store.setCurrentUser(session.user);
   
-  const { data: prof } = await sb.from('professionals').select('*').eq('user_id', session.user.id).single();
+  const { data: prof } = await sb.from('professionals').select('*').eq('user_id', session.user.id).maybeSingle();
   store.setCurrentPro(prof);
   
   const meta = session.user.user_metadata || {};
