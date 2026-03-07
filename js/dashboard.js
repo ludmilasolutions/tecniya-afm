@@ -75,21 +75,12 @@ export async function loadFavorites() {
   if (!store.currentUser) return;
   const sb = getSupabase();
   try {
-    // favorites.professional_id referencia profiles.id
-    // hacemos join a través de professionals usando user_id
-    const { data: favs } = await sb
-      .from('favorites')
-      .select(`
-        id,
-        professional_id,
-        professionals!inner(
-          id, specialty, city, province, description,
-          avg_rating, reviews_count, jobs_count,
-          is_featured, is_certified, is_online, zones, whatsapp,
-          profiles!inner(full_name)
-        )
-      `)
+    const { data: favs, error } = await sb
+      .from('v_favorites_full')
+      .select('*')
       .eq('user_id', store.currentUser.id);
+
+    if (error) console.error('loadFavorites:', error);
 
     setEl('user-stat-favs', favs?.length || 0);
 
@@ -103,27 +94,23 @@ export async function loadFavorites() {
     }
 
     const { proCard } = await import('./professionals.js');
-    favsEl.innerHTML = favs.map(f => {
-      const p = f.professionals;
-      if (!p) return '';
-      return proCard({
-        id: p.id,
-        user_id: f.professional_id,
-        name: p.profiles?.full_name || 'Profesional',
-        specialty: p.specialty,
-        city: p.city,
-        province: p.province,
-        description: p.description,
-        rating: parseFloat(p.avg_rating) || 0,
-        reviews_count: p.reviews_count || 0,
-        jobs_count: p.jobs_count || 0,
-        is_featured: p.is_featured,
-        is_certified: p.is_certified,
-        is_online: p.is_online,
-        zones: p.zones || [],
-        whatsapp: p.whatsapp,
-      });
-    }).join('');
+    favsEl.innerHTML = favs.map(f => proCard({
+      id:            f.pro_id,
+      user_id:       f.pro_user_id,
+      name:          f.pro_name || 'Profesional',
+      specialty:     f.specialty,
+      city:          f.city,
+      province:      f.province,
+      description:   f.description,
+      rating:        parseFloat(f.avg_rating) || 0,
+      reviews_count: f.reviews_count || 0,
+      jobs_count:    f.jobs_count || 0,
+      is_featured:   f.is_featured,
+      is_certified:  f.is_certified,
+      is_online:     f.is_online,
+      zones:         f.zones || [],
+      whatsapp:      f.whatsapp,
+    })).join('');
   } catch (e) {
     console.error('loadFavorites:', e);
   }
