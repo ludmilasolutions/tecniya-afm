@@ -40,6 +40,7 @@ export async function loadProfessionals() {
     if (data && data.length > 0) {
       allProfessionals = data.map(p => ({
         id: p.id,
+        user_id: p.user_id,
         name: p.name || p.full_name || 'Profesional',
         specialty: p.specialty,
         city: p.city,
@@ -132,7 +133,7 @@ export function proCard(p) {
     </div>
     <div class="pro-card-footer">
       <button class="btn btn-ghost" onclick="event.stopPropagation();window.contactPro('${p.id}','${(p.whatsapp || '').replace(/'/g, '')}')"><i class="fa-brands fa-whatsapp"></i>Contactar</button>
-      <button class="btn btn-primary" onclick="event.stopPropagation();window.openJobRequest('${p.id}','${(p.name || '').replace(/'/g, '')}')"><i class="fa fa-paper-plane"></i>Solicitar</button>
+      <button class="btn btn-primary" onclick="event.stopPropagation();window.openJobRequest('${p.id}','${(p.name || '').replace(/'/g, '')}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar</button>
     </div>
   </div>`;
 }
@@ -157,7 +158,7 @@ export function showProProfile(proId) {
         <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num" style="font-size:1.1rem;">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos)</span></div>
       </div>
       <div class="pro-profile-actions">
-        <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${p.name}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
+        <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${p.name}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
         <button class="btn btn-whatsapp" onclick="window.contactPro('${p.id}','${p.whatsapp || ''}')"><i class="fa-brands fa-whatsapp"></i>WhatsApp</button>
         <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>
       </div>

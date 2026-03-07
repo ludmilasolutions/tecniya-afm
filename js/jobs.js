@@ -3,19 +3,19 @@ import { getSupabase } from './supabase.js';
 import { showModal, closeModal, showToast } from './ui.js';
 import { formatDate } from './utils.js';
 
-export function openJobRequest(proId, proName) {
+export function openJobRequest(proId, proName, proUserId) {
   if (!store.currentUser) {
     showModal('modal-login');
     showToast('Iniciá sesión para solicitar trabajos', 'info');
     return;
   }
   
-  store.setCurrentProIdForAction(proId);
+  // Guardar tanto el id de professionals como el user_id (que referencia profiles)
+  const p = store.allProfessionals?.find(x => x.id == proId);
+  store.setCurrentProIdForAction({ proId, userProfileId: proUserId || p?.user_id || proId });
   
   const proNameEl = document.getElementById('job-req-pro-name');
-  if (proNameEl) {
-    proNameEl.textContent = proName;
-  }
+  if (proNameEl) proNameEl.textContent = proName;
   
   showModal('modal-request-job');
 }
@@ -36,9 +36,21 @@ export async function submitJobRequest() {
     return;
   }
   
+  const proAction = store.currentProIdForAction;
+  // Resolver el user_id del profesional (que referencia profiles.id)
+  // proAction puede ser {proId, userProfileId} o un string con el id directo
+  let professionalProfileId;
+  if (proAction?.userProfileId) {
+    professionalProfileId = proAction.userProfileId;
+  } else {
+    const proId = proAction?.proId || proAction;
+    const pro = store.allProfessionals?.find(x => x.id == proId);
+    professionalProfileId = pro?.user_id || proId;
+  }
+
   const { error } = await sb.from('jobs').insert({
     user_id: store.currentUser.id,
-    professional_id: store.currentProIdForAction,
+    professional_id: professionalProfileId,
     specialty: document.getElementById('job-req-specialty')?.value || 'General',
     description: desc,
     address,
@@ -189,10 +201,14 @@ export async function addFavorite(proId) {
     return;
   }
   
+  // proId es el id de la tabla professionals, necesitamos el user_id que referencia profiles
+  const pro = store.allProfessionals?.find(x => x.id == proId);
+  const profileId = pro?.user_id || proId;
+
   const sb = getSupabase();
   const { error } = await sb.from('favorites').insert({
     user_id: store.currentUser.id,
-    professional_id: proId,
+    professional_id: profileId,
     created_at: new Date().toISOString()
   });
   
@@ -230,13 +246,19 @@ export async function submitRating() {
   const comment = document.getElementById('rate-comment')?.value.trim();
   const avg = Object.values(store.ratings).reduce((a, b) => a + b, 0) / 4;
   
+  const proId = store.currentProIdForAction.proId;
+  const jobId = store.currentProIdForAction.jobId;
+
+  // Resolver user_id del profesional (reviews.professional_id referencia profiles.id)
+  const pro = store.allProfessionals?.find(x => x.id == proId);
+  const professionalProfileId = pro?.user_id || proId;
+
   const { error } = await sb.from('reviews').insert({
     user_id: store.currentUser.id,
-    professional_id: store.currentProIdForAction.proId,
-    job_id: store.currentProIdForAction.jobId,
+    professional_id: professionalProfileId,
+    job_id: jobId,
     comment,
-    avg_rating: avg,
-    rating: avg,
+    rating: parseFloat(avg.toFixed(2)),
     puntualidad: store.ratings.puntualidad,
     calidad: store.ratings.calidad,
     precio: store.ratings.precio,
