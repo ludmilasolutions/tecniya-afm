@@ -233,7 +233,7 @@ export function applyFilters() {
   updateCount('count-all', filtered.length);
 }
 
-export function clearFilters() {
+export async function clearFilters() {
   ['filter-specialty', 'filter-province', 'filter-distance', 'filter-sort'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -257,7 +257,7 @@ export function clearFilters() {
   showAd('nacional');
 }
 
-export function filterByType(type) {
+export async function filterByType(type) {
   if (type === 'destacado') {
     store.setActiveFilters({ ...store.activeFilters, dest: true });
     document.getElementById('toggle-dest')?.classList.add('active');
