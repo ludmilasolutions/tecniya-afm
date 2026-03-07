@@ -37,8 +37,6 @@ export async function submitJobRequest() {
   }
   
   const proAction = store.currentProIdForAction;
-  // Resolver el user_id del profesional (que referencia profiles.id)
-  // proAction puede ser {proId, userProfileId} o un string con el id directo
   let professionalProfileId;
   if (proAction?.userProfileId) {
     professionalProfileId = proAction.userProfileId;
@@ -48,7 +46,7 @@ export async function submitJobRequest() {
     professionalProfileId = pro?.user_id || proId;
   }
 
-  const { error } = await sb.from('jobs').insert({
+  const jobPayload = {
     user_id: store.currentUser.id,
     professional_id: professionalProfileId,
     specialty: document.getElementById('job-req-specialty')?.value || 'General',
@@ -56,11 +54,16 @@ export async function submitJobRequest() {
     address,
     status: 'solicitado',
     created_at: new Date().toISOString()
-  });
+  };
+
+  console.log('=== JOB INSERT PAYLOAD ===', JSON.stringify(jobPayload, null, 2));
+
+  const { data, error } = await sb.from('jobs').insert(jobPayload).select();
   
   if (error) {
+    console.error('=== JOB INSERT ERROR ===', JSON.stringify(error, null, 2));
     if (errorEl) {
-      errorEl.textContent = error.message;
+      errorEl.textContent = error.message || JSON.stringify(error);
       errorEl.classList.remove('hidden');
     }
     return;
