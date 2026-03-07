@@ -129,7 +129,7 @@ export async function updateJobStatus(jobId, status) {
   }
 }
 
-export function showUrgentModal() {
+export async function showUrgentModal() {
   if (!store.currentUser) {
     showModal('modal-login');
     showToast('Iniciá sesión para solicitar urgencias', 'info');
