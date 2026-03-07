@@ -472,8 +472,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Prevenir acceso a usuarios bloqueados
-CREATE OR REPLACE FUNCTION auth.check_auth()
+-- Prevenir acceso a usuarios bloqueados (función en schema público)
+-- Esta función debe crearse en public schema
+CREATE OR REPLACE FUNCTION public.check_auth()
 RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND blocked = true) THEN
