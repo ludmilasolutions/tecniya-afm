@@ -121,7 +121,6 @@ async function initApp() {
   on('menu-profile',    'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
   on('menu-chat',       'click', e => { e.preventDefault(); showPage('chat'); loadChatPage(); hideUserMenu(); });
   on('menu-logout',     'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
-
   // ── NOTIFICACIONES ──────────────────────────────────────────────────────
   on('notif-btn',        'click', toggleNotifPanel);
   on('mark-all-read-btn','click', markAllRead);

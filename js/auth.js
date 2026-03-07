@@ -27,15 +27,45 @@ export async function initAuth() {
 export async function handleSession(session) {
   const sb = getSupabase();
   store.setCurrentUser(session.user);
-  
-  const { data: prof } = await sb.from('professionals').select('*').eq('user_id', session.user.id).maybeSingle();
+
+  // Leer role desde profiles (fuente de verdad)
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  // Buscar registro profesional
+  const { data: prof } = await sb
+    .from('professionals')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+
   store.setCurrentPro(prof);
-  
+
+  // Role: primero profiles, luego user_metadata, luego inferir
   const meta = session.user.user_metadata || {};
-  store.setCurrentRole(meta.role || (prof ? 'professional' : 'user'));
-  
+  let role = profile?.role || meta.role || (prof ? 'professional' : 'user');
+  store.setCurrentRole(role);
+
+  // Si eligió professional pero profiles aún dice 'user', sincronizar
+  if (meta.role === 'professional' && profile?.role !== 'professional') {
+    await sb.from('profiles').update({ role: 'professional' }).eq('id', session.user.id);
+    store.setCurrentRole('professional');
+    // Crear registro en professionals si no existe
+    if (!prof) {
+      const { data: newPro } = await sb.from('professionals').insert({
+        user_id: session.user.id,
+        specialty: 'General',
+        city: '', province: '', description: ''
+      }).select().maybeSingle();
+      store.setCurrentPro(newPro);
+    }
+  }
+
   updateAuthUI();
-  
+
   const { setupNotifBadge } = await import('./notifications.js');
   setupNotifBadge();
 }
@@ -165,13 +195,19 @@ export async function logout() {
   showToast('Sesión cerrada', 'info');
 }
 
-export function redirectAfterLogin() {
+export async function redirectAfterLogin() {
   if (store.currentRole === 'admin') {
     showPage('admin');
+    const { loadAdminData } = await import('./admin.js');
+    loadAdminData();
   } else if (store.currentRole === 'professional') {
     showPage('pro-dashboard');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
   } else {
     showPage('user-dashboard');
+    const { loadUserDashboard } = await import('./dashboard.js');
+    loadUserDashboard();
   }
 }
 

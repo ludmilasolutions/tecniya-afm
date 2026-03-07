@@ -1,243 +1,416 @@
 import { store } from './store.js';
 import { getSupabase } from './supabase.js';
-import { showToast, closeModal } from './ui.js';
+import { showToast, closeModal, showPage } from './ui.js';
 import { jobItem } from './jobs.js';
+
+// ─── DASHBOARD CLIENTE ────────────────────────────────────────────────────────
 
 export async function loadUserDashboard() {
   if (!store.currentUser) return;
-  
-  const sb = getSupabase();
-  try {
-    const { data: jobs } = await sb.from('jobs').select('*').eq('user_id', store.currentUser.id);
-    
-    if (jobs) {
-      const active = jobs.filter(j => ['solicitado', 'aceptado', 'en_proceso'].includes(j.status));
-      const done = jobs.filter(j => j.status === 'finalizado');
-      
-      const activeEl = document.getElementById('user-stat-active');
-      const doneEl = document.getElementById('user-stat-done');
-      
-      if (activeEl) activeEl.textContent = active.length;
-      if (doneEl) doneEl.textContent = done.length;
-      
-      const jobsEl = document.getElementById('user-jobs-list');
-      if (jobsEl && active.length) {
-        jobsEl.innerHTML = active.map(j => jobItem(j, 'user')).join('');
-      }
-    }
-    
-    loadFavorites();
-    loadBudgets();
-  } catch {}
-}
 
-export async function loadProDashboard() {
-  if (!store.currentUser || !store.currentPro) return;
-  
-  const specialtyEl = document.getElementById('pro-dash-specialty');
-  if (specialtyEl) {
-    specialtyEl.textContent = store.currentPro.specialty || 'Tu especialidad';
-  }
-  
   const sb = getSupabase();
+
+  // Nombre de bienvenida
+  const name = store.currentUser.user_metadata?.full_name
+    || store.currentUser.email?.split('@')[0]
+    || 'Usuario';
+  const dashName = document.getElementById('dash-user-name');
+  if (dashName) dashName.textContent = name.split(' ')[0];
+
+  // Pre-llenar formulario de perfil
+  const editName  = document.getElementById('edit-name');
+  const editEmail = document.getElementById('edit-email');
+  const editPhone = document.getElementById('edit-phone');
+  const editCity  = document.getElementById('edit-city');
+  if (editName)  editName.value  = store.currentUser.user_metadata?.full_name || '';
+  if (editEmail) editEmail.value = store.currentUser.email || '';
+
   try {
-    const { data: jobs } = await sb.from('jobs').select('*').eq('professional_id', store.currentPro.id);
-    
-    if (jobs) {
-      const newJ = jobs.filter(j => j.status === 'solicitado');
-      const activeJ = jobs.filter(j => j.status === 'en_proceso');
-      const doneJ = jobs.filter(j => j.status === 'finalizado');
-      
-      const newEl = document.getElementById('pro-stat-new');
-      const activeEl = document.getElementById('pro-stat-active');
-      const doneEl = document.getElementById('pro-stat-done');
-      
-      if (newEl) newEl.textContent = newJ.length;
-      if (activeEl) activeEl.textContent = activeJ.length;
-      if (doneEl) doneEl.textContent = doneJ.length;
-      
-      const newJobsEl = document.getElementById('pro-jobs-new');
-      if (newJobsEl && newJ.length) {
-        newJobsEl.innerHTML = newJ.map(j => jobItem(j, 'pro')).join('');
-      }
+    // Datos del perfil
+    const { data: profile } = await sb.from('profiles')
+      .select('*').eq('id', store.currentUser.id).maybeSingle();
+    if (profile) {
+      if (editPhone) editPhone.value = profile.phone || '';
+      if (editCity)  editCity.value  = profile.city  || '';
     }
-  } catch {}
-  
-  const featuredBtn = document.getElementById('btn-new-budget');
-  if (featuredBtn) {
-    featuredBtn.style.display = store.currentPro?.is_featured ? 'inline-flex' : 'none';
-  }
-  
-  if (!store.currentPro?.is_featured) {
-    const tab = document.getElementById('tab-pro-presupuestos');
-    if (tab) {
-      tab.innerHTML = `<div class="card" style="text-align:center;padding:40px;">
-        <i class="fa fa-lock" style="font-size:2.5rem;color:var(--orange);margin-bottom:16px;display:block;"></i>
-        <h3 style="font-size:1rem;margin-bottom:10px;">Función Destacados</h3>
-        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Los presupuestos están disponibles para profesionales con Plan Destacado.</p>
-        <button class="btn btn-orange" onclick="window.showSuscripcion()"><i class="fa fa-crown"></i>Activar Plan Destacado</button>
-      </div>`;
+
+    // Trabajos
+    const { data: jobs } = await sb.from('jobs')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso'].includes(j.status));
+    const done    = (jobs || []).filter(j => j.status === 'finalizado');
+    const history = (jobs || []).filter(j => ['finalizado','cancelado','rechazado'].includes(j.status));
+
+    setEl('user-stat-active', active.length);
+    setEl('user-stat-done',   done.length);
+
+    const jobsEl = document.getElementById('user-jobs-list');
+    if (jobsEl) {
+      jobsEl.innerHTML = active.length
+        ? active.map(j => jobItem(j, 'user')).join('')
+        : `<div class="empty-state"><i class="fa fa-briefcase"></i>
+           <p>No tenés trabajos activos.<br>
+           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);">
+           Buscar un profesional</a></p></div>`;
     }
+
+    const histEl = document.getElementById('user-history-list');
+    if (histEl) {
+      histEl.innerHTML = history.length
+        ? history.map(j => jobItem(j, 'user')).join('')
+        : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+    }
+  } catch (e) {
+    console.error('loadUserDashboard jobs:', e);
   }
+
+  await loadFavorites();
+  await loadUserBudgets();
 }
 
 export async function loadFavorites() {
   if (!store.currentUser) return;
-  
   const sb = getSupabase();
   try {
-    const { data: favs } = await sb.from('favorites').select('*,professionals(*,users(full_name))').eq('user_id', store.currentUser.id);
-    
+    // favorites.professional_id referencia profiles.id
+    // hacemos join a través de professionals usando user_id
+    const { data: favs } = await sb
+      .from('favorites')
+      .select(`
+        id,
+        professional_id,
+        professionals!inner(
+          id, specialty, city, province, description,
+          avg_rating, reviews_count, jobs_count,
+          is_featured, is_certified, is_online, zones, whatsapp,
+          profiles!inner(full_name)
+        )
+      `)
+      .eq('user_id', store.currentUser.id);
+
+    setEl('user-stat-favs', favs?.length || 0);
+
     const favsEl = document.getElementById('user-favs-grid');
-    const favsStatEl = document.getElementById('user-stat-favs');
-    
-    if (favsStatEl) favsStatEl.textContent = favs?.length || 0;
-    
-    if (favsEl && favs?.length) {
-      const { proCard } = await import('./professionals.js');
-      favsEl.innerHTML = favs.map(f => proCard(f.professionals)).join('');
-    }
-  } catch {}
-}
+    if (!favsEl) return;
 
-export async function loadBudgets() {
-  if (!store.currentUser) return;
-  
-  const sb = getSupabase();
-  try {
-    const { data: budgets } = await sb.from('budgets').select('*').eq('user_id', store.currentUser.id);
-    
-    const budgetsEl = document.getElementById('user-budgets-list');
-    const budgetsStatEl = document.getElementById('user-stat-budgets');
-    
-    if (budgetsStatEl) budgetsStatEl.textContent = budgets?.length || 0;
-    
-    if (budgetsEl && budgets?.length) {
-      budgetsEl.innerHTML = budgets.map(b => `
-        <div class="job-item">
-          <div class="job-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);"><i class="fa fa-file-invoice"></i></div>
-          <div class="job-info">
-            <div class="job-title">${b.description || 'Presupuesto'}</div>
-            <div class="job-meta">$${b.price || 0} · ${b.client_name || ''}</div>
-          </div>
-        </div>
-      `).join('');
+    if (!favs?.length) {
+      favsEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px;">
+        <i class="fa fa-heart"></i><p>No guardaste profesionales favoritos.</p></div>`;
+      return;
     }
-  } catch {}
-}
 
-export async function saveAvailability() {
-  if (!store.currentPro) return;
-  
-  const sb = getSupabase();
-  const dias = Array.from(document.querySelectorAll('#dias-laborales input:checked')).map(c => c.value);
-  const desde = document.getElementById('hora-desde')?.value;
-  const hasta = document.getElementById('hora-hasta')?.value;
-  const urgencias = document.getElementById('urgencias')?.checked;
-  
-  const { error } = await sb.from('professionals').update({
-    availability: { dias, desde, hasta, urgencias }
-  }).eq('id', store.currentPro.id);
-  
-  if (error) {
-    showToast('Error al guardar', 'error');
-  } else {
-    showToast('Disponibilidad actualizada', 'success');
+    const { proCard } = await import('./professionals.js');
+    favsEl.innerHTML = favs.map(f => {
+      const p = f.professionals;
+      if (!p) return '';
+      return proCard({
+        id: p.id,
+        user_id: f.professional_id,
+        name: p.profiles?.full_name || 'Profesional',
+        specialty: p.specialty,
+        city: p.city,
+        province: p.province,
+        description: p.description,
+        rating: parseFloat(p.avg_rating) || 0,
+        reviews_count: p.reviews_count || 0,
+        jobs_count: p.jobs_count || 0,
+        is_featured: p.is_featured,
+        is_certified: p.is_certified,
+        is_online: p.is_online,
+        zones: p.zones || [],
+        whatsapp: p.whatsapp,
+      });
+    }).join('');
+  } catch (e) {
+    console.error('loadFavorites:', e);
   }
 }
 
+export async function loadUserBudgets() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  try {
+    const { data: budgets } = await sb
+      .from('budgets')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    setEl('user-stat-budgets', budgets?.length || 0);
+
+    const budgetsEl = document.getElementById('user-budgets-list');
+    if (!budgetsEl) return;
+
+    if (!budgets?.length) {
+      budgetsEl.innerHTML = `<div class="empty-state">
+        <i class="fa fa-file-invoice"></i><p>No tenés presupuestos recibidos.</p></div>`;
+      return;
+    }
+
+    budgetsEl.innerHTML = budgets.map(b => `
+      <div class="job-item">
+        <div class="job-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);">
+          <i class="fa fa-file-invoice"></i>
+        </div>
+        <div class="job-info">
+          <div class="job-title">${escHtml(b.description || 'Presupuesto')}</div>
+          <div class="job-meta">$${b.price || 0} · ${escHtml(b.client_name || '')}</div>
+        </div>
+        <span class="job-status status-${b.status || 'pending'}">${statusLabel(b.status)}</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('loadUserBudgets:', e);
+  }
+}
+
+// ─── DASHBOARD PROFESIONAL ────────────────────────────────────────────────────
+
+export async function loadProDashboard() {
+  if (!store.currentUser || !store.currentPro) return;
+
+  const sb = getSupabase();
+
+  setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
+
+  // Pre-llenar formulario de edición del pro
+  setVal('pro-edit-name',      store.currentUser.user_metadata?.full_name || '');
+  setVal('pro-edit-specialty', store.currentPro.specialty || '');
+  setVal('pro-edit-desc',      store.currentPro.description || '');
+  setVal('pro-edit-city',      store.currentPro.city || '');
+  setVal('pro-edit-province',  store.currentPro.province || '');
+  setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
+  setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
+
+  try {
+    // Jobs donde professional_id = profiles.id del usuario actual
+    const { data: jobs } = await sb
+      .from('jobs')
+      .select('*')
+      .eq('professional_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    const newJ    = (jobs || []).filter(j => j.status === 'solicitado');
+    const activeJ = (jobs || []).filter(j => ['aceptado','en_proceso'].includes(j.status));
+    const doneJ   = (jobs || []).filter(j => j.status === 'finalizado');
+
+    setEl('pro-stat-new',    newJ.length);
+    setEl('pro-stat-active', activeJ.length);
+    setEl('pro-stat-done',   doneJ.length);
+
+    renderJobList('pro-jobs-new',     newJ,    'pro');
+    renderJobList('pro-jobs-active',  activeJ, 'pro');
+    renderJobList('pro-jobs-done',    doneJ,   'pro');
+
+    // Rating promedio
+    const { data: reviews } = await sb
+      .from('reviews')
+      .select('rating')
+      .eq('professional_id', store.currentUser.id);
+
+    if (reviews?.length) {
+      const avg = reviews.reduce((s, r) => s + parseFloat(r.rating), 0) / reviews.length;
+      setEl('pro-stat-rating', avg.toFixed(1));
+    }
+
+  } catch (e) {
+    console.error('loadProDashboard:', e);
+  }
+
+  // Presupuestos — solo para destacados
+  const featuredBtn = document.getElementById('btn-new-budget');
+  if (featuredBtn) featuredBtn.style.display = store.currentPro?.is_featured ? 'inline-flex' : 'none';
+
+  if (!store.currentPro?.is_featured) {
+    const tab = document.getElementById('tab-pro-presupuestos');
+    if (tab) tab.innerHTML = `
+      <div class="card" style="text-align:center;padding:40px;">
+        <i class="fa fa-lock" style="font-size:2.5rem;color:var(--orange);margin-bottom:16px;display:block;"></i>
+        <h3 style="font-size:1rem;margin-bottom:10px;">Función Destacados</h3>
+        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">
+          Los presupuestos están disponibles para profesionales con Plan Destacado.</p>
+        <button class="btn btn-orange" onclick="window.showSuscripcion()">
+          <i class="fa fa-crown"></i>Activar Plan Destacado</button>
+      </div>`;
+  } else {
+    await loadProBudgets();
+  }
+
+  await loadProWorkPhotos();
+}
+
+async function loadProBudgets() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  try {
+    const { data: budgets } = await sb
+      .from('budgets')
+      .select('*')
+      .eq('professional_id', store.currentPro.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('pro-budgets-list');
+    if (!el) return;
+
+    if (!budgets?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-file-invoice"></i>
+        <p>No generaste presupuestos aún.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = budgets.map(b => `
+      <div class="job-item">
+        <div class="job-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);">
+          <i class="fa fa-file-invoice"></i></div>
+        <div class="job-info">
+          <div class="job-title">${escHtml(b.client_name || 'Cliente')}</div>
+          <div class="job-meta">${escHtml(b.description || '')} · $${b.price || 0}</div>
+        </div>
+        <span class="job-status">${b.date || ''}</span>
+      </div>
+    `).join('');
+  } catch (e) { console.error('loadProBudgets:', e); }
+}
+
+async function loadProWorkPhotos() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  try {
+    const { data: photos } = await sb
+      .from('work_photos')
+      .select('*')
+      .eq('professional_id', store.currentPro.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('pro-work-photos');
+    if (!el) return;
+
+    if (!photos?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-images"></i>
+        <p>No subiste fotos de trabajos aún.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = photos.map(p => `
+      <div class="photo-thumb" style="background-image:url('${p.photo_url}');background-size:cover;background-position:center;">
+      </div>
+    `).join('');
+  } catch (e) { console.error('loadProWorkPhotos:', e); }
+}
+
+// ─── ACCIONES ────────────────────────────────────────────────────────────────
+
 export async function saveProfile() {
   if (!store.currentUser) return;
-  
   const sb = getSupabase();
-  const name = document.getElementById('edit-name')?.value.trim();
+  const name  = document.getElementById('edit-name')?.value.trim();
   const phone = document.getElementById('edit-phone')?.value.trim();
-  const city = document.getElementById('edit-city')?.value.trim();
-  
+  const city  = document.getElementById('edit-city')?.value.trim();
+
   const { error } = await sb.from('profiles').update({
-    full_name: name,
-    phone,
-    city
+    full_name: name, phone, city, updated_at: new Date().toISOString()
   }).eq('id', store.currentUser.id);
-  
-  if (error) {
-    showToast('Error al guardar', 'error');
-  } else {
+
+  if (error) { showToast('Error al guardar', 'error'); }
+  else {
     showToast('Perfil actualizado', 'success');
+    if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
   }
 }
 
 export async function saveProProfile() {
   if (!store.currentUser || !store.currentPro) return;
-  
   const sb = getSupabase();
-  const name = document.getElementById('pro-edit-name')?.value;
+  const name      = document.getElementById('pro-edit-name')?.value.trim();
   const specialty = document.getElementById('pro-edit-specialty')?.value;
-  const desc = document.getElementById('pro-edit-desc')?.value;
-  const city = document.getElementById('pro-edit-city')?.value;
-  const province = document.getElementById('pro-edit-province')?.value;
-  const zones = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
-  const whatsapp = document.getElementById('pro-edit-whatsapp')?.value;
-  
-  const { error } = await sb.from('professionals').update({
-    specialty,
-    description: desc,
-    city,
-    province,
-    zones,
-    whatsapp
-  }).eq('id', store.currentPro.id);
-  
-  await sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id);
-  
-  if (error) {
-    showToast('Error al guardar', 'error');
-  } else {
-    showToast('Perfil profesional actualizado', 'success');
+  const desc      = document.getElementById('pro-edit-desc')?.value.trim();
+  const city      = document.getElementById('pro-edit-city')?.value.trim();
+  const province  = document.getElementById('pro-edit-province')?.value.trim();
+  const zones     = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
+  const whatsapp  = document.getElementById('pro-edit-whatsapp')?.value.trim();
+
+  const [{ error: e1 }, { error: e2 }] = await Promise.all([
+    sb.from('professionals').update({
+      specialty, description: desc, city, province, zones, whatsapp,
+      updated_at: new Date().toISOString()
+    }).eq('id', store.currentPro.id),
+    sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
+  ]);
+
+  if (e1 || e2) { showToast('Error al guardar', 'error'); }
+  else {
+    // Actualizar store local
+    Object.assign(store.currentPro, { specialty, description: desc, city, province, zones, whatsapp });
+    showToast('Perfil actualizado', 'success');
+    showPage('pro-dashboard');
   }
+}
+
+export async function saveAvailability() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  const dias      = Array.from(document.querySelectorAll('#dias-laborales input:checked')).map(c => c.value);
+  const desde     = document.getElementById('hora-desde')?.value;
+  const hasta     = document.getElementById('hora-hasta')?.value;
+  const urgencias = document.getElementById('urgencias')?.checked;
+
+  const { error } = await sb.from('professionals').update({
+    availability: { dias, desde, hasta, urgencias }
+  }).eq('id', store.currentPro.id);
+
+  if (error) { showToast('Error al guardar', 'error'); }
+  else { showToast('Disponibilidad actualizada', 'success'); }
 }
 
 export async function saveBudget() {
   if (!store.currentUser || !store.currentPro) return;
-  
   const sb = getSupabase();
   const client = document.getElementById('budget-client')?.value.trim();
-  const desc = document.getElementById('budget-desc')?.value.trim();
-  const price = document.getElementById('budget-price')?.value;
-  const date = document.getElementById('budget-date')?.value;
-  
-  if (!client || !desc || !price) {
-    showToast('Completá todos los campos', 'error');
-    return;
-  }
-  
+  const desc   = document.getElementById('budget-desc')?.value.trim();
+  const price  = document.getElementById('budget-price')?.value;
+  const date   = document.getElementById('budget-date')?.value;
+
+  if (!client || !desc || !price) { showToast('Completá todos los campos', 'error'); return; }
+
   const { error } = await sb.from('budgets').insert({
     professional_id: store.currentPro.id,
+    user_id: store.currentUser.id,
     client_name: client,
     description: desc,
-    price,
-    date,
+    price: parseFloat(price),
+    date: date || new Date().toISOString().split('T')[0],
     created_at: new Date().toISOString()
   });
-  
+
   closeModal('modal-new-budget');
-  
-  if (error) {
-    showToast('Error al guardar presupuesto', 'error');
-  } else {
-    showToast('Presupuesto guardado', 'success');
-  }
+  if (error) { showToast('Error al guardar presupuesto', 'error'); }
+  else { showToast('Presupuesto guardado', 'success'); await loadProBudgets(); }
 }
 
 export function generateBudgetPDF() {
-  const client = document.getElementById('budget-client')?.value;
-  const desc = document.getElementById('budget-desc')?.value;
-  const price = document.getElementById('budget-price')?.value;
-  const date = document.getElementById('budget-date')?.value;
+  const client  = document.getElementById('budget-client')?.value;
+  const desc    = document.getElementById('budget-desc')?.value;
+  const price   = document.getElementById('budget-price')?.value;
+  const date    = document.getElementById('budget-date')?.value;
   const proName = store.currentUser?.user_metadata?.full_name || 'Profesional';
-  
-  const html = `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}h1{color:#4f46e5;}table{width:100%;border-collapse:collapse;margin-top:20px;}td{padding:10px;border:1px solid #ddd;}.total{font-weight:bold;font-size:1.2rem;color:#4f46e5;}</style></head><body><h1>PRESUPUESTO - TECNIYA</h1><p><strong>Profesional:</strong> ${proName}</p><p><strong>Cliente:</strong> ${client}</p><p><strong>Fecha:</strong> ${date}</p><hr><h3>Descripción del trabajo</h3><p>${desc}</p><table><tr><td>Mano de obra</td><td class="total">$${price}</td></tr></table><br><p style="font-size:0.8rem;color:#999;">Presupuesto generado por TECNIYA · Aplicación creada por AFM Solutions</p></body></html>`;
-  
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}
+    h1{color:#4f46e5;}table{width:100%;border-collapse:collapse;margin-top:20px;}
+    td{padding:10px;border:1px solid #ddd;}.total{font-weight:bold;font-size:1.2rem;color:#4f46e5;}
+    </style></head><body>
+    <h1>PRESUPUESTO - TECNIYA</h1>
+    <p><strong>Profesional:</strong> ${proName}</p>
+    <p><strong>Cliente:</strong> ${client}</p>
+    <p><strong>Fecha:</strong> ${date}</p><hr>
+    <h3>Descripción del trabajo</h3><p>${desc}</p>
+    <table><tr><td>Total</td><td class="total">$${price}</td></tr></table>
+    <br><p style="font-size:0.8rem;color:#999;">Generado por TECNIYA · AFM Solutions</p>
+    </body></html>`;
+
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
@@ -245,12 +418,45 @@ export function generateBudgetPDF() {
 }
 
 export function sendBudgetWhatsApp() {
-  const client = document.getElementById('budget-client')?.value;
-  const desc = document.getElementById('budget-desc')?.value;
-  const price = document.getElementById('budget-price')?.value;
+  const client  = document.getElementById('budget-client')?.value;
+  const desc    = document.getElementById('budget-desc')?.value;
+  const price   = document.getElementById('budget-price')?.value;
   const proName = store.currentUser?.user_metadata?.full_name || 'Profesional';
-  
-  const msg = encodeURIComponent(`Hola ${client}! Soy ${proName} de TECNIYA.\n\nPresupuesto para: ${desc}\nPrecio: $${price}\n\n¿Te parece bien? Podemos coordinar fecha y hora.`);
-  
+  const msg = encodeURIComponent(
+    `Hola ${client}! Soy ${proName} de TECNIYA.\n\nPresupuesto para: ${desc}\nPrecio: $${price}\n\n¿Te parece bien? Podemos coordinar fecha y hora.`
+  );
   window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+function renderJobList(id, jobs, viewAs) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = jobs.length
+    ? jobs.map(j => jobItem(j, viewAs)).join('')
+    : `<div class="empty-state" style="padding:30px;">
+        <i class="fa fa-briefcase"></i><p>Sin trabajos en esta categoría.</p></div>`;
+}
+
+function escHtml(text) {
+  if (!text) return '';
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function statusLabel(status) {
+  const map = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado', expired: 'Vencido' };
+  return map[status] || status || '';
 }
