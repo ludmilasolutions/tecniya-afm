@@ -125,11 +125,11 @@ async function loadAdminJobs() {
   if (!tbody) return;
 
   if (!jobs || jobs.length === 0) {
-    tbody.innerHTML = '="6" style<tr><td colspan="text-align:center;padding:40px;color:var(-- hay trabajos</tdgray);">No return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">No hay trabajos</td></tr>';
+    return;
   }
-
-></tr>';
-     tbody.innerHTML = jobs.map(j => `
+  
+  tbody.innerHTML = jobs.map(j => `
     <tr>
       <td style="font-size:0.78rem;color:var(--gray2);">${j.id.slice(0, 8)}...</td>
       <td>${escapeHtml(j.profiles?.full_name || '-')}</td>
