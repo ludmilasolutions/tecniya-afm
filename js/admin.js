@@ -322,9 +322,10 @@ export async function adminCancelSubscription(subId) {
   }).eq('id', subId);
   
   if (!error) {
-    const { error: proError } = await sb.from('professionals')
-      .update({ is_featured: false })
-      .eq('user_id', (await sb.from('subscriptions').select('professional_id').eq('id', subId).single()).data?.[0]?.professional_id;
+    const { data: sub } = await sb.from('subscriptions').select('professional_id').eq('id', subId).single();
+    if (sub?.professional_id) {
+      await sb.from('professionals').update({ is_featured: false }).eq('user_id', sub.professional_id);
+    }
     
     showToast('Suscripción cancelada', 'success');
     loadAdminSubscriptions();
