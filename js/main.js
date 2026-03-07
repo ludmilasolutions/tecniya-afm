@@ -7,7 +7,7 @@ import { loadAds, onProvinceChange, onCityInput, openAdLink, saveAd, showAd } fr
 import { detectLocation } from './geolocation.js';
 import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest, contactPro, addFavorite, openRatingModal, setRating, submitRating, initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, saveAvailability, saveProfile, saveProProfile, saveBudget, generateBudgetPDF, sendBudgetWhatsApp } from './dashboard.js';
-import { loadAdminData, switchAdminTab, blockUser, approveFeatured, deleteAd, filterAdminTable } from './admin.js';
+import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured, adminDeleteAd, filterAdminTable } from './admin.js';
 import { setupRealtimeNotifications, setupNotifBadge, toggleNotifPanel, markAllRead, initNotificationsEvents } from './notifications.js';
 import { sendChatMsg, sendChatMsgBtn, initChatEvents } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
@@ -61,9 +61,9 @@ window.sendBudgetWhatsApp = sendBudgetWhatsApp;
 
 window.loadAdminData = loadAdminData;
 window.switchAdminTab = switchAdminTab;
-window.blockUser = blockUser;
-window.approveFeatured = approveFeatured;
-window.deleteAd = deleteAd;
+window.adminToggleBlock = adminToggleBlock;
+window.adminToggleFeatured = adminToggleFeatured;
+window.adminDeleteAd = adminDeleteAd;
 window.filterAdminTable = filterAdminTable;
 
 window.toggleNotifPanel = toggleNotifPanel;
