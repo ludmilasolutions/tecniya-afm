@@ -138,7 +138,7 @@ export function showUrgentModal() {
   
   showModal('modal-urgent');
   
-  const { detectLocation } = import('./geolocation.js');
+  const { detectLocation } = await import('./geolocation.js');
   detectLocation();
 }
 

@@ -1,6 +1,6 @@
 import { store } from './store.js';
 import { getSupabase } from './supabase.js';
-import { showToast } from './ui.js';
+import { showToast, closeModal } from './ui.js';
 import { ADS_DEFAULT } from './config.js';
 
 export let allAds = [];
@@ -42,11 +42,11 @@ export function showAd(level) {
   }
 }
 
-export function onProvinceChange() {
+export async function onProvinceChange() {
   const prov = document.getElementById('filter-province')?.value;
   showAd(prov ? 'provincial' : 'nacional');
   
-  const { applyFilters } = import('./professionals.js');
+  const { applyFilters } = await import('./professionals.js');
   applyFilters();
 }
 

@@ -11,6 +11,7 @@ export let activeFilters = store.activeFilters;
 export async function loadSpecialties() {
   const sb = getSupabase();
   try {
+    if (!sb) throw new Error('no sb');
     const { data } = await sb.from('specialties').select('*').order('name');
     allSpecialties = (data && data.length > 0) ? data.map(s => s.name) : SPECIALTIES_DEFAULT;
   } catch {
@@ -282,16 +283,16 @@ export function initProfessionalsEvents() {
   
   const filterProvince = document.getElementById('filter-province');
   if (filterProvince) {
-    filterProvince.addEventListener('change', () => {
-      const { onProvinceChange } = import('./ads.js');
+    filterProvince.addEventListener('change', async () => {
+      const { onProvinceChange } = await import('./ads.js');
       onProvinceChange();
     });
   }
   
   const filterCity = document.getElementById('filter-city');
   if (filterCity) {
-    filterCity.addEventListener('input', () => {
-      const { onCityInput } = import('./ads.js');
+    filterCity.addEventListener('input', async () => {
+      const { onCityInput } = await import('./ads.js');
       onCityInput();
     });
   }

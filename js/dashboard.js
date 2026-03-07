@@ -1,6 +1,6 @@
 import { store } from './store.js';
 import { getSupabase } from './supabase.js';
-import { showToast } from './ui.js';
+import { showToast, closeModal } from './ui.js';
 import { jobItem } from './jobs.js';
 
 export async function loadUserDashboard() {

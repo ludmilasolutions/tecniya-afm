@@ -1,6 +1,6 @@
 import { store } from './store.js';
 import { getSupabase, onAuthStateChange } from './supabase.js';
-import { showToast, updateAuthUI, showPage } from './ui.js';
+import { showToast, updateAuthUI, showPage, closeModal, showModal } from './ui.js';
 
 export async function initAuth() {
   const sb = getSupabase();
@@ -177,23 +177,33 @@ export function redirectAfterLogin() {
 
 export function initAuthEventListeners() {
   const loginEmailBtn = document.getElementById('btn-login');
-  if (loginEmailBtn) {
-    loginEmailBtn.addEventListener('click', loginEmail);
-  }
+  if (loginEmailBtn) loginEmailBtn.addEventListener('click', loginEmail);
   
   const registerEmailBtn = document.getElementById('btn-register');
-  if (registerEmailBtn) {
-    registerEmailBtn.addEventListener('click', registerEmail);
-  }
+  if (registerEmailBtn) registerEmailBtn.addEventListener('click', registerEmail);
   
-  const loginEmailInput = document.getElementById('login-email');
   const loginPassInput = document.getElementById('login-pass');
-  
-  if (loginEmailInput && loginPassInput) {
+  if (loginPassInput) {
     loginPassInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') {
-        loginEmail();
-      }
+      if (e.key === 'Enter') loginEmail();
     });
   }
+
+  const googleLoginBtn = document.getElementById('btn-google-login');
+  if (googleLoginBtn) googleLoginBtn.addEventListener('click', loginGoogle);
+
+  const googleRegisterBtn = document.getElementById('btn-google-register');
+  if (googleRegisterBtn) googleRegisterBtn.addEventListener('click', loginGoogle);
+
+  const logoutBtn = document.getElementById('menu-logout');
+  if (logoutBtn) logoutBtn.addEventListener('click', e => { e.preventDefault(); logout(); });
+
+  const navLoginBtn = document.getElementById('btn-login-nav');
+  if (navLoginBtn) navLoginBtn.addEventListener('click', () => showModal('modal-login'));
+
+  const navRegisterBtn = document.getElementById('btn-register-nav');
+  if (navRegisterBtn) navRegisterBtn.addEventListener('click', () => showModal('modal-register'));
+
+  const mobileLoginLink = document.getElementById('mobile-login-link');
+  if (mobileLoginLink) mobileLoginLink.addEventListener('click', e => { e.preventDefault(); showModal('modal-login'); });
 }
