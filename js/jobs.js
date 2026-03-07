@@ -251,12 +251,10 @@ export async function submitRating() {
   }
 }
 
-export function initJobsEventListeners() {
+export async function initJobsEventListeners() {
   const urgentSpecialty = document.getElementById('urgent-specialty');
   if (urgentSpecialty) {
-    const { loadSpecialties } = import('./professionals.js');
-    loadSpecialties().then(() => {
-      const currentSpecialties = document.getElementById('filter-specialty')?.value;
-    });
+    const { loadSpecialties } = await import('./professionals.js');
+    await loadSpecialties();
   }
 }
