@@ -37,13 +37,19 @@ export async function submitJobRequest() {
   }
   
   const proAction = store.currentProIdForAction;
-  let professionalProfileId;
+  let professionalProfileId = null;
   if (proAction?.userProfileId) {
     professionalProfileId = proAction.userProfileId;
   } else {
     const proId = proAction?.proId || proAction;
     const pro = store.allProfessionals?.find(x => x.id == proId);
-    professionalProfileId = pro?.user_id || proId;
+    professionalProfileId = pro?.user_id || null;
+  }
+
+  // Validar que sea un UUID real (36 chars con guiones), no un mock ID como 'p1'
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (professionalProfileId && !uuidRegex.test(professionalProfileId)) {
+    professionalProfileId = null;
   }
 
   const jobPayload = {
@@ -206,7 +212,13 @@ export async function addFavorite(proId) {
   
   // proId es el id de la tabla professionals, necesitamos el user_id que referencia profiles
   const pro = store.allProfessionals?.find(x => x.id == proId);
-  const profileId = pro?.user_id || proId;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const profileId = (pro?.user_id && uuidRegex.test(pro.user_id)) ? pro.user_id : null;
+
+  if (!profileId) {
+    showToast('Este profesional es de demo, no se puede guardar en favoritos', 'info');
+    return;
+  }
 
   const sb = getSupabase();
   const { error } = await sb.from('favorites').insert({
@@ -251,10 +263,15 @@ export async function submitRating() {
   
   const proId = store.currentProIdForAction.proId;
   const jobId = store.currentProIdForAction.jobId;
-
-  // Resolver user_id del profesional (reviews.professional_id referencia profiles.id)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const pro = store.allProfessionals?.find(x => x.id == proId);
-  const professionalProfileId = pro?.user_id || proId;
+  const professionalProfileId = (pro?.user_id && uuidRegex.test(pro.user_id)) ? pro.user_id : null;
+
+  if (!professionalProfileId) {
+    showToast('No se puede calificar un profesional de demo', 'info');
+    closeModal('modal-rating');
+    return;
+  }
 
   const { error } = await sb.from('reviews').insert({
     user_id: store.currentUser.id,
