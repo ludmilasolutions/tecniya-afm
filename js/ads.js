@@ -14,10 +14,7 @@ export async function loadAds() {
       allAds = ADS_DEFAULT;
     } else {
       allAds = (data && data.length > 0) ? data : ADS_DEFAULT;
-      console.log('Ads cargados:', allAds.length);
-      allAds.forEach((a, i) => {
-        console.log(`  [${i}] title: "${a.title}" | desc: "${a.description}" | level: "${a.level}" | link: "${a.link}"`);
-      });
+      console.log('Ads cargados:', allAds.length, allAds.map(a => a.title));
     }
   } catch(e) {
     console.warn('loadAds exception:', e.message);
@@ -29,112 +26,80 @@ export async function loadAds() {
 }
 
 export function showAd(level) {
-  console.log('[showAd] ===== INICIO =====');
-  console.log('[showAd] level:', level);
-  console.log('[showAd] store.allAds:', store.allAds?.length);
-  console.log('[showAd] allAds (local):', allAds?.length);
-  
-  // Leer siempre del store para evitar problemas con módulos importados dinámicamente
   const ads = store.allAds?.length ? store.allAds : allAds;
-  if (!ads || ads.length === 0) {
-    console.warn('[showAd] NO HAY ADS DISPONIBLES');
-    return;
-  }
+  if (!ads || ads.length === 0) return;
 
-  console.log('[showAd] Ads disponibles:', ads.length, ads.map(a => a.title));
-
-  // Buscar por nivel exacto, sino nacional, sino cualquiera
   let filtered = ads.filter(a => a.level === level);
-  console.log('[showAd] filtered (level exacto):', filtered.length);
   if (!filtered.length) filtered = ads.filter(a => a.level === 'nacional' || !a.level);
-  console.log('[showAd] filtered (nacional):', filtered.length);
   if (!filtered.length) filtered = ads;
-  console.log('[showAd] filtered (final):', filtered.length);
 
   const ad = filtered[Math.floor(Math.random() * filtered.length)];
-  if (!ad) {
-    console.warn('[showAd] NO SE PUDO SELECCIONAR AD');
-    return;
-  }
-  allAds = ads; // sincronizar variable local
+  if (!ad) return;
 
-  console.log('[showAd] AD SELECCIONADO:', ad.title);
-  console.log('[showAd] Elementos DOM:');
-  const titleEl  = document.getElementById('ad-title');
-  const descEl   = document.getElementById('ad-desc');
-  const badgeEl  = document.getElementById('ad-level-badge');
-  const bannerEl = document.getElementById('ad-banner-main');
-  const imgReal = document.getElementById('ad-img-real');
-  const imgPlaceholder = document.getElementById('ad-img-placeholder');
-  
-  console.log('  - ad-title:', !!titleEl, titleEl);
-  console.log('  - ad-desc:', !!descEl, descEl);
-  console.log('  - ad-level-badge:', !!badgeEl, badgeEl);
-  console.log('  - ad-banner-main:', !!bannerEl, bannerEl);
-  console.log('  - ad-img-real:', !!imgReal, imgReal);
-  console.log('  - ad-img-placeholder:', !!imgPlaceholder, imgPlaceholder);
-  
-  // DEBUG: Verificar estilos aplicados
-  const adSection = document.querySelector('.ad-section');
-  const adContent = document.querySelector('.ad-content');
-  
-  // FORZAR display:block ya que el CSS tiene display:none
-  if (adSection) {
-    adSection.setAttribute('style', 'display: block !important; visibility: visible !important; opacity: 1 !important;');
-    console.log('[DEBUG] Forzado display:block en ad-section con !important');
-  }
-  
-  const computedSection = adSection ? window.getComputedStyle(adSection) : null;
-  const computedBanner = bannerEl ? window.getComputedStyle(bannerEl) : null;
-  
-  console.log('[DEBUG] ad-section computed:', {
-    display: computedSection?.display,
-    visibility: computedSection?.visibility,
-    opacity: computedSection?.opacity,
-    position: computedSection?.position,
-    width: computedSection?.width,
-    height: computedSection?.height
-  });
-  console.log('[DEBUG] ad-banner computed:', {
-    display: computedBanner?.display,
-    visibility: computedBanner?.visibility,
-    opacity: computedBanner?.opacity,
-    position: computedBanner?.position
-  });
+  renderAdBanner(ad);
+}
 
-  if (titleEl) {
-    titleEl.textContent = ad.title || 'Publicidad';
-    console.log('[showAd] Asignado title:', titleEl.textContent);
-  }
-  if (descEl) {
-    descEl.textContent = ad.description || '';
-    console.log('[showAd] Asignado desc:', descEl.textContent);
-  }
-  if (badgeEl) {
-    const lbl = ad.level || level;
-    badgeEl.textContent = lbl.charAt(0).toUpperCase() + lbl.slice(1);
-    badgeEl.className = `ad-level-badge ad-level-${lbl}`;
-    console.log('[showAd] Asignado badge:', badgeEl.textContent);
-  }
-  if (bannerEl) {
-    bannerEl.dataset.link = ad.link || '#';
-    console.log('[showAd] Asignado link:', bannerEl.dataset.link);
-  }
-
-  // Mostrar imagen real o placeholder
-  if (imgReal && imgPlaceholder) {
-    if (ad.image_url) {
-      imgReal.src = ad.image_url;
-      imgReal.style.display = 'block';
-      imgPlaceholder.style.display = 'none';
-      console.log('[showAd] Imagen asignada:', ad.image_url);
+function renderAdBanner(ad) {
+  let banner = document.getElementById('custom-ad-banner');
+  
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'custom-ad-banner';
+    banner.style.cssText = `
+      position: relative;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(6, 182, 212, 0.15));
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    `;
+    banner.onclick = () => {
+      if (ad.link && ad.link !== '#') {
+        window.open(ad.link, '_blank');
+      }
+    };
+    
+    const container = document.querySelector('.container');
+    if (container) {
+      container.insertBefore(banner, container.firstChild);
     } else {
-      imgReal.style.display = 'none';
-      imgPlaceholder.style.display = 'flex';
-      console.log('[showAd] Sin imagen, usando placeholder');
+      document.body.insertBefore(banner, document.body.firstChild);
     }
   }
-  console.log('[showAd] ===== FIN =====');
+
+  const levelLabel = ad.level === 'nacional' ? 'NACIONAL' : ad.level === 'provincial' ? 'PROVINCIAL' : 'LOCAL';
+  const levelColor = ad.level === 'nacional' ? '#8b5cf6' : ad.level === 'provincial' ? '#06b6d4' : '#10b981';
+  
+  banner.innerHTML = `
+    <div style="flex-shrink: 0; width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #06b6d4); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+      <i class="fa fa-bullhorn"></i>
+    </div>
+    <div style="flex: 1; min-width: 0;">
+      <div style="font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 2px;">${ad.title || 'Publicidad'}</div>
+      <div style="font-size: 0.85rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
+    </div>
+    <div style="flex-shrink: 0; padding: 4px 10px; border-radius: 4px; background: ${levelColor}20; border: 1px solid ${levelColor}40; color: ${levelColor}; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+      ${levelLabel}
+    </div>
+  `;
+  
+  banner.onmouseenter = () => {
+    banner.style.borderColor = 'rgba(79, 70, 229, 0.6)';
+    banner.style.transform = 'translateY(-2px)';
+  };
+  banner.onmouseleave = () => {
+    banner.style.borderColor = 'rgba(79, 70, 229, 0.3)';
+    banner.style.transform = 'translateY(0)';
+  };
 }
 
 export async function onProvinceChange() {
@@ -152,12 +117,15 @@ export function onCityInput() {
 }
 
 export function openAdLink() {
-  const bannerEl = document.getElementById('ad-banner-main');
+  const bannerEl = document.getElementById('custom-ad-banner');
   if (!bannerEl) return;
   
-  const link = bannerEl.dataset.link;
-  if (link && link !== '#') {
-    window.open(link, '_blank');
+  const ads = store.allAds?.length ? store.allAds : allAds;
+  if (ads && ads.length > 0) {
+    const ad = ads[0];
+    if (ad.link && ad.link !== '#') {
+      window.open(ad.link, '_blank');
+    }
   }
 }
 
