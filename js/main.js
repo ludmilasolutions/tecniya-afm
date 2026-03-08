@@ -428,6 +428,7 @@ async function initApp() {
   setTimeout(() => {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, 1200);
 
   initAuth();

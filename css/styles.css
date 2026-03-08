@@ -543,6 +543,8 @@ p {
 /* ===== AD BANNER ===== */
 .ad-section {
   padding: 16px 0;
+  width: 100%;
+  display: block !important;
 }
 .ad-banner {
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(6, 182, 212, 0.1));
