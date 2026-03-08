@@ -39,6 +39,7 @@ export function showAd(level) {
   if (!ad) return;
   allAds = ads; // sincronizar variable local
 
+  console.log('[showAd] mostrando:', ad.title, '| titleEl:', !!document.getElementById('ad-title'));
   const titleEl  = document.getElementById('ad-title');
   const descEl   = document.getElementById('ad-desc');
   const badgeEl  = document.getElementById('ad-level-badge');

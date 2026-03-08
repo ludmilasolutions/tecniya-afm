@@ -416,6 +416,9 @@ async function initApp() {
   await loadSpecialties();
   await loadAds();
   await loadProfessionals();
+  // Re-mostrar el ad después de que loadProfessionals termine (puede sobreescribir)
+  const { showAd: _showAd } = await import('./ads.js');
+  _showAd('nacional');
 
   initStorage();
   initUploadEvents();
