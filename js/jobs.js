@@ -142,13 +142,42 @@ export async function submitJobRequest() {
     created_at:      new Date().toISOString()
   };
 
-  const { data, error } = await sb.from('jobs').insert(jobPayload).select();
+  // Determinar targets (multi o simple)
+  const targets = store.selectedPros.length > 1
+    ? store.selectedPros
+    : [{ userProfileId: professionalProfileId }];
+
+  const isMulti = targets.length > 1;
+  const groupId = isMulti ? crypto.randomUUID() : null;
+  const uuidRegex2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  let sent = 0;
+  let lastError = null;
+  for (const target of targets) {
+    const pid = target.userProfileId;
+    if (!pid || !uuidRegex2.test(pid)) continue;
+    const payload = { ...jobPayload,
+      professional_id:  pid,
+      multiple_request: isMulti,
+      group_id:         groupId
+    };
+    const { error: e } = await sb.from('jobs').insert(payload);
+    if (!e) {
+      sent++;
+      import('./notifications.js').then(m => m.createNotification(
+        pid, 'job_request', 'Nueva solicitud de trabajo',
+        `${desc.substring(0, 80)}${desc.length > 80 ? '...' : ''}`
+      ));
+    } else {
+      lastError = e;
+      console.error('job insert error:', e);
+    }
+  }
 
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-paper-plane"></i>Enviar solicitud'; }
 
-  if (error) {
-    console.error('job insert:', error);
-    if (errorEl) { errorEl.textContent = error.message; errorEl.classList.remove('hidden'); }
+  if (sent === 0) {
+    if (errorEl) { errorEl.textContent = lastError?.message || 'No se pudo enviar la solicitud.'; errorEl.classList.remove('hidden'); }
     return;
   }
 
@@ -159,32 +188,6 @@ export async function submitJobRequest() {
   if (prev) { prev.src=''; prev.style.display='none'; }
   const pname = document.getElementById('job-req-photo-name');
   if (pname) pname.textContent = '';
-
-  let groupId = null;
-  // Enviar a todos los pros seleccionados (multi-request)
-  const targets = store.selectedPros.length > 1
-    ? store.selectedPros
-    : [{ userProfileId: professionalProfileId }];
-
-  let sent = 0;
-  for (const target of targets) {
-    const pid = target.userProfileId;
-    const uuidRegex2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!pid || !uuidRegex2.test(pid)) continue;
-    const payload = { ...jobPayload,
-      professional_id: pid,
-      multiple_request: targets.length > 1,
-      group_id: targets.length > 1 ? (groupId || (groupId = crypto.randomUUID())) : null
-    };
-    const { error: e } = await sb.from('jobs').insert(payload);
-    if (!e) {
-      sent++;
-      import('./notifications.js').then(m => m.createNotification(
-        pid, 'job_request', 'Nueva solicitud de trabajo',
-        `${desc.substring(0, 80)}${desc.length > 80 ? '...' : ''}`
-      ));
-    }
-  }
 
   store.selectedPros = [];
   updateMultiProBadge();
