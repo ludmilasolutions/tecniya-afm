@@ -77,6 +77,13 @@ export function showAd(level) {
   // DEBUG: Verificar estilos aplicados
   const adSection = document.querySelector('.ad-section');
   const adContent = document.querySelector('.ad-content');
+  
+  // FORZAR display:block ya que el CSS tiene display:none
+  if (adSection) {
+    adSection.style.display = 'block';
+    console.log('[DEBUG] Forzado display:block en ad-section');
+  }
+  
   const computedSection = adSection ? window.getComputedStyle(adSection) : null;
   const computedBanner = bannerEl ? window.getComputedStyle(bannerEl) : null;
   
