@@ -113,21 +113,22 @@
     </div>
   </section>
 
-  <div class="ad-section" style="padding:16px 24px;width:100%;box-sizing:border-box;">
-    <div id="ad-banner-main" class="ad-banner">
-      <span class="ad-label">Publicidad</span>
-      <div class="ad-content">
-        <div class="ad-img-placeholder" id="ad-img-placeholder"><i class="fa fa-bullhorn"></i></div>
-        <img id="ad-img-real" src="" alt="" style="display:none;width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;">
-        <div class="ad-text-wrap">
-          <div class="ad-title" id="ad-title">Cargando publicidad...</div>
-          <div class="ad-desc" id="ad-desc"></div>
+  <div class="container">
+    <div class="ad-section">
+      <div id="ad-banner-main" class="ad-banner">
+        <span class="ad-label">Publicidad</span>
+        <div class="ad-content">
+          <div class="ad-img-placeholder" id="ad-img-placeholder"><i class="fa fa-bullhorn"></i></div>
+          <img id="ad-img-real" src="" alt="" style="display:none;width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+          <div class="ad-text-wrap">
+            <div class="ad-title" id="ad-title">Cargando publicidad...</div>
+            <div class="ad-desc" id="ad-desc"></div>
+          </div>
+          <span class="ad-level-badge ad-level-nacional" id="ad-level-badge">Nacional</span>
         </div>
-        <span class="ad-level-badge ad-level-nacional" id="ad-level-badge">Nacional</span>
       </div>
     </div>
-  </div>
-  <div class="container">
+
     <div class="search-section" id="search-section">
       <div class="search-card">
         <div class="search-title"><i class="fa fa-sliders-h" style="color:var(--accent);margin-right:8px;"></i>Encontrá tu profesional ideal</div>
@@ -1696,7 +1697,7 @@
 
 <!-- Modal: crear/editar publicidad (admin) -->
 <div class="modal-overlay" id="modal-ad-form">
-  <div class="modal">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-header">
       <h3 class="modal-title" id="ad-form-modal-title"><i class="fa fa-bullhorn" style="color:var(--accent);margin-right:8px;"></i>Nueva publicidad</h3>
       <button class="modal-close" onclick="document.getElementById('modal-ad-form').classList.remove('open')"><i class="fa fa-xmark"></i></button>
@@ -1705,58 +1706,107 @@
       <input type="hidden" id="ad-form-id">
 
       <div class="form-group">
-        <label class="form-label">Título <span style="color:#f87171;">*</span></label>
-        <input class="form-input" type="text" id="ad-form-title" placeholder="Ej: Ferretería El Clavo">
+        <label class="form-label">Título del anuncio <span style="color:#f87171;">*</span></label>
+        <input class="form-input" type="text" id="ad-form-title" placeholder="Ej: Ferretería El Clavo - Todo para tu hogar">
       </div>
 
       <div class="form-group">
         <label class="form-label">Descripción</label>
-        <textarea class="form-textarea" id="ad-form-desc" placeholder="Descripción breve del anuncio..." style="min-height:70px;"></textarea>
+        <textarea class="form-textarea" id="ad-form-desc" placeholder="Breve descripción que se mostrará en el banner..." style="min-height:70px;"></textarea>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Link (URL)</label>
-        <input class="form-input" type="url" id="ad-form-link" placeholder="https://...">
+        <label class="form-label"><i class="fa fa-link"></i> Link de destino</label>
+        <input class="form-input" type="url" id="ad-form-link" placeholder="https://tu-sitio-web.com">
       </div>
 
       <div class="form-group">
-        <label class="form-label">Imagen del banner <span style="color:var(--gray);font-size:0.75rem;">(URL pública)</span></label>
-        <input class="form-input" type="url" id="ad-form-image" placeholder="https://ejemplo.com/imagen.jpg">
-        <div id="ad-form-image-preview" style="margin-top:8px;display:none;">
-          <img id="ad-form-image-thumb" style="height:60px;border-radius:8px;object-fit:cover;" src="">
-          <div style="font-size:0.72rem;color:var(--gray);margin-top:4px;">Vista previa</div>
+        <label class="form-label"><i class="fa fa-image"></i> Imagen del banner</label>
+        
+        <!-- Input para subir archivo -->
+        <div id="ad-image-upload-area" style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px;" onclick="document.getElementById('ad-form-image-file').click()">
+          <input type="file" id="ad-form-image-file" accept="image/*" style="display:none;" onchange="window.adImageFileSelected(this)">
+          <div style="color:var(--accent);font-size:24px;margin-bottom:8px;"><i class="fa fa-cloud-upload"></i></div>
+          <div style="font-size:0.85rem;color:var(--gray);">Click para subir una imagen</div>
+          <div style="font-size:0.72rem;color:var(--gray2);margin-top:4px;">PNG, JPG - Máx 5MB</div>
+        </div>
+        
+        <!-- Editor de imagen -->
+        <div id="ad-image-editor" style="display:none;margin-top:12px;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageZoomIn()"><i class="fa fa-search-plus"></i> Zoom +</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageZoomOut()"><i class="fa fa-search-minus"></i> Zoom -</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveUp()"><i class="fa fa-arrow-up"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveDown()"><i class="fa fa-arrow-down"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveLeft()"><i class="fa fa-arrow-left"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveRight()"><i class="fa fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="window.adImageClear()"><i class="fa fa-times"></i> Quitar</button>
+          </div>
+          
+          <!-- Contenedor de previsualización -->
+          <div id="ad-image-preview-container" style="width:100%;height:150px;overflow:hidden;border-radius:8px;background:var(--darker);border:1px solid var(--border);position:relative;">
+            <img id="ad-image-preview-img" src="" style="position:absolute;max-width:none;transform-origin:center;">
+          </div>
+          
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input type="hidden" id="ad-form-image">
+            <input type="hidden" id="ad-form-image-transform" value="">
+            <span id="ad-image-status" style="font-size:0.72rem;color:var(--green);"><i class="fa fa-check"></i> Imagen lista</span>
+          </div>
+        </div>
+        
+        <!-- Preview de URL manual -->
+        <div id="ad-form-image-preview-url" style="margin-top:8px;display:none;">
+          <img id="ad-form-image-thumb" style="width:100%;max-height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border);" src="">
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="document.getElementById('ad-form-image').value='';document.getElementById('ad-form-image-preview-url').style.display='none';"><i class="fa fa-times"></i> Quitar URL</button>
+        </div>
+        
+        <!-- Alternativa: URL manual -->
+        <div style="margin-top:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="document.getElementById('ad-image-url-input').style.display=document.getElementById('ad-image-url-input').style.display==='none'?'block':'none';">
+            <i class="fa fa-link"></i> Usar URL externa
+          </button>
+          <input class="form-input" type="url" id="ad-image-url-input" placeholder="https://ejemplo.com/imagen.jpg" style="display:none;margin-top:8px;" onchange="window.adImageUrlChanged(this.value)">
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group">
-          <label class="form-label">Nivel</label>
-          <select class="form-select" id="ad-form-level">
-            <option value="nacional">🌎 Nacional</option>
-            <option value="provincial">🏛️ Provincial</option>
-            <option value="local" selected>📍 Local</option>
-          </select>
+      <div style="background:rgba(79,70,229,0.1);border-radius:8px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:0.8rem;font-weight:600;color:var(--accent);margin-bottom:8px;"><i class="fa fa-crosshairs"></i> Alcance geográfico</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-size:0.75rem;">Nivel</label>
+            <select class="form-select" id="ad-form-level">
+              <option value="nacional">🌎 Nacional</option>
+              <option value="provincial">🏛️ Provincial</option>
+              <option value="local">📍 Local</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-size:0.75rem;">Provincia</label>
+            <input class="form-input" type="text" id="ad-form-province" placeholder="Ej: Buenos Aires">
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Provincia</label>
-          <input class="form-input" type="text" id="ad-form-province" placeholder="Ej: Buenos Aires">
+        <div class="form-group" style="margin-bottom:0;margin-top:8px;">
+          <input class="form-input" type="text" id="ad-form-city" placeholder="Ciudad específica (opcional)">
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Ciudad</label>
-        <input class="form-input" type="text" id="ad-form-city" placeholder="Ej: La Plata">
-      </div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border);margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--darker);border-radius:8px;border:1px solid var(--border);">
         <div>
           <div style="font-size:0.88rem;font-weight:600;">Publicidad activa</div>
-          <div style="font-size:0.75rem;color:var(--gray);">Se mostrará a los usuarios</div>
+          <div style="font-size:0.75rem;color:var(--gray);">Visible para los usuarios</div>
         </div>
-        <input type="checkbox" id="ad-form-active" checked style="width:18px;height:18px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="ad-active-label" style="font-size:0.8rem;color:var(--green);font-weight:600;">Sí</span>
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;">
+            <input type="checkbox" id="ad-form-active" checked style="display:none;" onchange="document.getElementById('ad-active-label').textContent=this.checked?'Sí':'No';document.getElementById('ad-active-label').style.color=this.checked?'var(--green)':'var(--gray)';">
+            <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--accent);transition:0.3s;border-radius:26px;"></span>
+            <span class="toggle-knob" style="position:absolute;content:'';height:20px;width:20px;left:3px;bottom:3px;background-color:white;transition:0.3s;border-radius:50%;"></span>
+          </label>
+        </div>
       </div>
 
-      <button class="btn btn-primary btn-block" onclick="window.adminSaveAd()">
+      <button class="btn btn-primary btn-block" onclick="window.adminSaveAd()" style="margin-top:16px;">
         <i class="fa fa-floppy-disk"></i> Guardar publicidad
       </button>
     </div>
