@@ -74,42 +74,26 @@ export function showAd(level) {
   console.log('  - ad-img-real:', !!imgReal, imgReal);
   console.log('  - ad-img-placeholder:', !!imgPlaceholder, imgPlaceholder);
   
-  // DEBUG: Forzar visibilidad
+  // DEBUG: Verificar estilos aplicados
   const adSection = document.querySelector('.ad-section');
   const adContent = document.querySelector('.ad-content');
+  const computedSection = adSection ? window.getComputedStyle(adSection) : null;
+  const computedBanner = bannerEl ? window.getComputedStyle(bannerEl) : null;
   
-  // Crear banner de debug directamente en el body
-  const debugBanner = document.createElement('div');
-  debugBanner.id = 'debug-banner';
-  debugBanner.textContent = 'BANNER DEBUG: ' + ad.title;
-  debugBanner.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:200px;background:red;color:white;font-size:30px;z-index:9999999;display:flex;align-items:center;justify-content:center;';
-  document.body.appendChild(debugBanner);
-  console.log('[DEBUG] Banner debug creado');
-  alert('DEBUG: Banner rojo creado en la parte superior de la página!');
-  
-  if (adSection) {
-    adSection.style.display = 'block !important';
-    adSection.style.visibility = 'visible !important';
-    adSection.style.opacity = '1 !important';
-    adSection.style.position = 'relative';
-    adSection.style.zIndex = '99999';
-    console.log('[DEBUG] ad-section forzado');
-  }
-  if (adContent) {
-    adContent.style.display = 'flex !important';
-    console.log('[DEBUG] ad-content forzado');
-  }
-  if (bannerEl) {
-    bannerEl.style.display = 'flex !important';
-    bannerEl.style.background = 'red !important';
-    bannerEl.style.minHeight = '150px';
-    bannerEl.style.position = 'fixed';
-    bannerEl.style.top = '0';
-    bannerEl.style.left = '0';
-    bannerEl.style.width = '100%';
-    bannerEl.style.zIndex = '999999';
-    console.log('[DEBUG] banner forzado a visible');
-  }
+  console.log('[DEBUG] ad-section computed:', {
+    display: computedSection?.display,
+    visibility: computedSection?.visibility,
+    opacity: computedSection?.opacity,
+    position: computedSection?.position,
+    width: computedSection?.width,
+    height: computedSection?.height
+  });
+  console.log('[DEBUG] ad-banner computed:', {
+    display: computedBanner?.display,
+    visibility: computedBanner?.visibility,
+    opacity: computedBanner?.opacity,
+    position: computedBanner?.position
+  });
 
   if (titleEl) {
     titleEl.textContent = ad.title || 'Publicidad';
