@@ -1018,31 +1018,58 @@ export async function adminEditAd(adId) {
 
 export async function adminSaveAd() {
   const sb = getSupabase();
-  const id       = document.getElementById('ad-form-id').value;
-  const title    = document.getElementById('ad-form-title').value.trim();
-  const desc     = document.getElementById('ad-form-desc').value.trim();
-  const link     = document.getElementById('ad-form-link').value.trim();
-  const level    = document.getElementById('ad-form-level').value;
-  const province = document.getElementById('ad-form-province').value.trim();
-  const city     = document.getElementById('ad-form-city').value.trim();
-  const active   = document.getElementById('ad-form-active').checked;
+  const id       = document.getElementById('ad-form-id')?.value?.trim();
+  const title    = document.getElementById('ad-form-title')?.value?.trim();
+  const desc     = document.getElementById('ad-form-desc')?.value?.trim();
+  const link     = document.getElementById('ad-form-link')?.value?.trim();
+  const level    = document.getElementById('ad-form-level')?.value || 'local';
+  const province = document.getElementById('ad-form-province')?.value?.trim();
+  const city     = document.getElementById('ad-form-city')?.value?.trim();
+  const active   = document.getElementById('ad-form-active')?.checked ?? true;
 
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
-  const payload = { title, description: desc, link: link||null, level, province: province||null, city: city||null, active };
-
-  let error;
-  if (id) {
-    ({ error } = await sb.from('ads').update(payload).eq('id', id));
-  } else {
+  try {
     const { data: { user } } = await sb.auth.getUser();
-    ({ error } = await sb.from('ads').insert({ ...payload, created_by: user.id }));
-  }
+    const payload = {
+      title,
+      description: desc || null,
+      link: link || null,
+      level,
+      province: province || null,
+      city: city || null,
+      active,
+      created_by: user.id,
+    };
 
-  if (error) { showToast('Error: ' + error.message, 'error'); return; }
-  showToast(id ? 'Publicidad actualizada' : 'Publicidad creada', 'success');
-  document.getElementById('modal-ad-form').classList.remove('open');
-  loadAdminAds();
+    let error;
+    if (id) {
+      const res = await sb.rpc('admin_update_ad', {
+        p_id: id, p_title: title, p_description: desc||null, p_link: link||null,
+        p_level: level, p_province: province||null, p_city: city||null, p_active: active
+      });
+      error = res.error;
+    } else {
+      const res = await sb.rpc('admin_create_ad', {
+        p_title: title, p_description: desc||null, p_link: link||null,
+        p_level: level, p_province: province||null, p_city: city||null, p_active: active
+      });
+      error = res.error;
+    }
+
+    if (error) {
+      console.error('adminSaveAd error:', error);
+      showToast('Error: ' + error.message, 'error');
+      return;
+    }
+
+    showToast(id ? 'Publicidad actualizada' : 'Publicidad creada', 'success');
+    document.getElementById('modal-ad-form')?.classList.remove('open');
+    loadAdminAds();
+  } catch(e) {
+    console.error('adminSaveAd exception:', e);
+    showToast('Error inesperado: ' + e.message, 'error');
+  }
 }
 
 window.adminNewAd  = adminNewAd;
