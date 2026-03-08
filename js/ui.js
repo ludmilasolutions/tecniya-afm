@@ -5,11 +5,16 @@ export function showPage(pageId) {
   if (prev) {
     const prevId = prev.id.replace('page-', '');
     store.setPreviousPage(prevId);
-    // Limpiar canal realtime al salir del chat
     if (prevId === 'chat') {
       import('./chat.js').then(m => m.cleanupChat?.());
     }
   }
+
+  // Cerrar dropdown y selección múltiple al navegar
+  document.getElementById('user-dropdown')?.classList.remove('open');
+  document.getElementById('mobile-nav')?.classList.remove('open');
+  const multiBar = document.getElementById('multi-request-bar');
+  if (multiBar) multiBar.style.display = 'none';
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + pageId);
@@ -67,9 +72,7 @@ export function toggleUserMenu() {
 
 export function hideUserMenu() {
   const dropdown = document.getElementById('user-dropdown');
-  if (dropdown) {
-    dropdown.style.display = 'none';
-  }
+  if (dropdown) dropdown.classList.remove('open');
 }
 
 export function showToast(msg, type = 'info') {
@@ -126,10 +129,18 @@ export function initUIEvents() {
   document.addEventListener('click', e => {
     const userDropdown = document.getElementById('user-dropdown');
     const userAvatarBtn = document.getElementById('user-avatar-btn');
-    if (userDropdown && userDropdown.classList.contains('open')) {
-      if (!userDropdown.contains(e.target) && !userAvatarBtn?.contains(e.target)) {
-        userDropdown.classList.remove('open');
-      }
+    if (!userDropdown) return;
+
+    const clickedInsideDropdown = userDropdown.contains(e.target);
+    const clickedAvatar = userAvatarBtn && (userAvatarBtn === e.target || userAvatarBtn.contains(e.target));
+
+    if (clickedAvatar) {
+      // Toggle: el avatar abre/cierra
+      userDropdown.classList.toggle('open');
+      return;
+    }
+    if (!clickedInsideDropdown) {
+      userDropdown.classList.remove('open');
     }
   });
 

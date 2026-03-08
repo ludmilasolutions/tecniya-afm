@@ -23,6 +23,7 @@
   --glow-accent: rgba(6, 182, 212, 0.35);
   --glow-orange: rgba(249, 115, 22, 0.35);
   --glow-green: rgba(16, 185, 129, 0.35);
+  --header-h: 72px;
   --radius: 14px;
   --radius-sm: 8px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -335,6 +336,7 @@ p {
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
 }
 .notif-btn {
   position: relative;
@@ -625,7 +627,7 @@ p {
 
 /* ===== SEARCH FILTERS ===== */
 .search-section {
-  padding: 32px 0 24px;
+  padding: calc(var(--header-h) + 24px) 0 24px;
 }
 .search-card {
   background: rgba(255, 255, 255, 0.05);
@@ -1164,7 +1166,7 @@ p {
 
 /* ===== DASHBOARD ===== */
 .dash-wrap {
-  padding: 32px 0 48px;
+  padding: calc(var(--header-h) + 32px) 0 48px;
 }
 .dash-header {
   display: flex;
@@ -1315,7 +1317,7 @@ p {
 
 /* ===== PRO PROFILE PAGE ===== */
 .pro-profile-wrap {
-  padding: 32px 0 48px;
+  padding: calc(var(--header-h) + 32px) 0 48px;
 }
 .pro-profile-header {
   background: rgba(255, 255, 255, 0.05);
@@ -1503,7 +1505,7 @@ p {
 }
 .admin-content {
   margin-left: 240px;
-  padding: 32px;
+  padding: calc(var(--header-h) + 24px) 32px 32px;
 }
 .admin-table-wrap {
   background: rgba(255, 255, 255, 0.05);
@@ -1965,6 +1967,15 @@ p {
   margin-top: 4px;
 }
 
+.sub-wrap {
+  padding-top: var(--header-h);
+}
+
+/* ===== PÁGINAS SUELTAS (con padding-top de header) =====
+.page-padded {
+  padding-top: var(--header-h);
+}
+
 /* ===== SUBSCRIPTION ===== */
 .sub-card {
   background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(220, 38, 38, 0.1));
@@ -2092,8 +2103,8 @@ p {
 .user-dropdown {
   display: none;
   position: absolute;
-  top: 68px;
-  right: 24px;
+  top: calc(100% + 8px);
+  right: 0;
   background: rgba(8, 14, 36, 0.98);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2224,6 +2235,61 @@ p {
   .slot-period {
     width: 100%;
   }
+}
+
+
+/* ===== ESPECIALIDADES MÚLTIPLES ===== */
+.pro-specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.specialty-chip {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(79,70,229,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(79,70,229,0.25);
+  border-radius: 100px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.specialty-chip--sm {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+}
+/* Editor de chips (panel pro - editar perfil) */
+.specialty-chips-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  min-height: 52px;
+}
+.specialty-chip--toggle {
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  color: var(--gray);
+  border-color: var(--border);
+  transition: all 0.15s ease;
+  user-select: none;
+  padding: 5px 14px;
+  font-size: 0.82rem;
+}
+.specialty-chip--toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.specialty-chip--toggle.active {
+  background: rgba(79,70,229,0.15);
+  color: var(--accent);
+  border-color: rgba(79,70,229,0.4);
 }
 
 /* ===== RESPONSIVE ===== */

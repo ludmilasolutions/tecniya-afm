@@ -418,6 +418,7 @@ export async function confirmChosenRole() {
   if (role === 'professional') {
     const { data: newPro } = await saveProfessional(sb, userId, {
       specialty,
+      specialties: specialty ? [specialty] : [],
       city,
       province,
       description: ''

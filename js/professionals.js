@@ -19,8 +19,9 @@ export async function loadSpecialties() {
   }
   
   store.setAllSpecialties(allSpecialties);
+  window._allSpecialties = allSpecialties;
   
-  const selects = ['filter-specialty', 'urgent-specialty', 'pro-edit-specialty', 'job-req-specialty'];
+  const selects = ['filter-specialty', 'urgent-specialty', 'job-req-specialty'];
   selects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -50,7 +51,8 @@ export async function loadProfessionals() {
       id:            p.id,
       user_id:       p.user_id,
       name:          p.name || p.full_name || 'Profesional',
-      specialty:     p.specialty,
+      specialty:     p.specialties?.[0] || p.specialty,
+      specialties:   p.specialties || (p.specialty ? [p.specialty] : []),
       city:          p.city,
       province:      p.province,
       description:   p.description,
@@ -134,7 +136,10 @@ export function proCard(p) {
       <div class="pro-avatar">${initial}${p.is_online ? '<span class="online-dot"></span>' : ''}</div>
       <div class="pro-info">
         <div class="pro-name">${escapeHtml(p.name) || 'Profesional'}</div>
-        <div class="pro-specialty">${escapeHtml(p.specialty) || 'Técnico'}</div>
+        <div class="pro-specialties">${
+          (p.specialties?.length ? p.specialties : [p.specialty||'Técnico'])
+            .map(s => `<span class="specialty-chip">${escapeHtml(s)}</span>`).join('')
+        }</div>
         <div class="pro-location"><i class="fa fa-location-dot"></i>${escapeHtml(p.city || '')}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
       </div>
       <div class="pro-badges">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}</div>
@@ -165,7 +170,10 @@ export function showProProfile(proId) {
       <div class="pro-avatar-lg">${initial}</div>
       <div class="pro-profile-info">
         <div class="pro-name">${escapeHtml(p.name)}</div>
-        <div class="pro-specialty">${escapeHtml(p.specialty)}</div>
+        <div class="pro-specialties">${
+          (p.specialties?.length ? p.specialties : [p.specialty||'Técnico'])
+            .map(s => `<span class="specialty-chip">${escapeHtml(s)}</span>`).join('')
+        }</div>
         <div class="pro-location"><i class="fa fa-location-dot"></i> ${escapeHtml(p.city)}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}${p.is_online ? '<span class="badge badge-disponible"><i class="fa fa-circle" style="font-size:0.5rem;"></i>Disponible</span>' : ''}</div>
         <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num" style="font-size:1.1rem;">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos)</span></div>
@@ -285,7 +293,10 @@ export function applyFilters() {
   
   let filtered = [...allProfessionals];
   
-  if (specialty) filtered = filtered.filter(p => p.specialty === specialty);
+  if (specialty) filtered = filtered.filter(p => {
+    const specs = p.specialties?.length ? p.specialties : [p.specialty];
+    return specs.some(s => s === specialty);
+  });
   if (province) filtered = filtered.filter(p => p.province === province);
   if (city) filtered = filtered.filter(p => (p.city || '').toLowerCase().includes(city));
   if (zone) filtered = filtered.filter(p => (p.zones || []).some(z => z.toLowerCase().includes(zone)));

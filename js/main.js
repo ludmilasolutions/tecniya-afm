@@ -1,4 +1,5 @@
 import { store } from './store.js';
+window.__store = store;
 import { initSupabase } from './supabase.js';
 import { initAuth, redirectAfterLogin, initAuthEventListeners, chooseRole, confirmChosenRole, activateProProfile } from './auth.js';
 import { showPage, showModal, closeModal, toggleMobileMenu, toggleUserMenu, hideUserMenu,
@@ -19,6 +20,7 @@ import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBad
          previewJobPhoto,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
+         renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
@@ -49,6 +51,7 @@ window.toggleFilter     = toggleFilter;
 
 window.openJobRequest        = openJobRequest;
 window.toggleProSelection    = toggleProSelection;
+window.handleNotifClick      = handleNotifClick;
 window.openMultiRequest      = openMultiRequest;
 window.clearMultiSelection   = () => {
   store.selectedPros = [];
@@ -79,6 +82,8 @@ window.approveProDate        = approveProDate;
 window.rejectProDate         = rejectProDate;
 window.openWarrantyReport    = openWarrantyReport;
 window.submitWarrantyReport  = submitWarrantyReport;
+window.toggleSpecialtyChip   = toggleSpecialtyChip;
+window.toggleSpecialtyChip   = toggleSpecialtyChip;
 window.previewJobPhoto  = previewJobPhoto;
 window.openChatWith     = (userId, jobId, isPre) => openChatWith(userId, jobId, isPre);
 window.deleteWorkPhoto  = deleteWorkPhoto;
@@ -221,8 +226,20 @@ async function initApp() {
   on('mobile-panel-link', 'click', e => { e.preventDefault(); redirectAfterLogin();            toggleMobileMenu(); });
 
   // ── MENÚ USUARIO ────────────────────────────────────────────────────────
-  on('user-avatar-btn', 'click', e => { e.stopPropagation(); toggleUserMenu(); });
-  on('menu-dashboard',     'click', e => { e.preventDefault(); redirectAfterLogin(); hideUserMenu(); });
+  // Toggle del avatar manejado en el listener global de ui.js (evita race condition)
+  on('menu-dashboard', 'click', async e => {
+    e.preventDefault(); hideUserMenu();
+    if (store.isAdmin) {
+      showPage('admin');
+    } else if (store.isPro && store.activePanel === 'pro') {
+      const { loadProDashboard } = await import('./dashboard.js');
+      showPage('pro-dashboard'); loadProDashboard();
+    } else {
+      store.setActivePanel('user');
+      const { loadUserDashboard } = await import('./dashboard.js');
+      showPage('user-dashboard'); loadUserDashboard();
+    }
+  });
   on('menu-profile',       'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
   on('menu-chat',          'click', e => { e.preventDefault(); showPage('chat'); loadChatPage(); hideUserMenu(); });
   on('menu-logout',        'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });

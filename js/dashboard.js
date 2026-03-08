@@ -353,14 +353,16 @@ export async function saveProProfile() {
   if (!store.currentUser || !store.currentPro) return;
   const sb = getSupabase();
   const name      = document.getElementById('pro-edit-name')?.value.trim();
-  const specialty = document.getElementById('pro-edit-specialty')?.value;
+  // Leer especialidades del multi-selector
+  const specialty = getSelectedSpecialties()[0] || '';
+  const specialties = getSelectedSpecialties();
   const desc      = document.getElementById('pro-edit-desc')?.value.trim();
   const city      = document.getElementById('pro-edit-city')?.value.trim();
   const province  = document.getElementById('pro-edit-province')?.value.trim();
   const zones     = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     sb.from('professionals').update({
-      specialty, description: desc, city, province, zones,
+      specialty: specialties[0] || specialty, specialties, description: desc, city, province, zones,
       updated_at: new Date().toISOString()
     }).eq('user_id', store.currentUser.id),
     sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
@@ -369,7 +371,7 @@ export async function saveProProfile() {
   if (e1 || e2) { showToast('Error al guardar', 'error'); }
   else {
     // Actualizar store local
-    Object.assign(store.currentPro, { specialty, description: desc, city, province, zones });
+    Object.assign(store.currentPro, { specialty: specialties[0]||specialty, specialties, description: desc, city, province, zones });
     showToast('Perfil actualizado', 'success');
     showPage('pro-dashboard');
   }
@@ -489,4 +491,25 @@ function escHtml(text) {
 function statusLabel(status) {
   const map = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado', expired: 'Vencido' };
   return map[status] || status || '';
+}
+
+// ─── HELPERS MULTI-ESPECIALIDADES ────────────────────────────────────────────
+
+export function renderSpecialtyEditor(selected = []) {
+  const container = document.getElementById('specialty-chips-editor');
+  if (!container) return;
+  const allSpecs = window._allSpecialties || [];
+  container.innerHTML = allSpecs.map(s => {
+    const active = selected.includes(s) ? 'active' : '';
+    return `<span class="specialty-chip specialty-chip--toggle ${active}" onclick="window.toggleSpecialtyChip(this,'${s}')">${s}</span>`;
+  }).join('');
+}
+
+export function toggleSpecialtyChip(el, specialty) {
+  el.classList.toggle('active');
+}
+
+export function getSelectedSpecialties() {
+  const chips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
+  return Array.from(chips).map(c => c.textContent.trim());
 }

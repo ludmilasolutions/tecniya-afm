@@ -260,7 +260,7 @@
 </div>
 
 <div class="page" id="page-professionals-list">
-  <div class="container" style="padding-top:40px;padding-bottom:60px;">
+  <div class="container" style="padding-top:88px;padding-bottom:60px;">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
       <button class="btn btn-ghost btn-sm" id="btn-back-pros"><i class="fa fa-arrow-left"></i></button>
       <h2 style="margin:0;font-size:1.6rem;">Todos los profesionales</h2>
@@ -570,7 +570,7 @@
 </div>
 
 <div class="page" id="page-profile-edit">
-  <div class="container" style="padding-top:40px;padding-bottom:60px;max-width:680px;">
+  <div class="container" style="padding-top:88px;padding-bottom:60px;max-width:680px;">
     <button class="btn btn-ghost btn-sm" id="btn-back-profile-edit"><i class="fa fa-arrow-left"></i>Volver</button>
     <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar mi perfil</h2>
     <div class="card">
@@ -596,7 +596,7 @@
 </div>
 
 <div class="page" id="page-pro-profile-edit">
-  <div class="container" style="padding-top:40px;padding-bottom:60px;max-width:720px;">
+  <div class="container" style="padding-top:88px;padding-bottom:60px;max-width:720px;">
     <button class="btn btn-ghost btn-sm" id="btn-back-pro-profile-edit"><i class="fa fa-arrow-left"></i>Volver</button>
     <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar perfil profesional</h2>
     <div class="card">
@@ -607,7 +607,10 @@
         </div>
         <div class="form-group">
           <label class="form-label">Especialidad</label>
-          <select class="form-select" id="pro-edit-specialty"></select>
+          <div id="specialty-chips-editor" class="specialty-chips-editor">
+              <!-- Se rellena dinámicamente con renderSpecialtyEditor() -->
+            </div>
+            <p style="font-size:0.75rem;color:var(--gray);margin-top:6px;">Tocá para seleccionar o deseleccionar especialidades</p>
         </div>
       </div>
       <div class="form-group">
@@ -643,7 +646,7 @@
 </div>
 
 <div class="page" id="page-how">
-  <div class="container" style="padding-top:60px;padding-bottom:80px;text-align:center;">
+  <div class="container" style="padding-top:88px;padding-bottom:80px;text-align:center;">
     <div class="hero-eyebrow" style="display:inline-flex;margin-bottom:20px;"><i class="fa fa-circle-question"></i>¿Cómo funciona?</div>
     <h2 style="margin-bottom:12px;">Simple, rápido y confiable</h2>
     <p style="color:var(--gray);max-width:520px;margin:0 auto 60px;">En 3 pasos encontrás el profesional ideal para resolver tu problema.</p>

@@ -109,7 +109,8 @@ function notifItemHTML(n) {
   const { icon, color } = iconMap[n.type] || { icon: 'fa-bell', color: 'var(--gray)' };
   const date = n.created_at ? formatDateTime(n.created_at) : '';
 
-  return `<div class="notif-item${isUnread ? ' unread' : ''}" style="display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);${isUnread ? 'background:rgba(79,70,229,0.06);' : ''}">
+  const destination = notifDestination(n);
+  return `<div class="notif-item${isUnread ? ' unread' : ''}" onclick="window.handleNotifClick('${n.id}','${destination}')" style="cursor:pointer;display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);${isUnread ? 'background:rgba(79,70,229,0.06);' : ''}">
     <div style="width:34px;height:34px;border-radius:50%;background:rgba(79,70,229,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
       <i class="fa ${icon}" style="font-size:0.85rem;color:${color};"></i>
     </div>
@@ -187,6 +188,55 @@ export async function createNotification(userId, type, title, message) {
     p_user_id: userId, p_type: type, p_title: title, p_message: message
   });
   if (error) console.warn('createNotification:', error.message);
+}
+
+
+// ─── NAVEGACIÓN DESDE NOTIFICACIÓN ───────────────────────────────────────────
+
+function notifDestination(n) {
+  const type = n.type || '';
+  const isPro = window.__store?.activePanel === 'pro' || window.__store?.isPro;
+  if (['job_request','job_accepted','job_rejected','job_started',
+       'job_finished','pendiente_confirmacion','dispute',
+       'no_response_alert','reminder_24h','reminder_1h',
+       'fecha_propuesta_pro'].includes(type)) {
+    return isPro ? 'pro-dashboard' : 'user-dashboard';
+  }
+  if (type === 'new_message') return 'chat';
+  if (type === 'new_review')  return 'pro-dashboard';
+  return 'user-dashboard';
+}
+
+export async function handleNotifClick(notifId, destination) {
+  // Marcar como leída
+  const sb = (await import('./supabase.js')).getSupabase();
+  if (notifId && notifId !== 'undefined') {
+    await sb.from('notifications').update({ read: true }).eq('id', notifId);
+  }
+  // Cerrar panel
+  const panel = document.getElementById('notif-panel');
+  if (panel) panel.classList.remove('open');
+
+  // Navegar
+  const { showPage } = await import('./ui.js');
+  const { store }    = await import('./store.js');
+  window.__store = store;
+
+  if (destination === 'chat') {
+    showPage('chat');
+    const { loadChatPage } = await import('./chat.js');
+    loadChatPage();
+  } else if (destination === 'pro-dashboard') {
+    store.setActivePanel('pro');
+    showPage('pro-dashboard');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else {
+    store.setActivePanel('user');
+    showPage('user-dashboard');
+    const { loadUserDashboard } = await import('./dashboard.js');
+    loadUserDashboard();
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
