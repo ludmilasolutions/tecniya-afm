@@ -292,10 +292,9 @@ export async function adminSaveUser() {
 
   if (!full_name) { showToast('El nombre no puede estar vacío', 'warning'); return; }
 
-  const { error } = await sb.from('profiles')
-    .update({ full_name, role, blocked })
-    .eq('id', uid);
-
+  const { error } = await sb.rpc('admin_update_user', {
+    p_user_id: uid, p_name: full_name, p_role: role, p_blocked: blocked
+  });
   if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
 
   showToast('Usuario actualizado', 'success');
@@ -305,14 +304,14 @@ export async function adminSaveUser() {
 
 export async function adminResetCancelCount(userId) {
   const sb = getSupabase();
-  await sb.from('profiles').update({ cancel_count: 0, warning_count: 0 }).eq('id', userId);
+  await sb.rpc('admin_reset_counters', { p_user_id: userId });
   showToast('Contadores reseteados', 'success');
   adminEditUser(userId);
 }
 
 export async function adminUnblockUntil(userId) {
   const sb = getSupabase();
-  await sb.from('profiles').update({ blocked: false, blocked_until: null }).eq('id', userId);
+  await sb.rpc('admin_set_blocked', { p_user_id: userId, p_blocked: false });
   showToast('Usuario desbloqueado', 'success');
   adminEditUser(userId);
   loadAdminData();
@@ -320,32 +319,43 @@ export async function adminUnblockUntil(userId) {
 
 export async function adminToggleBlock(userId, blocked) {
   const sb = getSupabase();
-  const { error } = await sb.from('profiles').update({ blocked }).eq('id', userId);
-  
-  if (!error) {
-    showToast(blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado', 'success');
-    loadAdminUsers();
+
+  // Verificar sesión
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { showToast('Sin sesión activa', 'error'); return; }
+
+  // Verificar is_admin
+  const { data: isAdm, error: admErr } = await sb.rpc('is_admin');
+  if (admErr || !isAdm) {
+    showToast('Tu sesión no tiene permisos de admin. Cerrá sesión y volvé a entrar.', 'error');
+    return;
   }
+
+  const { error } = await sb.from('profiles').update({ blocked }).eq('id', userId);
+
+  if (error) {
+    showToast('Error: ' + error.message + ' (code: ' + error.code + ')', 'error');
+    return;
+  }
+
+  showToast(blocked ? 'Usuario bloqueado' : 'Usuario desbloqueado', 'success');
+  loadAdminUsers();
 }
 
 export async function adminToggleFeatured(proId, featured) {
   const sb = getSupabase();
-  const { error } = await sb.from('professionals').update({ is_featured: featured }).eq('id', proId);
-  
-  if (!error) {
-    showToast(featured ? 'Profesional destacado' : 'Destacado removido', 'success');
-    loadAdminPros();
-  }
+  const { error } = await sb.rpc('admin_set_featured', { p_pro_id: proId, p_featured: featured });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(featured ? 'Profesional destacado' : 'Destacado removido', 'success');
+  loadAdminPros();
 }
 
 export async function adminBlockPro(userId) {
   const sb = getSupabase();
-  const { error } = await sb.from('profiles').update({ blocked: true }).eq('id', userId);
-  
-  if (!error) {
-    showToast('Profesional bloqueado', 'success');
-    loadAdminPros();
-  }
+  const { error } = await sb.rpc('admin_set_blocked', { p_user_id: userId, p_blocked: true });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast('Profesional bloqueado', 'success');
+  loadAdminPros();
 }
 
 export async function adminViewPro(proId) {
@@ -479,69 +489,48 @@ export async function adminCancelJob(jobId) {
   if (!confirm('¿Estás seguro de cancelar este trabajo?')) return;
   
   const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({ 
-    status: 'cancelado',
-    cancelled_at: new Date().toISOString()
-  }).eq('id', jobId);
-  
-  if (!error) {
-    showToast('Trabajo cancelado', 'success');
-    loadAdminJobs();
-  }
+  const { error } = await sb.rpc('admin_cancel_job', { p_job_id: jobId });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast('Trabajo cancelado', 'success');
+  loadAdminJobs();
 }
 
 export async function adminCancelSubscription(subId) {
   if (!confirm('¿Estás seguro de cancelar esta suscripción?')) return;
   
   const sb = getSupabase();
-  const { error } = await sb.from('subscriptions').update({ 
-    status: 'cancelled',
-    cancelled_at: new Date().toISOString()
-  }).eq('id', subId);
-  
-  if (!error) {
-    const { data: sub } = await sb.from('subscriptions').select('professional_id').eq('id', subId).maybeSingle();
-    if (sub?.professional_id) {
-      await sb.from('professionals').update({ is_featured: false }).eq('user_id', sub.professional_id);
-    }
-    
-    showToast('Suscripción cancelada', 'success');
-    loadAdminSubscriptions();
-  }
+  const { error } = await sb.rpc('admin_cancel_subscription', { p_sub_id: subId });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast('Suscripción cancelada', 'success');
+  loadAdminSubscriptions();
 }
 
 export async function adminToggleAd(adId, active) {
   const sb = getSupabase();
-  const { error } = await sb.from('ads').update({ active }).eq('id', adId);
-  
-  if (!error) {
-    showToast(active ? 'Publicidad activada' : 'Publicidad desactivada', 'success');
-    loadAdminAds();
-  }
+  const { error } = await sb.rpc('admin_toggle_ad', { p_ad_id: adId, p_active: active });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(active ? 'Publicidad activada' : 'Publicidad desactivada', 'success');
+  loadAdminAds();
 }
 
 export async function adminDeleteAd(adId) {
   if (!confirm('¿Estás seguro de eliminar esta publicidad?')) return;
   
   const sb = getSupabase();
-  const { error } = await sb.from('ads').delete().eq('id', adId);
-  
-  if (!error) {
-    showToast('Publicidad eliminada', 'success');
-    loadAdminAds();
-  }
+  const { error } = await sb.rpc('admin_delete_ad', { p_ad_id: adId });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast('Publicidad eliminada', 'success');
+  loadAdminAds();
 }
 
 export async function adminDeleteReview(reviewId) {
   if (!confirm('¿Estás seguro de eliminar esta reseña?')) return;
   
   const sb = getSupabase();
-  const { error } = await sb.from('reviews').delete().eq('id', reviewId);
-  
-  if (!error) {
-    showToast('Reseña eliminada', 'success');
-    loadAdminReviews();
-  }
+  const { error } = await sb.rpc('admin_delete_review', { p_review_id: reviewId });
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast('Reseña eliminada', 'success');
+  loadAdminReviews();
 }
 
 export async function adminViewAuditLog() {
@@ -820,7 +809,10 @@ export async function adminSubmitSuspend() {
   if (!reason) { showToast('Ingresá el motivo', 'warning'); return; }
   const { data: { user } } = await sb.auth.getUser();
   try {
-    await suspendPro({ proId, reason, days, adminId: user.id });
+    const { error: suspErr } = await sb.rpc('admin_suspend_pro', {
+      p_pro_id: proId, p_reason: reason, p_days: days
+    });
+    if (suspErr) throw suspErr;
     showToast(`Profesional suspendido por ${days} días`, 'success');
     document.getElementById('modal-suspend')?.classList.remove('open');
     loadAdminPenalties();
@@ -829,7 +821,8 @@ export async function adminSubmitSuspend() {
 
 export async function adminUnsuspend(proId) {
   if (!confirm('¿Levantar la suspensión?')) return;
-  await unsuspendPro(proId);
+  const sb = getSupabase();
+  await sb.rpc('admin_unsuspend_pro', { p_pro_id: proId });
   showToast('Suspensión levantada', 'success');
   loadAdminPenalties();
 }
@@ -984,7 +977,7 @@ async function loadHighReportPros() {
 
 export async function adminClearSuspicious(userId) {
   const sb = getSupabase();
-  await sb.from('profiles').update({ suspicious_flag: false, suspicious_reason: null }).eq('id', userId);
+  await sb.rpc('admin_clear_suspicious', { p_user_id: userId });
   showToast('Flag de sospechoso eliminado', 'success');
   loadSuspiciousAccounts();
 }
