@@ -133,10 +133,10 @@ export async function sendMessage(conversationId, content, type = 'text', metada
     }).eq('id', conversationId);
 
     // Notificación al otro participante
-    const { data: conv } = await sb.from('conversations')
+    const { data: convMeta } = await sb.from('conversations')
       .select('participant_one,participant_two').eq('id', conversationId).maybeSingle();
-    if (conv) {
-      const recipientId = conv.participant_one === store.currentUser.id ? conv.participant_two : conv.participant_one;
+    if (convMeta) {
+      const recipientId = convMeta.participant_one === store.currentUser.id ? convMeta.participant_two : convMeta.participant_one;
       const senderName = store.currentUser.user_metadata?.full_name || 'Alguien';
       await sb.from('notifications').insert({
         user_id: recipientId,
