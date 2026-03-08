@@ -270,21 +270,28 @@ export async function logout() {
 }
 
 export async function redirectAfterLogin() {
+  const { updateAuthUI } = await import('./ui.js');
+
   if (store.isAdmin) {
     store.setActivePanel('admin');
+    updateAuthUI();
     showPage('admin');
     const { loadAdminData } = await import('./admin.js');
     loadAdminData();
-  } else {
-    // SIEMPRE aterrizar en panel cliente al iniciar sesión.
-    // El pro elige cambiar al panel profesional manualmente desde el menú.
-    // Forzar reset del panel aunque quedara 'pro' de una sesión anterior.
-    store.setActivePanel('user');
-    const { updateAuthUI } = await import('./ui.js');
+
+  } else if (store.isPro) {
+    // Tiene perfil profesional → panel profesional
+    store.setActivePanel('pro');
     updateAuthUI();
-    showPage('user-dashboard');
-    const { loadUserDashboard } = await import('./dashboard.js');
-    loadUserDashboard();
+    showPage('pro-dashboard');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+
+  } else {
+    // Cliente común → inicio
+    store.setActivePanel('user');
+    updateAuthUI();
+    showPage('home');
   }
 }
 

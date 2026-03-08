@@ -539,7 +539,7 @@
       </div>
 
       <div class="chat-messages" id="chat-messages">
-        <div class="chat-empty-conv" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;">
+        <div class="chat-empty-conv">
           <i class="fa fa-comment-dots" style="font-size:2.5rem;color:var(--gray);opacity:0.4;"></i>
           <p style="color:var(--gray);font-size:0.85rem;">Seleccioná una conversación</p>
         </div>
@@ -769,12 +769,12 @@
 
       <!-- Selector visual de rol -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;" id="role-selector">
-        <div class="role-card active" id="role-card-user" onclick="window.selectRegisterRole('user')" style="border:2px solid var(--accent);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;">
+        <div class="role-card active" id="role-card-user" onclick="window.selectRegisterRole('user')">
           <div style="font-size:1.8rem;margin-bottom:6px;">🔍</div>
           <div style="font-weight:600;font-size:0.9rem;">Busco servicios</div>
           <div style="font-size:0.75rem;color:var(--gray);margin-top:3px;">Soy cliente</div>
         </div>
-        <div class="role-card" id="role-card-professional" onclick="window.selectRegisterRole('professional')" style="border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;">
+        <div class="role-card" id="role-card-professional" onclick="window.selectRegisterRole('professional')">
           <div style="font-size:1.8rem;margin-bottom:6px;">🔧</div>
           <div style="font-weight:600;font-size:0.9rem;">Ofrezco servicios</div>
           <div style="font-size:0.75rem;color:var(--gray);margin-top:3px;">Soy profesional</div>
@@ -990,8 +990,8 @@
         <label class="form-label"><i class="fa fa-calendar" style="color:var(--accent);margin-right:6px;"></i>Fechas disponibles <span style="font-size:0.78rem;color:var(--gray);font-weight:400;">(proponé hasta 3 opciones)</span></label>
         <div style="display:grid;gap:8px;" id="date-slots">
           <div style="display:flex;gap:8px;align-items:center;">
-            <input type="datetime-local" class="form-input slot-date" id="job-req-date-1" style="flex:1;">
-            <select class="form-select slot-period" id="job-req-period-1" style="width:130px;">
+            <input type="datetime-local" class="form-input slot-date">
+            <select class="form-select slot-period">
               <option value="mañana">Mañana</option>
               <option value="tarde">Tarde</option>
               <option value="noche">Noche</option>
@@ -999,8 +999,8 @@
             </select>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <input type="datetime-local" class="form-input slot-date" id="job-req-date-2" style="flex:1;">
-            <select class="form-select slot-period" id="job-req-period-2" style="width:130px;">
+            <input type="datetime-local" class="form-input slot-date">
+            <select class="form-select slot-period">
               <option value="mañana">Mañana</option>
               <option value="tarde">Tarde</option>
               <option value="noche">Noche</option>
@@ -1008,8 +1008,8 @@
             </select>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <input type="datetime-local" class="form-input slot-date" id="job-req-date-3" style="flex:1;">
-            <select class="form-select slot-period" id="job-req-period-3" style="width:130px;">
+            <input type="datetime-local" class="form-input slot-date">
+            <select class="form-select slot-period">
               <option value="mañana">Mañana</option>
               <option value="tarde">Tarde</option>
               <option value="noche">Noche</option>

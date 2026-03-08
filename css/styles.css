@@ -2154,6 +2154,78 @@ p {
   color: #f87171;
 }
 
+
+/* ===== FOOTER ===== (columnas y brand) */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+}
+.footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== ADMIN TABS ===== */
+.admin-tab {
+  display: none;
+}
+.admin-tab.active {
+  display: block;
+}
+
+/* ===== CHAT EMPTY CONV ===== */
+.chat-empty-conv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--gray);
+}
+.chat-empty-conv i {
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+.chat-empty-conv p {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ===== ROLE CARD (registro) ===== */
+.role-card {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+}
+.role-card:hover {
+  border-color: var(--gray);
+}
+.role-card.active {
+  border-color: var(--accent);
+  background: rgba(6,182,212,0.06);
+}
+
+/* ===== SLOT FECHA/TURNO (modal solicitud) ===== */
+.slot-date {
+  flex: 1;
+  min-width: 0;
+}
+.slot-period {
+  width: 130px;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .slot-date,
+  .slot-period {
+    width: 100%;
+  }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .admin-sidebar { width: 200px; }
