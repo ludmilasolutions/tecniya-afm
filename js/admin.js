@@ -1116,38 +1116,41 @@ export async function adminSaveAd() {
 
   try {
     const { data: { user } } = await sb.auth.getUser();
-    const payload = {
-      title,
-      description: desc || null,
-      link: link || null,
-      level,
-      province: province || null,
-      city: city || null,
-      active,
-      image_url: image_url || null,
-      image_zoom: imageTransform.zoom || 1,
-      image_posX: imageTransform.posX || 0,
-      image_posY: imageTransform.posY || 0,
-      created_by: user.id,
-    };
-
+    
     let error;
     if (id) {
-      const res = await sb.rpc('admin_update_ad', {
-        p_id: id, p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null, p_image_zoom: imageTransform.zoom||1, 
-        p_image_posX: imageTransform.posX||0, p_image_posY: imageTransform.posY||0
-      });
-      error = res.error;
+      // Actualizar directamente
+      const { error: updateError } = await sb.from('ads').update({
+        title: title,
+        description: desc || null,
+        link: link || null,
+        level: level,
+        province: province || null,
+        city: city || null,
+        active: active,
+        image_url: image_url || null,
+        image_zoom: imageTransform.zoom || 1,
+        image_posX: imageTransform.posX || 0,
+        image_posY: imageTransform.posY || 0
+      }).eq('id', id);
+      error = updateError;
     } else {
-      const res = await sb.rpc('admin_create_ad', {
-        p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null, p_image_zoom: imageTransform.zoom||1,
-        p_image_posX: imageTransform.posX||0, p_image_posY: imageTransform.posY||0
+      // Insertar directamente
+      const { error: insertError } = await sb.from('ads').insert({
+        title: title,
+        description: desc || null,
+        link: link || null,
+        level: level,
+        province: province || null,
+        city: city || null,
+        active: active,
+        image_url: image_url || null,
+        image_zoom: imageTransform.zoom || 1,
+        image_posX: imageTransform.posX || 0,
+        image_posY: imageTransform.posY || 0,
+        created_by: user.id
       });
-      error = res.error;
+      error = insertError;
     }
 
     if (error) {
