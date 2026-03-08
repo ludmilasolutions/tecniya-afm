@@ -275,11 +275,9 @@ export async function redirectAfterLogin() {
     showPage('admin');
     const { loadAdminData } = await import('./admin.js');
     loadAdminData();
-  } else if (store.activePanel === 'pro' && store.isPro) {
-    showPage('pro-dashboard');
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
   } else {
+    // Siempre aterrizar en el panel cliente.
+    // El panel pro solo se activa cuando el usuario lo elige desde el menú.
     store.setActivePanel('user');
     showPage('user-dashboard');
     const { loadUserDashboard } = await import('./dashboard.js');
