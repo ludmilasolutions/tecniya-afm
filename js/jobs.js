@@ -205,28 +205,28 @@ export function jobItem(j, viewAs) {
         ${j.proposed_dates?.length ? `<span style="font-size:0.75rem;color:var(--accent);"><i class="fa fa-calendar"></i> ${j.proposed_dates.length} fecha${j.proposed_dates.length>1?'s':''}</span>` : ''}
         <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
         <button class="btn btn-ghost btn-sm" onclick="window.rejectJob('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>
+        ${j.user_id ? `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>
         ${photoBtn}`;
     } else if (j.status === 'aceptado') {
       actions = `
         <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+        ${j.user_id ? `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'en_proceso') {
       actions = `
         <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Marcar terminado</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+        ${j.user_id ? `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `<span style="font-size:0.82rem;color:var(--gray);">Esperando que el cliente confirme...</span>`;
     }
   } else if (viewAs === 'user') {
     if (['solicitado','aceptado','en_proceso'].includes(j.status)) {
       actions = `
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id||''}')"><i class="fa fa-comments"></i>Chat</button>
         <button class="btn btn-ghost btn-sm" onclick="window.cancelJob('${j.id}')"><i class="fa fa-times"></i>Cancelar</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `
         <button class="btn btn-success btn-sm" onclick="window.openConfirmFinish('${j.id}')"><i class="fa fa-check-double"></i>Confirmar cierre</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id||''}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'finalizado') {
       const ratingBtn = j.client_confirmed
         ? `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`

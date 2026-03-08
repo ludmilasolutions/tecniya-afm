@@ -176,12 +176,19 @@ export async function sendBudgetMessage(conversationId, budget) {
 
 export async function createConversation(participantId, jobId = null) {
   if (!store.currentUser || !participantId) return null;
+  if (!UUID_RE.test(participantId)) {
+    console.error('createConversation: participantId inválido:', participantId);
+    return null;
+  }
   const sb = getSupabase();
   try {
-    const { data: existing } = await sb
-      .from('conversations').select('*')
-      .or(`and(participant_one.eq.${store.currentUser.id},participant_two.eq.${participantId}),and(participant_one.eq.${participantId},participant_two.eq.${store.currentUser.id})`)
-      .maybeSingle();
+    // Buscar conversación existente con dos queries separadas para evitar el .or() con UUID null
+    const { data: conv1 } = await sb.from('conversations').select('*')
+      .eq('participant_one', store.currentUser.id).eq('participant_two', participantId).maybeSingle();
+    const { data: conv2 } = !conv1 ? await sb.from('conversations').select('*')
+      .eq('participant_one', participantId).eq('participant_two', store.currentUser.id).maybeSingle()
+      : { data: null };
+    const existing = conv1 || conv2;
 
     if (existing) return { conversation: existing, exists: true };
 
@@ -534,10 +541,18 @@ export async function loadChatPage() {
 
 // ─── OPEN CHAT WITH USER ──────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function openChatWith(userId) {
   if (!store.currentUser) {
     const { showModal } = await import('./ui.js');
     showModal('modal-login');
+    return;
+  }
+  // Validar UUID antes de enviar a Supabase
+  if (!userId || userId === 'null' || userId === 'undefined' || !UUID_RE.test(userId)) {
+    showToast('No se puede abrir el chat: usuario no encontrado.', 'error');
+    console.warn('openChatWith: userId inválido:', userId);
     return;
   }
   if (userId === store.currentUser.id) {
@@ -548,6 +563,8 @@ export async function openChatWith(userId) {
   const result = await createConversation(userId);
   if (result?.conversation) {
     await openConversation(result.conversation.id);
+  } else {
+    showToast('No se pudo iniciar la conversación. Intentá de nuevo.', 'error');
   }
 }
 
