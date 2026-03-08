@@ -77,6 +77,8 @@ export function showAd(level) {
   // DEBUG: Forzar visibilidad
   const adSection = document.querySelector('.ad-section');
   const adContent = document.querySelector('.ad-content');
+  
+  alert('DEBUG: showAd ejecutado! Banner debe verse ARRIBA DE TODO con fondo ROJO');
   console.log('[DEBUG] ad-section:', !!adSection, adSection);
   console.log('[DEBUG] ad-content:', !!adContent, adContent);
   
