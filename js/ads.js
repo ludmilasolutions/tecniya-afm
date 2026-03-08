@@ -68,21 +68,29 @@ function renderAdBanner(ad) {
       }
     };
     
-    const container = document.querySelector('.container');
-    if (container) {
-      container.insertBefore(banner, container.firstChild);
+    // Insertar antes del search-section
+    const searchSection = document.getElementById('search-section');
+    if (searchSection && searchSection.parentElement) {
+      searchSection.parentElement.insertBefore(banner, searchSection);
     } else {
-      document.body.insertBefore(banner, document.body.firstChild);
+      // Fallback: insertar en el container
+      const container = document.querySelector('.container');
+      if (container) {
+        container.insertBefore(banner, container.firstChild);
+      }
     }
   }
 
   const levelLabel = ad.level === 'nacional' ? 'NACIONAL' : ad.level === 'provincial' ? 'PROVINCIAL' : 'LOCAL';
   const levelColor = ad.level === 'nacional' ? '#8b5cf6' : ad.level === 'provincial' ? '#06b6d4' : '#10b981';
   
+  // Mostrar imagen si existe, si no el ícono
+  const imageHtml = ad.image_url 
+    ? `<img src="${ad.image_url}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;flex-shrink:0;" alt="${ad.title}">`
+    : `<div style="width:50px;height:50px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;"><i class="fa fa-bullhorn"></i></div>`;
+  
   banner.innerHTML = `
-    <div style="flex-shrink: 0; width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #06b6d4); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
-      <i class="fa fa-bullhorn"></i>
-    </div>
+    ${imageHtml}
     <div style="flex: 1; min-width: 0;">
       <div style="font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 2px;">${ad.title || 'Publicidad'}</div>
       <div style="font-size: 0.85rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>

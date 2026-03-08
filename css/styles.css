@@ -2887,3 +2887,28 @@ p {
     transform: translateY(100%);
   }
 }
+
+/* ===== ADMIN ADS TABLE ===== */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray);
+  display: inline-block;
+}
+.status-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+#modal-ad-form .form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+#modal-ad-form input[type="checkbox"]:checked + span {
+  background-color: var(--accent);
+}
+#modal-ad-form input[type="checkbox"]:checked + span:before {
+  transform: translateX(22px);
+}

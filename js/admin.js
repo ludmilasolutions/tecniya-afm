@@ -193,17 +193,33 @@ async function loadAdminAds() {
   if (!tbody) return;
 
   if (!ads || ads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">No hay publicidades</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray);">No hay publicidades</td></tr>';
     return;
   }
 
   tbody.innerHTML = ads.map(a => `
     <tr>
-      <td>${escapeHtml(a.title || '-')}</td>
-      <td><span class="ad-level-badge ad-level-${a.level}">${a.level}</span></td>
-      <td>${escapeHtml(a.province || a.city || 'Nacional')}</td>
-      <td>${a.link ? `<a href="${a.link}" target="_blank" style="color:var(--accent);">Ver</a>` : '-'}</td>
-      <td>${a.active ? '<span style="color:var(--green);">Activa</span>' : '<span style="color:var(--gray);">Inactiva</span>'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,rgba(79,70,229,0.2),rgba(6,182,212,0.2));display:flex;align-items:center;justify-content:center;color:var(--accent);">
+            <i class="fa fa-bullhorn"></i>
+          </div>
+          <div>
+            <div style="font-weight:600;">${escapeHtml(a.title || '-')}</div>
+            <div style="font-size:0.72rem;color:var(--gray);">${escapeHtml(a.description || '').substring(0, 30)}${a.description?.length > 30 ? '...' : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="ad-level-badge ad-level-${a.level || 'nacional'}">${a.level || 'nacional'}</span></td>
+      <td>${escapeHtml(a.province || a.city || '—')}</td>
+      <td>${a.link ? `<a href="${a.link}" target="_blank" style="color:var(--accent);text-decoration:none;"><i class="fa fa-external-link"></i> Ver</a>` : '—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="status-dot ${a.active ? 'active' : ''}"></span>
+          <span style="color:${a.active ? 'var(--green)' : 'var(--gray)'};">${a.active ? 'Activa' : 'Inactiva'}</span>
+        </div>
+      </td>
+      <td style="white-space:nowrap;">${new Date(a.created_at).toLocaleDateString('es-AR')}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-sm" onclick="window.adminEditAd('${a.id}')" title="Editar"><i class="fa fa-pencil"></i></button>
         <button class="btn btn-${a.active ? 'danger' : 'success'} btn-sm" onclick="window.adminToggleAd('${a.id}', ${!a.active})" title="${a.active ? 'Desactivar' : 'Activar'}">
