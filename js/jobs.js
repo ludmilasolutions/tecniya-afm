@@ -102,6 +102,14 @@ export async function submitJobRequest() {
 
   closeModal('modal-request-job');
   showToast('¡Solicitud enviada! El profesional elegirá una fecha.', 'success');
+  // Notificar al profesional
+  if (professionalProfileId) {
+    import('./notifications.js').then(m => m.createNotification(
+      professionalProfileId, 'job_request',
+      'Nueva solicitud de trabajo',
+      `${desc.substring(0, 80)}${desc.length > 80 ? '...' : ''}`
+    ));
+  }
 }
 
 // Preview foto adjunta
@@ -199,14 +207,31 @@ export function jobItem(j, viewAs) {
 
   // Acciones según rol y estado
   let actions = '';
+  // ── Alerta de expiración (solicitado sin respuesta > EXPIRE_HRS horas) ──────
+  const EXPIRE_HRS = 24;
+  let expiryWarning = '';
+  if (j.status === 'solicitado' && j.created_at) {
+    const hoursOld = (Date.now() - new Date(j.created_at).getTime()) / 36e5;
+    if (hoursOld >= EXPIRE_HRS) {
+      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#f59e0b;margin-bottom:6px;padding:6px 10px;background:rgba(245,158,11,0.08);border-radius:8px;width:100%;">
+        <i class="fa fa-clock"></i> Sin respuesta hace más de ${Math.floor(hoursOld)}h — podés cancelar y buscar otro profesional.
+      </div>`;
+    } else if (hoursOld >= EXPIRE_HRS / 2) {
+      const remaining = EXPIRE_HRS - Math.floor(hoursOld);
+      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--gray);margin-bottom:6px;width:100%;">
+        <i class="fa fa-hourglass-half"></i> Esperando respuesta — ${remaining}h restantes antes de poder cancelar sin cargo.
+      </div>`;
+    }
+  }
+
   if (viewAs === 'pro') {
     if (j.status === 'solicitado') {
       actions = `
+        ${expiryWarning}
         ${j.proposed_dates?.length ? `<span style="font-size:0.75rem;color:var(--accent);"><i class="fa fa-calendar"></i> ${j.proposed_dates.length} fecha${j.proposed_dates.length>1?'s':''}</span>` : ''}
+        ${photoBtn}
         <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.rejectJob('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>
-        ${photoBtn}`;
+        <button class="btn btn-ghost btn-sm" onclick="window.openRejectModal('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>`;
     } else if (j.status === 'aceptado') {
       actions = `
         <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
@@ -216,13 +241,18 @@ export function jobItem(j, viewAs) {
         <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Marcar terminado</button>
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
-      actions = `<span style="font-size:0.82rem;color:var(--gray);">Esperando que el cliente confirme...</span>`;
+      actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
     }
   } else if (viewAs === 'user') {
-    if (['solicitado','aceptado','en_proceso'].includes(j.status)) {
+    if (j.status === 'solicitado') {
+      // Puede cancelar mientras espera respuesta — siempre disponible
+      actions = `
+        ${expiryWarning}
+        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','solicitado')"><i class="fa fa-times"></i>Cancelar solicitud</button>`;
+    } else if (['aceptado','en_proceso'].includes(j.status)) {
       actions = `
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.cancelJob('${j.id}')"><i class="fa fa-times"></i>Cancelar</button>`;
+        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','activo')"><i class="fa fa-times"></i>Cancelar</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `
         <button class="btn btn-success btn-sm" onclick="window.openConfirmFinish('${j.id}')"><i class="fa fa-check-double"></i>Confirmar cierre</button>
@@ -234,6 +264,12 @@ export function jobItem(j, viewAs) {
       actions = `
         ${ratingBtn}
         <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Volver a contratar</button>`;
+    } else if (['cancelado','rechazado'].includes(j.status)) {
+      // Mostrar motivo si existe
+      const motivo = j.cancel_reason ? `<span style="font-size:0.78rem;color:var(--gray);font-style:italic;">"${escHtml(j.cancel_reason)}"</span>` : '';
+      actions = `
+        ${motivo}
+        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Buscar otro</button>`;
     }
   }
 
@@ -329,6 +365,15 @@ export async function confirmJobDate(jobId, date, period) {
       const d = new Date(date);
       const fmt = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
       showToast(`Trabajo aceptado para el ${fmt} — ${period}`, 'success');
+      // Notificar al cliente
+      const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
+      if (job?.user_id) {
+        import('./notifications.js').then(m => m.createNotification(
+          job.user_id, 'job_accepted',
+          '¡Tu solicitud fue aceptada!',
+          `El profesional confirmó para el ${fmt} — ${period}`
+        ));
+      }
     } catch { showToast('Trabajo aceptado', 'success'); }
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
@@ -488,11 +533,27 @@ export async function initJobsEventListeners() {
   }
 }
 
-export async function rejectJob(jobId) {
+export async function rejectJob() {
+  const jobId  = store._rejectJobId;
+  const reason = document.getElementById('reject-reason')?.value.trim();
+  if (!jobId) return;
   const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({ status: 'rechazado' }).eq('id', jobId);
+  const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
+  const { error } = await sb.from('jobs').update({
+    status:        'rechazado',
+    cancel_reason: reason || null
+  }).eq('id', jobId);
   if (!error) {
-    showToast('Trabajo rechazado.', 'info');
+    closeModal('modal-reject-job');
+    showToast('Solicitud rechazada.', 'info');
+    if (job?.user_id) {
+      import('./notifications.js').then(m => m.createNotification(
+        job.user_id, 'job_rejected',
+        'Tu solicitud no fue aceptada',
+        reason || 'El profesional no está disponible. Podés buscar otro.'
+      ));
+    }
+    store._rejectJobId = null;
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else showToast('Error: ' + error.message, 'error');
@@ -514,6 +575,13 @@ export async function finishJob(jobId) {
   const { error } = await sb.from('jobs').update({ status: 'pendiente_confirmacion' }).eq('id', jobId);
   if (!error) {
     showToast('Marcaste el trabajo como terminado. Esperando confirmación del cliente.', 'success');
+    const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
+    if (job?.user_id) {
+      import('./notifications.js').then(m => m.createNotification(
+        job.user_id, 'job_finished', 'El profesional terminó el trabajo',
+        'Revisá el trabajo y confirmá el cierre desde tu panel.'
+      ));
+    }
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else showToast('Error: ' + error.message, 'error');
@@ -567,14 +635,54 @@ export async function submitDispute() {
   loadUserDashboard();
 }
 
-export async function cancelJob(jobId) {
+// Abrir modal de cancelación (cliente)
+export function openCancelModal(jobId, context) {
+  store._cancelJobId     = jobId;
+  store._cancelContext   = context; // 'solicitado' | 'activo'
+  const title = document.getElementById('cancel-modal-title');
+  const hint  = document.getElementById('cancel-modal-hint');
+  if (title) title.textContent = context === 'solicitado' ? 'Cancelar solicitud' : 'Cancelar trabajo';
+  if (hint)  hint.textContent  = context === 'solicitado'
+    ? 'El profesional será notificado. Tu solicitud quedará registrada como cancelada.'
+    : 'El profesional será notificado. Esta acción no se puede deshacer.';
+  const el = document.getElementById('cancel-reason');
+  if (el) el.value = '';
+  showModal('modal-cancel-job');
+}
+
+export async function cancelJob() {
+  const jobId  = store._cancelJobId;
+  const reason = document.getElementById('cancel-reason')?.value.trim();
+  if (!jobId) return;
   const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({ status: 'cancelado' }).eq('id', jobId);
+  const { error } = await sb.from('jobs').update({
+    status:        'cancelado',
+    cancel_reason: reason || null
+  }).eq('id', jobId);
   if (!error) {
-    showToast('Trabajo cancelado.', 'info');
+    closeModal('modal-cancel-job');
+    showToast('Solicitud cancelada.', 'info');
+    // Notificar al profesional si ya había uno asignado
+    const { data: job } = await sb.from('jobs').select('professional_id,description').eq('id', jobId).maybeSingle();
+    if (job?.professional_id) {
+      import('./notifications.js').then(m => m.createNotification(
+        job.professional_id, 'job_rejected',
+        'Solicitud cancelada por el cliente',
+        reason || 'El cliente canceló la solicitud.'
+      ));
+    }
+    store._cancelJobId = null;
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
+}
+
+// Abrir modal de rechazo (pro)
+export function openRejectModal(jobId) {
+  store._rejectJobId = jobId;
+  const el = document.getElementById('reject-reason');
+  if (el) el.value = '';
+  showModal('modal-reject-job');
 }
 
 // FEATURE 5 — Volver a contratar desde historial

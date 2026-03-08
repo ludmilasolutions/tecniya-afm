@@ -9,7 +9,8 @@ import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
 import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest,
          addFavorite, openRatingModal, setRating, submitRating,
-         acceptJob, rejectJob, startJob, finishJob, cancelJob,
+         acceptJob, rejectJob, openRejectModal, startJob, finishJob,
+         cancelJob, openCancelModal,
          confirmJobDate, clientConfirmFinish, submitDispute, reHireJob,
          previewJobPhoto,
          initJobsEventListeners } from './jobs.js';
@@ -18,8 +19,8 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
-import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents } from './notifications.js';
-import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat } from './chat.js';
+import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification } from './notifications.js';
+import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat, closeChat } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
 import { deleteWorkPhoto } from './upload.js';
 import { initPWA, installPWA, generateManifest, initPWAEvents } from './pwa.js';
@@ -55,6 +56,8 @@ window.rejectJob        = rejectJob;
 window.startJob         = startJob;
 window.finishJob        = finishJob;
 window.cancelJob        = cancelJob;
+window.openCancelModal  = openCancelModal;
+window.openRejectModal  = openRejectModal;
 window.confirmJobDate   = confirmJobDate;
 window.clientConfirmFinish = clientConfirmFinish;
 window.submitDispute    = submitDispute;
@@ -62,6 +65,19 @@ window.reHireJob        = reHireJob;
 window.previewJobPhoto  = previewJobPhoto;
 window.openChatWith     = openChatWith;
 window.deleteWorkPhoto  = deleteWorkPhoto;
+
+// Helpers modales cancelar/rechazar
+window.syncCancelReason = (val) => {
+  const ta = document.getElementById('cancel-reason');
+  if (ta && val && val !== 'Otro') ta.value = val;
+  else if (ta && val === 'Otro') ta.value = '';
+};
+window.syncRejectReason = (val) => {
+  const ta = document.getElementById('reject-reason');
+  if (ta && val && val !== 'Otro') ta.value = val;
+  else if (ta && val === 'Otro') ta.value = '';
+};
+
 window.openConfirmFinish = (jobId) => {
   store._confirmingJobId = jobId;
   const el = document.getElementById('confirm-finish-comment');

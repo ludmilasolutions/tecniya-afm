@@ -501,10 +501,17 @@
 
 <div class="page" id="page-chat">
   <div class="chat-wrap">
-    <div class="chat-sidebar">
+
+    <!-- SIDEBAR -->
+    <div class="chat-sidebar" id="chat-sidebar">
       <div class="chat-sidebar-header">
-        <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:10px;">Mensajes</h3>
-        <input type="text" class="chat-search" placeholder="Buscar..." id="chat-search-input">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin:0;">Mensajes</h3>
+          <button class="btn btn-ghost btn-sm" id="btn-close-chat" title="Cerrar mensajes" style="padding:6px 10px;">
+            <i class="fa fa-xmark"></i>
+          </button>
+        </div>
+        <input type="text" class="chat-search" placeholder="Buscar conversación..." id="chat-search-input">
       </div>
       <div class="chat-conversations" id="chat-conversations">
         <div class="empty-state" style="padding:40px 20px;text-align:center;">
@@ -513,38 +520,52 @@
         </div>
       </div>
     </div>
-    <div class="chat-main">
-      <div class="chat-header" id="chat-header" style="display:none;">
+
+    <!-- MAIN -->
+    <div class="chat-main" id="chat-main-panel">
+      <div class="chat-header" id="chat-header">
+        <!-- Botón volver (mobile) -->
+        <button class="btn btn-ghost btn-sm" id="btn-chat-back" title="Volver" style="display:none;padding:6px 10px;margin-right:4px;">
+          <i class="fa fa-arrow-left"></i>
+        </button>
         <div class="chat-conv-avatar" id="chat-header-avatar"></div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.95rem;" id="chat-header-name"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="chat-header-name"></div>
           <div style="font-size:0.78rem;color:var(--gray);" id="chat-header-sub"></div>
         </div>
+        <button class="btn btn-ghost btn-sm" id="btn-close-chat-main" title="Cerrar" style="padding:6px 10px;margin-left:auto;">
+          <i class="fa fa-xmark"></i>
+        </button>
       </div>
+
       <div class="chat-messages" id="chat-messages">
-        <div class="empty-state" style="padding:60px 20px;text-align:center;">
-          <i class="fa fa-comment-dots" style="font-size:2rem;margin-bottom:10px;display:block;color:var(--gray);"></i>
-          <p style="color:var(--gray);font-size:0.85rem;">Seleccioná una conversación.</p>
+        <div class="chat-empty-conv" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;">
+          <i class="fa fa-comment-dots" style="font-size:2.5rem;color:var(--gray);opacity:0.4;"></i>
+          <p style="color:var(--gray);font-size:0.85rem;">Seleccioná una conversación</p>
         </div>
       </div>
-      <!-- Formulario de presupuesto inline -->
+
+      <!-- Presupuesto inline -->
       <div id="chat-budget-form" style="display:none;padding:12px 16px;border-top:1px solid var(--border);background:rgba(2,6,23,0.9);gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="text" class="form-input" id="chat-budget-desc" placeholder="Descripción del trabajo" style="flex:2;min-width:160px;padding:8px 12px;">
-        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:100px;">
-          <span style="color:var(--gray);font-size:0.9rem;">$</span>
+        <input type="text" class="form-input" id="chat-budget-desc" placeholder="Descripción" style="flex:2;min-width:140px;padding:8px 12px;">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:90px;">
+          <span style="color:var(--gray);">$</span>
           <input type="number" class="form-input" id="chat-budget-price" placeholder="Precio" style="flex:1;padding:8px 12px;">
         </div>
         <button class="btn btn-orange btn-sm" id="btn-submit-chat-budget"><i class="fa fa-paper-plane"></i>Enviar</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('chat-budget-form').style.display='none'"><i class="fa fa-times"></i></button>
       </div>
-      <!-- Barra de input -->
+
+      <!-- Input -->
       <div class="chat-input-bar" id="chat-input-bar" style="display:none;">
         <button class="btn btn-ghost btn-sm chat-tool-btn" id="btn-chat-image" title="Adjuntar foto"><i class="fa fa-image"></i></button>
-        <button class="btn btn-ghost btn-sm chat-tool-btn" id="btn-chat-budget" title="Compartir presupuesto"><i class="fa fa-file-invoice-dollar"></i></button>
+        <button class="btn btn-ghost btn-sm chat-tool-btn" id="btn-chat-budget" title="Presupuesto"><i class="fa fa-file-invoice-dollar"></i></button>
         <input type="file" id="chat-image-input" accept="image/*" style="display:none;">
         <input type="text" class="chat-input" placeholder="Escribí un mensaje..." id="chat-input-field">
         <button class="btn btn-primary btn-sm" id="btn-send-chat"><i class="fa fa-paper-plane"></i></button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -1186,5 +1207,64 @@
 </div>
 
 <script type="module" src="js/main.js"></script>
+
+<!-- Modal cancelar trabajo (cliente) -->
+<div class="modal-overlay" id="modal-cancel-job">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="cancel-modal-title"><i class="fa fa-times-circle" style="color:#ef4444;margin-right:8px;"></i>Cancelar solicitud</div>
+      <button class="modal-close" data-close="modal-cancel-job"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="cancel-modal-hint" style="color:var(--gray);font-size:0.88rem;margin-bottom:18px;">El profesional será notificado.</p>
+      <div class="form-group">
+        <label class="form-label">Motivo de la cancelación <span style="color:var(--gray);font-weight:400;">(opcional)</span></label>
+        <select class="form-select" id="cancel-reason-select" onchange="window.syncCancelReason(this.value)" style="margin-bottom:8px;">
+          <option value="">— Elegí un motivo —</option>
+          <option value="Conseguí a alguien más">Conseguí a alguien más</option>
+          <option value="El trabajo ya no es necesario">El trabajo ya no es necesario</option>
+          <option value="Cambié de opinión">Cambié de opinión</option>
+          <option value="Tarda demasiado en responder">Tarda demasiado en responder</option>
+          <option value="Otro">Otro (detallá abajo)</option>
+        </select>
+        <textarea class="form-textarea" id="cancel-reason" rows="2" placeholder="Podés agregar un detalle..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-danger btn-block" onclick="window.cancelJob()"><i class="fa fa-times-circle"></i>Confirmar cancelación</button>
+        <button class="btn btn-ghost" style="min-width:100px;" data-close="modal-cancel-job">Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rechazar trabajo (pro) -->
+<div class="modal-overlay" id="modal-reject-job">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-times-circle" style="color:#ef4444;margin-right:8px;"></i>Rechazar solicitud</div>
+      <button class="modal-close" data-close="modal-reject-job"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:18px;">El cliente recibirá una notificación con tu motivo.</p>
+      <div class="form-group">
+        <label class="form-label">Motivo <span style="color:var(--gray);font-weight:400;">(opcional pero recomendado)</span></label>
+        <select class="form-select" id="reject-reason-select" onchange="window.syncRejectReason(this.value)" style="margin-bottom:8px;">
+          <option value="">— Elegí un motivo —</option>
+          <option value="No tengo disponibilidad en esa fecha">No tengo disponibilidad en esa fecha</option>
+          <option value="La zona queda fuera de mi área de trabajo">La zona queda fuera de mi área</option>
+          <option value="El trabajo no es de mi especialidad">No es mi especialidad</option>
+          <option value="Estoy completo de trabajos por ahora">Estoy completo de trabajos</option>
+          <option value="Otro">Otro (detallá abajo)</option>
+        </select>
+        <textarea class="form-textarea" id="reject-reason" rows="2" placeholder="Podés agregar más detalle..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-danger btn-block" onclick="window.rejectJob()"><i class="fa fa-times"></i>Rechazar solicitud</button>
+        <button class="btn btn-ghost" style="min-width:100px;" data-close="modal-reject-job">Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

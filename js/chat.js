@@ -176,12 +176,19 @@ export async function sendBudgetMessage(conversationId, budget) {
 
 export async function createConversation(participantId, jobId = null) {
   if (!store.currentUser || !participantId) return null;
+  if (!UUID_RE.test(participantId)) {
+    console.error('createConversation: participantId inválido:', participantId);
+    return null;
+  }
   const sb = getSupabase();
   try {
-    const { data: existing } = await sb
-      .from('conversations').select('*')
-      .or(`and(participant_one.eq.${store.currentUser.id},participant_two.eq.${participantId}),and(participant_one.eq.${participantId},participant_two.eq.${store.currentUser.id})`)
-      .maybeSingle();
+    // Buscar conversación existente con dos queries separadas para evitar el .or() con UUID null
+    const { data: conv1 } = await sb.from('conversations').select('*')
+      .eq('participant_one', store.currentUser.id).eq('participant_two', participantId).maybeSingle();
+    const { data: conv2 } = !conv1 ? await sb.from('conversations').select('*')
+      .eq('participant_one', participantId).eq('participant_two', store.currentUser.id).maybeSingle()
+      : { data: null };
+    const existing = conv1 || conv2;
 
     if (existing) return { conversation: existing, exists: true };
 
@@ -396,7 +403,18 @@ export async function openConversation(conversationId) {
 
 function updateChatHeader(conv) {
   const header = document.getElementById('chat-header');
-  if (!header || !conv) return;
+  if (!header) return;
+  if (!conv) {
+    // Sin conversación: mostrar header vacío pero visible
+    const avatarEl = document.getElementById('chat-header-avatar');
+    const nameEl   = document.getElementById('chat-header-name');
+    const subEl    = document.getElementById('chat-header-sub');
+    if (avatarEl) { avatarEl.textContent = ''; avatarEl.style.backgroundImage = ''; }
+    if (nameEl)   nameEl.textContent = 'Seleccioná una conversación';
+    if (subEl)    subEl.textContent  = '';
+    header.style.display = '';
+    return;
+  }
   const other    = conv.other_user;
   const name     = other?.full_name || 'Usuario';
   const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -479,38 +497,78 @@ export async function submitChatBudget() {
   if (bar) bar.style.display = 'none';
 }
 
-// ─── INIT EVENTS ─────────────────────────────────────────────────────────────
+// ─── CERRAR CHAT (exportado para usar desde ui.js también) ───────────────────
 
+export function closeChat() {
+  currentConversationId = null;
+  // Limpiar estado mobile
+  document.getElementById('chat-sidebar')?.classList.remove('slide-out');
+  document.getElementById('chat-main-panel')?.classList.remove('slide-in');
+  // Limpiar input
+  const input = document.getElementById('chat-input-field');
+  if (input) input.value = '';
+  // showPage llama cleanupChat() automáticamente vía ui.js
+  showPage(store.previousPage || 'home');
+}
+
+// ─── INIT EVENTS (se llama UNA sola vez al cargar el DOM) ────────────────────
+
+let _chatEventsInit = false;
 export function initChatEvents() {
-  const input   = document.getElementById('chat-input-field');
-  const sendBtn = document.getElementById('btn-send-chat');
-  const imgBtn  = document.getElementById('btn-chat-image');
-  const imgInput = document.getElementById('chat-image-input');
-  const budgetBtn = document.getElementById('btn-chat-budget');
-  const budgetSubmit = document.getElementById('btn-submit-chat-budget');
+  if (_chatEventsInit) return;
+  _chatEventsInit = true;
 
-  input?.addEventListener('keydown', sendChatMsg);
-  sendBtn?.addEventListener('click', sendChatMsgBtn);
-  imgBtn?.addEventListener('click', sendChatImage);
-  budgetBtn?.addEventListener('click', openShareBudget);
-  budgetSubmit?.addEventListener('click', submitChatBudget);
+  // Mensajes
+  on('chat-input-field',      'keydown', sendChatMsg);
+  on('btn-send-chat',         'click',   sendChatMsgBtn);
+  on('btn-chat-image',        'click',   sendChatImage);
+  on('btn-chat-budget',       'click',   openShareBudget);
+  on('btn-submit-chat-budget','click',   submitChatBudget);
 
-  imgInput?.addEventListener('change', async e => {
+  document.getElementById('chat-image-input')?.addEventListener('change', async e => {
     const file = e.target.files[0];
     if (!file || !currentConversationId) return;
     await sendImageMessage(currentConversationId, file);
     e.target.value = '';
   });
 
-  // Búsqueda de conversaciones
-  const search = document.getElementById('chat-search-input');
-  search?.addEventListener('input', e => {
+  // Búsqueda
+  on('chat-search-input', 'input', e => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll('.chat-conv-item').forEach(el => {
       const name = el.querySelector('.chat-conv-name')?.textContent.toLowerCase() || '';
       el.style.display = name.includes(q) ? '' : 'none';
     });
   });
+
+  // Botones de cerrar
+  on('btn-close-chat',      'click', closeChat);
+  on('btn-close-chat-main', 'click', closeChat);
+
+  // Mobile: tap en conversación → deslizar al main
+  document.getElementById('chat-conversations')?.addEventListener('click', e => {
+    if (e.target.closest('.chat-conv-item') && window.innerWidth <= 480) {
+      document.getElementById('chat-sidebar')?.classList.add('slide-out');
+      document.getElementById('chat-main-panel')?.classList.add('slide-in');
+    }
+  });
+
+  // Mobile: botón volver → regresar al sidebar
+  on('btn-chat-back', 'click', () => {
+    document.getElementById('chat-sidebar')?.classList.remove('slide-out');
+    document.getElementById('chat-main-panel')?.classList.remove('slide-in');
+  });
+
+  // Tecla Escape cierra el chat
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('page-chat')?.classList.contains('active')) {
+      closeChat();
+    }
+  });
+}
+
+function on(id, event, handler) {
+  document.getElementById(id)?.addEventListener(event, handler);
 }
 
 // ─── CARGAR PÁGINA DE CHAT ────────────────────────────────────────────────────
@@ -534,10 +592,18 @@ export async function loadChatPage() {
 
 // ─── OPEN CHAT WITH USER ──────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function openChatWith(userId) {
   if (!store.currentUser) {
     const { showModal } = await import('./ui.js');
     showModal('modal-login');
+    return;
+  }
+  // Validar UUID antes de enviar a Supabase
+  if (!userId || userId === 'null' || userId === 'undefined' || !UUID_RE.test(userId)) {
+    showToast('No se puede abrir el chat: usuario no encontrado.', 'error');
+    console.warn('openChatWith: userId inválido:', userId);
     return;
   }
   if (userId === store.currentUser.id) {
@@ -548,6 +614,8 @@ export async function openChatWith(userId) {
   const result = await createConversation(userId);
   if (result?.conversation) {
     await openConversation(result.conversation.id);
+  } else {
+    showToast('No se pudo iniciar la conversación. Intentá de nuevo.', 'error');
   }
 }
 
