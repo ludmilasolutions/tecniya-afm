@@ -41,35 +41,32 @@ export async function loadProfessionals() {
   const sb = getSupabase();
   try {
     if (!sb) throw new Error('no sb');
-    // Usar la vista que hace join con profiles para obtener full_name
-    const { data, error } = await sb.from('v_professionals_public').select('*').limit(50);
-    
-    if (data && data.length > 0) {
-      allProfessionals = data.map(p => ({
-        id: p.id,
-        user_id: p.user_id,
-        name: p.name || p.full_name || 'Profesional',
-        specialty: p.specialty,
-        city: p.city,
-        province: p.province,
-        description: p.description,
-        rating: parseFloat(p.avg_rating) || 0,
-        reviews_count: p.reviews_count || 0,
-        jobs_count: p.jobs_count || 0,
-        is_featured: p.is_featured,
-        is_certified: p.is_certified,
-        is_online: p.is_online,
-        zones: p.zones || [],
-        whatsapp: p.whatsapp
-      }));
-    } else {
-      allProfessionals = [...MOCK_PROS];
-    }
+    const { data, error } = await sb.from('v_professionals_public').select('*').limit(100);
+
+    if (error) console.error('loadProfessionals:', error);
+
+    allProfessionals = (data || []).map(p => ({
+      id:            p.id,
+      user_id:       p.user_id,
+      name:          p.name || p.full_name || 'Profesional',
+      specialty:     p.specialty,
+      city:          p.city,
+      province:      p.province,
+      description:   p.description,
+      rating:        parseFloat(p.avg_rating) || 0,
+      reviews_count: p.reviews_count || 0,
+      jobs_count:    p.jobs_count || 0,
+      is_featured:   p.is_featured,
+      is_certified:  p.is_certified,
+      is_online:     p.is_online,
+      zones:         p.zones || [],
+      whatsapp:      p.whatsapp
+    }));
   } catch (e) {
-    console.log('Loading mock professionals:', e.message);
-    allProfessionals = [...MOCK_PROS];
+    console.error('loadProfessionals error:', e.message);
+    allProfessionals = [];
   }
-  
+
   store.setAllProfessionals(allProfessionals);
   renderAllSections();
 }
@@ -79,22 +76,30 @@ export function rankingScore(p) {
 }
 
 export function renderAllSections() {
-  const sorted = [...allProfessionals].sort((a, b) => rankingScore(b) - rankingScore(a));
-  const featured = sorted.filter(p => p.is_featured);
-  const certified = sorted.filter(p => p.is_certified && !p.is_featured);
-  const topRated = sorted.filter(p => !p.is_featured && !p.is_certified).sort((a, b) => b.rating - a.rating);
-  
-  renderGrid('grid-destacados', featured.slice(0, 4));
-  renderGrid('grid-certificados', certified.slice(0, 4));
-  renderGrid('grid-top', topRated.slice(0, 4));
-  renderGrid('grid-all', sorted);
-  
-  updateCount('count-destacados', featured.length);
-  updateCount('count-certificados', certified.length);
-  updateCount('count-top', topRated.length);
-  updateCount('count-all', sorted.length);
-  
+  const sorted     = [...allProfessionals].sort((a, b) => rankingScore(b) - rankingScore(a));
+  const featured   = sorted.filter(p => p.is_featured);
+  const certified  = sorted.filter(p => p.is_certified && !p.is_featured);
+  const topRated   = sorted.filter(p => !p.is_featured && !p.is_certified).sort((a, b) => b.rating - a.rating);
+
+  // Secciones del home: ocultar si no hay datos
+  toggleSection('section-destacados', featured,  'grid-destacados',  featured.slice(0, 4));
+  toggleSection('section-certificados',certified,'grid-certificados',certified.slice(0, 4));
+  toggleSection('section-top',         topRated, 'grid-top',         topRated.slice(0, 4));
+
+  updateCount('count-destacados',  featured.length);
+  updateCount('count-certificados',certified.length);
+  updateCount('count-top',         topRated.length);
+  updateCount('count-all',         sorted.length);
+
+  // Lista completa (página de búsqueda)
+  renderGrid('grid-all',      sorted);
   renderGrid('grid-all-page', sorted);
+}
+
+function toggleSection(sectionId, items, gridId, slice) {
+  const section = document.getElementById(sectionId);
+  if (section) section.style.display = items.length ? '' : 'none';
+  if (items.length) renderGrid(gridId, slice);
 }
 
 function updateCount(id, count) {
