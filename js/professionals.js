@@ -20,7 +20,7 @@ export async function loadSpecialties() {
   
   store.setAllSpecialties(allSpecialties);
   
-  const selects = ['filter-specialty', 'urgent-specialty', 'pro-edit-specialty'];
+  const selects = ['filter-specialty', 'urgent-specialty', 'pro-edit-specialty', 'job-req-specialty'];
   selects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -28,6 +28,13 @@ export async function loadSpecialties() {
     el.innerHTML = `<option value="">${defaultOpt}</option>`;
     allSpecialties.forEach(s => el.innerHTML += `<option value="${s}">${s}</option>`);
   });
+  // Si se pasa un selector externo (ej. reg-specialty del registro)
+  if (arguments[0] instanceof HTMLElement) {
+    const el = arguments[0];
+    const defaultOpt = el.options[0] ? el.options[0].text : 'Seleccioná tu especialidad';
+    el.innerHTML = `<option value="">${defaultOpt}</option>`;
+    allSpecialties.forEach(s => el.innerHTML += `<option value="${s}">${s}</option>`);
+  }
 }
 
 export async function loadProfessionals() {

@@ -72,6 +72,59 @@ window.sendBudgetWhatsApp=sendBudgetWhatsApp;
 
 window.goBack = () => showPage(store.previousPage || 'home');
 
+// ─── Funciones globales de UI para registro/login ───────────────────────────
+
+window.selectRegisterRole = (role) => {
+  document.getElementById('reg-role').value = role;
+  const cardUser = document.getElementById('role-card-user');
+  const cardPro  = document.getElementById('role-card-professional');
+  if (cardUser)  cardUser.style.border  = role === 'user'         ? '2px solid var(--accent)' : '2px solid var(--border)';
+  if (cardPro)   cardPro.style.border   = role === 'professional' ? '2px solid var(--accent)' : '2px solid var(--border)';
+  const extraFields = document.getElementById('pro-extra-fields');
+  if (extraFields) extraFields.style.display = role === 'professional' ? 'block' : 'none';
+  // Cargar especialidades en el select del registro si no están cargadas
+  if (role === 'professional') {
+    import('./professionals.js').then(m => {
+      const sel = document.getElementById('reg-specialty');
+      if (sel && sel.options.length <= 1) m.loadSpecialties(sel);
+    });
+  }
+};
+
+window.togglePassVisibility = (inputId, btnId) => {
+  const input = document.getElementById(inputId);
+  const btn   = document.getElementById(btnId);
+  if (!input) return;
+  const isPass = input.type === 'password';
+  input.type = isPass ? 'text' : 'password';
+  if (btn) btn.innerHTML = isPass ? '<i class="fa fa-eye-slash"></i>' : '<i class="fa fa-eye"></i>';
+};
+
+window.checkPassStrength = (val) => {
+  const fill  = document.getElementById('pass-strength-fill');
+  const label = document.getElementById('pass-strength-label');
+  if (!fill || !label) return;
+  let strength = 0;
+  if (val.length >= 6)  strength++;
+  if (val.length >= 10) strength++;
+  if (/[A-Z]/.test(val)) strength++;
+  if (/[0-9]/.test(val)) strength++;
+  if (/[^A-Za-z0-9]/.test(val)) strength++;
+  const levels = [
+    { pct: '0%',   color: 'transparent', text: '' },
+    { pct: '25%',  color: '#ef4444',     text: 'Muy débil' },
+    { pct: '50%',  color: '#f97316',     text: 'Débil' },
+    { pct: '75%',  color: '#eab308',     text: 'Media' },
+    { pct: '90%',  color: '#22c55e',     text: 'Fuerte' },
+    { pct: '100%', color: '#16a34a',     text: 'Muy fuerte' },
+  ];
+  const l = levels[Math.min(strength, 5)];
+  fill.style.width = l.pct;
+  fill.style.background = l.color;
+  label.textContent = l.text;
+  label.style.color = l.color;
+};
+
 window.closeMobileMenu = () => {
   document.getElementById('mobile-nav')?.classList.remove('open');
 };

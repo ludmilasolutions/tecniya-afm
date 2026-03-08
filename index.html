@@ -695,11 +695,15 @@
       <div class="form-divider">o con email</div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="login-email" placeholder="tu@email.com">
+        <input type="email" class="form-input" id="login-email" placeholder="tu@email.com" autocomplete="email">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="position:relative;">
         <label class="form-label">Contraseña</label>
-        <input type="password" class="form-input" id="login-pass" placeholder="••••••••">
+        <input type="password" class="form-input" id="login-pass" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px;">
+        <button type="button" id="toggle-login-pass" onclick="window.togglePassVisibility('login-pass','toggle-login-pass')" style="position:absolute;right:12px;top:34px;background:none;border:none;color:var(--gray);cursor:pointer;"><i class="fa fa-eye"></i></button>
+      </div>
+      <div style="text-align:right;margin-top:-8px;margin-bottom:12px;">
+        <a href="#" id="link-forgot-pass" style="font-size:0.8rem;color:var(--accent);">¿Olvidaste tu contraseña?</a>
       </div>
       <div id="login-error" class="form-error hidden"></div>
       <button class="btn btn-primary btn-block" id="btn-login">Ingresar</button>
@@ -708,37 +712,98 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-forgot-pass">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Recuperar contraseña</div>
+      <button class="modal-close" data-close="modal-forgot-pass"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">Ingresá tu email y te enviaremos un link para restablecer tu contraseña.</p>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="forgot-email" placeholder="tu@email.com">
+      </div>
+      <div id="forgot-error" class="form-error hidden"></div>
+      <div id="forgot-success" class="form-success hidden" style="color:var(--green);font-size:0.88rem;margin-bottom:12px;padding:10px;background:rgba(16,185,129,0.1);border-radius:8px;"></div>
+      <button class="btn btn-primary btn-block" id="btn-forgot-pass">Enviar link</button>
+      <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--gray);"><a href="#" id="link-back-to-login" style="color:var(--accent);">← Volver al login</a></p>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-register">
-  <div class="modal">
+  <div class="modal" style="max-width:480px;">
     <div class="modal-header">
       <div class="modal-title">Crear cuenta</div>
       <button class="modal-close" data-close="modal-register"><i class="fa fa-times"></i></button>
     </div>
     <div class="modal-body">
+
+      <!-- Selector visual de rol -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;" id="role-selector">
+        <div class="role-card active" id="role-card-user" onclick="window.selectRegisterRole('user')" style="border:2px solid var(--accent);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;">
+          <div style="font-size:1.8rem;margin-bottom:6px;">🔍</div>
+          <div style="font-weight:600;font-size:0.9rem;">Busco servicios</div>
+          <div style="font-size:0.75rem;color:var(--gray);margin-top:3px;">Soy cliente</div>
+        </div>
+        <div class="role-card" id="role-card-professional" onclick="window.selectRegisterRole('professional')" style="border:2px solid var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;">
+          <div style="font-size:1.8rem;margin-bottom:6px;">🔧</div>
+          <div style="font-weight:600;font-size:0.9rem;">Ofrezco servicios</div>
+          <div style="font-size:0.75rem;color:var(--gray);margin-top:3px;">Soy profesional</div>
+        </div>
+      </div>
+      <input type="hidden" id="reg-role" value="user">
+
       <button class="social-login-btn" id="btn-google-register">
         <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px;" alt="Google">
         Continuar con Google
       </button>
       <div class="form-divider">o con email</div>
+
       <div class="form-group">
         <label class="form-label">Nombre completo</label>
-        <input type="text" class="form-input" id="reg-name" placeholder="Juan García">
+        <input type="text" class="form-input" id="reg-name" placeholder="Juan García" autocomplete="name">
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="reg-email" placeholder="tu@email.com">
+        <input type="email" class="form-input" id="reg-email" placeholder="tu@email.com" autocomplete="email">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="position:relative;">
         <label class="form-label">Contraseña</label>
-        <input type="password" class="form-input" id="reg-pass" placeholder="Mínimo 6 caracteres">
+        <input type="password" class="form-input" id="reg-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:44px;" oninput="window.checkPassStrength(this.value)">
+        <button type="button" onclick="window.togglePassVisibility('reg-pass','toggle-reg-pass')" id="toggle-reg-pass" style="position:absolute;right:12px;top:34px;background:none;border:none;color:var(--gray);cursor:pointer;"><i class="fa fa-eye"></i></button>
+        <div id="pass-strength-bar" style="height:3px;border-radius:2px;margin-top:6px;background:var(--border);transition:all 0.3s;"><div id="pass-strength-fill" style="height:100%;width:0%;border-radius:2px;transition:all 0.3s;"></div></div>
+        <div id="pass-strength-label" style="font-size:0.75rem;color:var(--gray);margin-top:3px;"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Tipo de cuenta</label>
-        <select class="form-select" id="reg-role">
-          <option value="user">Soy usuario (busco servicios)</option>
-          <option value="professional">Soy profesional (ofrezco servicios)</option>
-        </select>
+
+      <!-- Campos extra para profesional (ocultos por defecto) -->
+      <div id="pro-extra-fields" style="display:none;">
+        <div style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.82rem;color:var(--orange);">
+          <i class="fa fa-circle-info" style="margin-right:6px;"></i>Completá tu perfil profesional. Podés editarlo después desde tu panel.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Especialidad principal</label>
+          <select class="form-select" id="reg-specialty">
+            <option value="">Seleccioná tu especialidad</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Ciudad</label>
+            <input type="text" class="form-input" id="reg-city" placeholder="Rosario">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Provincia</label>
+            <input type="text" class="form-input" id="reg-province" placeholder="Santa Fe">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WhatsApp <span style="color:var(--gray);font-weight:400;">(opcional)</span></label>
+          <input type="tel" class="form-input" id="reg-whatsapp" placeholder="+54 9 341 000-0000">
+        </div>
       </div>
+
       <div id="reg-error" class="form-error hidden"></div>
       <button class="btn btn-primary btn-block" id="btn-register">Crear cuenta</button>
       <p style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--gray);">¿Ya tenés cuenta? <a href="#" id="link-to-login" style="color:var(--accent);">Iniciar sesión</a></p>

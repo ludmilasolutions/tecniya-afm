@@ -101,94 +101,104 @@ export async function loginEmail() {
   const pass = document.getElementById('login-pass')?.value;
   const errEl = document.getElementById('login-error');
   
+  if (errEl) errEl.classList.add('hidden');
+
   if (!email || !pass) {
-    if (errEl) {
-      errEl.textContent = 'Completá todos los campos.';
-      errEl.classList.remove('hidden');
-    }
+    showAuthError(errEl, 'Completá todos los campos.');
     return;
   }
   
   const btn = document.getElementById('btn-login');
-  if (btn) {
-    btn.innerHTML = '<div class="loader" style="width:16px;height:16px;border-width:2px;"></div> Ingresando...';
-    btn.disabled = true;
-  }
+  setBtnLoading(btn, 'Ingresando...');
   
   const { error } = await sb.auth.signInWithPassword({ email, password: pass });
   
-  if (btn) {
-    btn.innerHTML = 'Ingresar';
-    btn.disabled = false;
-  }
+  setBtnLoading(btn, null, 'Ingresar');
   
   if (error) {
-    if (errEl) {
-      errEl.textContent = error.message;
-      errEl.classList.remove('hidden');
-    }
+    showAuthError(errEl, translateAuthError(error.message));
   } else {
     closeModal('modal-login');
-    showToast('¡Bienvenido!', 'success');
-    redirectAfterLogin();
+    showToast('¡Bienvenido de nuevo!', 'success');
+    await redirectAfterLogin();
   }
 }
 
 export async function registerEmail() {
   const sb = getSupabase();
-  const name = document.getElementById('reg-name')?.value.trim();
-  const email = document.getElementById('reg-email')?.value.trim();
-  const pass = document.getElementById('reg-pass')?.value;
-  const role = document.getElementById('reg-role')?.value;
-  const errEl = document.getElementById('reg-error');
+  const name     = document.getElementById('reg-name')?.value.trim();
+  const email    = document.getElementById('reg-email')?.value.trim();
+  const pass     = document.getElementById('reg-pass')?.value;
+  const role     = document.getElementById('reg-role')?.value || 'user';
+  const errEl    = document.getElementById('reg-error');
   
+  if (errEl) errEl.classList.add('hidden');
+
   if (!name || !email || !pass) {
-    if (errEl) {
-      errEl.textContent = 'Completá todos los campos.';
-      errEl.classList.remove('hidden');
-    }
+    showAuthError(errEl, 'Completá todos los campos obligatorios.');
     return;
   }
-  
-  const btn = document.getElementById('btn-register');
-  if (btn) {
-    btn.innerHTML = '<div class="loader" style="width:16px;height:16px;border-width:2px;"></div> Creando cuenta...';
-    btn.disabled = true;
+  if (pass.length < 6) {
+    showAuthError(errEl, 'La contraseña debe tener al menos 6 caracteres.');
+    return;
   }
-  
+
+  // Datos extra para profesional
+  const specialty = document.getElementById('reg-specialty')?.value || 'General';
+  const city      = document.getElementById('reg-city')?.value.trim() || '';
+  const province  = document.getElementById('reg-province')?.value.trim() || '';
+  const whatsapp  = document.getElementById('reg-whatsapp')?.value.trim() || '';
+
+  if (role === 'professional' && !specialty) {
+    showAuthError(errEl, 'Seleccioná tu especialidad principal.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-register');
+  setBtnLoading(btn, 'Creando cuenta...');
+
   const { data, error } = await sb.auth.signUp({
     email,
     password: pass,
-    options: {
-      data: { full_name: name, role }
-    }
+    options: { data: { full_name: name, role } }
   });
-  
-  if (btn) {
-    btn.innerHTML = 'Crear cuenta';
-    btn.disabled = false;
-  }
-  
+
+  setBtnLoading(btn, null, 'Crear cuenta');
+
   if (error) {
-    if (errEl) {
-      errEl.textContent = error.message;
-      errEl.classList.remove('hidden');
-    }
+    showAuthError(errEl, translateAuthError(error.message));
     return;
   }
-  
-  if (data.user && role === 'professional') {
-    await sb.from('professionals').insert({
-      user_id: data.user.id,
-      specialty: 'General',
-      city: '',
-      province: '',
-      description: ''
-    });
+
+  // Crear perfil manualmente (por si el trigger falla)
+  if (data.user) {
+    await sb.from('profiles').upsert({
+      id: data.user.id,
+      full_name: name,
+      role,
+    }, { onConflict: 'id', ignoreDuplicates: true });
+
+    if (role === 'professional') {
+      await sb.from('professionals').upsert({
+        user_id: data.user.id,
+        specialty: specialty || 'General',
+        city,
+        province,
+        whatsapp,
+        description: ''
+      }, { onConflict: 'user_id', ignoreDuplicates: true });
+    }
   }
-  
+
   closeModal('modal-register');
-  showToast('¡Cuenta creada! Revisá tu email para verificar.', 'success');
+
+  // Si el email necesita confirmación
+  if (data.user && !data.session) {
+    showToast('¡Cuenta creada! Revisá tu email para verificar.', 'success');
+  } else {
+    showToast('¡Bienvenido/a a TECNIYA!', 'success');
+    await redirectAfterLogin();
+  }
 }
 
 export async function loginGoogle() {
@@ -231,6 +241,71 @@ export async function redirectAfterLogin() {
   }
 }
 
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+
+function showAuthError(el, msg) {
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function setBtnLoading(btn, loadingText, resetText) {
+  if (!btn) return;
+  if (loadingText) {
+    btn.innerHTML = \`<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle;"></span>\${loadingText}\`;
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = resetText || btn.dataset.originalText || 'Confirmar';
+    btn.disabled = false;
+  }
+}
+
+function translateAuthError(msg) {
+  const map = {
+    'Invalid login credentials':         'Email o contraseña incorrectos.',
+    'Email not confirmed':                'Confirmá tu email antes de ingresar.',
+    'User already registered':            'Ya existe una cuenta con ese email.',
+    'Password should be at least 6':      'La contraseña debe tener al menos 6 caracteres.',
+    'Unable to validate email address':   'El formato del email no es válido.',
+    'Email rate limit exceeded':          'Demasiados intentos. Esperá unos minutos.',
+    'For security purposes':              'Por seguridad, esperá antes de intentar de nuevo.',
+    'signup is disabled':                 'El registro está temporalmente deshabilitado.',
+  };
+  for (const [key, val] of Object.entries(map)) {
+    if (msg.includes(key)) return val;
+  }
+  return msg;
+}
+
+export async function forgotPassword() {
+  const sb = getSupabase();
+  const email = document.getElementById('forgot-email')?.value.trim();
+  const errEl = document.getElementById('forgot-error');
+  const sucEl = document.getElementById('forgot-success');
+  if (errEl) errEl.classList.add('hidden');
+  if (sucEl) sucEl.classList.add('hidden');
+
+  if (!email) { showAuthError(errEl, 'Ingresá tu email.'); return; }
+
+  const btn = document.getElementById('btn-forgot-pass');
+  setBtnLoading(btn, 'Enviando...');
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/?reset=true'
+  });
+
+  setBtnLoading(btn, null, 'Enviar link');
+
+  if (error) {
+    showAuthError(errEl, translateAuthError(error.message));
+  } else {
+    if (sucEl) {
+      sucEl.textContent = '✓ Te enviamos un email con el link para restablecer tu contraseña.';
+      sucEl.classList.remove('hidden');
+    }
+  }
+}
+
 export function initAuthEventListeners() {
   const loginEmailBtn = document.getElementById('btn-login');
   if (loginEmailBtn) loginEmailBtn.addEventListener('click', loginEmail);
@@ -240,9 +315,11 @@ export function initAuthEventListeners() {
   
   const loginPassInput = document.getElementById('login-pass');
   if (loginPassInput) {
-    loginPassInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') loginEmail();
-    });
+    loginPassInput.addEventListener('keypress', e => { if (e.key === 'Enter') loginEmail(); });
+  }
+  const loginEmailInput = document.getElementById('login-email');
+  if (loginEmailInput) {
+    loginEmailInput.addEventListener('keypress', e => { if (e.key === 'Enter') loginEmail(); });
   }
 
   const googleLoginBtn = document.getElementById('btn-google-login');
@@ -262,4 +339,13 @@ export function initAuthEventListeners() {
 
   const mobileLoginLink = document.getElementById('mobile-login-link');
   if (mobileLoginLink) mobileLoginLink.addEventListener('click', e => { e.preventDefault(); showModal('modal-login'); });
+
+  // Olvidé mi contraseña
+  document.getElementById('link-forgot-pass')?.addEventListener('click', e => {
+    e.preventDefault(); closeModal('modal-login'); showModal('modal-forgot-pass');
+  });
+  document.getElementById('btn-forgot-pass')?.addEventListener('click', forgotPassword);
+  document.getElementById('link-back-to-login')?.addEventListener('click', e => {
+    e.preventDefault(); closeModal('modal-forgot-pass'); showModal('modal-login');
+  });
 }
