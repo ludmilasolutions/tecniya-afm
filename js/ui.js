@@ -62,9 +62,7 @@ export function closeMobileMenu() {
 
 export function toggleUserMenu() {
   const dropdown = document.getElementById('user-dropdown');
-  if (dropdown) {
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-  }
+  if (dropdown) dropdown.classList.toggle('open');
 }
 
 export function hideUserMenu() {
@@ -128,9 +126,9 @@ export function initUIEvents() {
   document.addEventListener('click', e => {
     const userDropdown = document.getElementById('user-dropdown');
     const userAvatarBtn = document.getElementById('user-avatar-btn');
-    if (userDropdown && userDropdown.style.display === 'block') {
+    if (userDropdown && userDropdown.classList.contains('open')) {
       if (!userDropdown.contains(e.target) && !userAvatarBtn?.contains(e.target)) {
-        userDropdown.style.display = 'none';
+        userDropdown.classList.remove('open');
       }
     }
   });
@@ -204,25 +202,24 @@ export function updateAuthUI() {
     const menuUserName = document.getElementById('menu-user-name');
     if (menuUserName) menuUserName.textContent = name.split(' ')[0];
 
-    // Label del panel activo
+    // Label "Mi Panel" — siempre igual, el switch indica a dónde va
     const menuDashLabel = document.getElementById('menu-dashboard-label');
-    if (menuDashLabel) {
-      menuDashLabel.textContent = store.activePanel === 'pro' ? 'Mi Panel Profesional' : 'Mi Panel Cliente';
-    }
+    if (menuDashLabel) menuDashLabel.textContent = 'Mi Panel';
 
     // Switch de panel si tiene perfil pro
-    const switchProBtn = document.getElementById('menu-switch-pro');
+    const switchProBtn  = document.getElementById('menu-switch-pro');
     const activateProBtn = document.getElementById('menu-activate-pro');
     if (switchProBtn && activateProBtn) {
       if (store.isPro) {
-        switchProBtn.style.display = 'block';
+        switchProBtn.style.display = 'flex';
         const switchLabel = document.getElementById('menu-switch-pro-label');
         if (switchLabel) {
-          switchLabel.textContent = store.activePanel === 'pro' ? 'Panel Cliente' : 'Panel Profesional';
+          // Muestra el panel al que VA a cambiar (no el actual)
+          switchLabel.textContent = store.activePanel === 'pro' ? 'Ir al Panel Cliente' : 'Ir al Panel Profesional';
         }
         activateProBtn.style.display = 'none';
       } else if (!store.isAdmin) {
-        activateProBtn.style.display = 'block';
+        activateProBtn.style.display = 'flex';
         switchProBtn.style.display = 'none';
       }
     }

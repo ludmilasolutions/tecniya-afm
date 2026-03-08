@@ -62,14 +62,14 @@
       </div>
       <div id="nav-user-menu" style="display:none;align-items:center;gap:10px;">
         <div class="user-avatar" id="user-avatar-btn">U</div>
-        <div id="user-dropdown" style="display:none;position:absolute;top:68px;right:24px;background:rgba(2,6,23,0.95);border:1px solid var(--border);border-radius:var(--radius-sm);min-width:200px;z-index:1000;overflow:hidden;">
-          <div style="padding:10px 18px;font-size:0.8rem;color:var(--gray);border-bottom:1px solid var(--border);" id="menu-user-name"></div>
-          <a href="#" id="menu-dashboard" style="display:block;padding:12px 18px;font-size:0.88rem;color:var(--light);border-bottom:1px solid var(--border);"><i class="fa fa-gauge" style="width:18px;margin-right:8px;"></i><span id="menu-dashboard-label">Mi Panel Cliente</span></a>
-          <a href="#" id="menu-switch-pro" style="display:none;padding:12px 18px;font-size:0.88rem;color:var(--orange);border-bottom:1px solid var(--border);"><i class="fa fa-wrench" style="width:18px;margin-right:8px;"></i><span id="menu-switch-pro-label">Panel Profesional</span></a>
-          <a href="#" id="menu-activate-pro" style="display:none;padding:12px 18px;font-size:0.88rem;color:var(--orange);border-bottom:1px solid var(--border);"><i class="fa fa-plus-circle" style="width:18px;margin-right:8px;"></i>Activar perfil pro</a>
-          <a href="#" id="menu-profile" style="display:block;padding:12px 18px;font-size:0.88rem;color:var(--light);border-bottom:1px solid var(--border);"><i class="fa fa-user" style="width:18px;margin-right:8px;"></i>Mi Perfil</a>
-          <a href="#" id="menu-chat" style="display:block;padding:12px 18px;font-size:0.88rem;color:var(--light);border-bottom:1px solid var(--border);"><i class="fa fa-comments" style="width:18px;margin-right:8px;"></i>Mensajes</a>
-          <a href="#" id="menu-logout" style="display:block;padding:12px 18px;font-size:0.88rem;color:#f87171;"><i class="fa fa-sign-out" style="width:18px;margin-right:8px;"></i>Salir</a>
+        <div id="user-dropdown" class="user-dropdown">
+          <div class="user-dropdown-name" id="menu-user-name"></div>
+          <a href="#" id="menu-dashboard" class="user-menu-item"><i class="fa fa-gauge"></i><span id="menu-dashboard-label">Mi Panel Cliente</span></a>
+          <a href="#" id="menu-switch-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-right-left"></i><span id="menu-switch-pro-label">Panel Profesional</span></a>
+          <a href="#" id="menu-activate-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-plus-circle"></i>Unirme como profesional</a>
+          <a href="#" id="menu-profile" class="user-menu-item"><i class="fa fa-user"></i>Mi Perfil</a>
+          <a href="#" id="menu-chat" class="user-menu-item"><i class="fa fa-comments"></i>Mensajes</a>
+          <a href="#" id="menu-logout" class="user-menu-item user-menu-item--danger"><i class="fa fa-right-from-bracket"></i>Salir</a>
         </div>
       </div>
       <button class="hamburger" id="hamburger-btn"><i class="fa fa-bars"></i></button>
