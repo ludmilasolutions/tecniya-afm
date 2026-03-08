@@ -19,7 +19,7 @@ export function openJobRequest(proId, proName, proUserId) {
   store.setCurrentProIdForAction({ proId, userProfileId: resolvedUserId || proId });
   const proNameEl = document.getElementById('job-req-pro-name');
   if (proNameEl) proNameEl.textContent = proName;
-  updateMultiProBadge();
+  // No mostrar barra — openJobRequest es solicitud directa a 1 pro
   showModal('modal-request-job');
 }
 
@@ -48,8 +48,9 @@ export function updateMultiProBadge() {
   const n = store.selectedPros.length;
   const bar = document.getElementById('multi-request-bar');
   if (!bar) return;
-  if (n === 0) { bar.style.display = 'none'; return; }
-  bar.style.display = 'flex';
+  // La barra solo aparece cuando hay 2 o más pros seleccionados con el botón +
+  if (n < 2) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex'; bar.style.alignItems = 'center';
   const names = store.selectedPros.map(p => p.name).join(', ');
   const label = document.getElementById('multi-req-label');
   const btn   = document.getElementById('multi-req-send-btn');
