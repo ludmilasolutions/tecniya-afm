@@ -41,7 +41,7 @@ async function loadAdminUsers() {
   
   const { data: users } = await sb
     .from('profiles')
-    .select('id,full_name,email,role,created_at')
+    .select('id,full_name,role,created_at')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -57,7 +57,6 @@ async function loadAdminUsers() {
     <tr>
       <td style="font-size:0.78rem;color:var(--gray2);">${u.id.slice(0, 8)}...</td>
       <td>${escapeHtml(u.full_name || '-')}</td>
-      <td>${escapeHtml(u.email || '-')}</td>
       <td><span class="badge badge-${u.role === 'admin' ? 'destacado' : u.role === 'professional' ? 'certificado' : 'disponible'}">${u.role || 'user'}</span></td>
       <td>${u.created_at ? formatDate(u.created_at) : '-'}</td>
       <td>
@@ -75,7 +74,7 @@ async function loadAdminPros() {
   
   const { data: pros } = await sb
     .from('professionals')
-    .select('id,user_id,specialty,avg_rating,is_featured,created_at,profiles:user_id(full_name,email)')
+    .select('id,user_id,specialty,avg_rating,is_featured,created_at,profiles:user_id(full_name)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -149,7 +148,7 @@ async function loadAdminSubscriptions() {
   
   const { data: subs } = await sb
     .from('subscriptions')
-    .select('*, profiles:user_id(full_name), professionals:professional_id(specialty)')
+    .select('id,professional_id,user_id,type,status,starts_at,ends_at,cancelled_at,created_at,professionals:professional_id(specialty)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -214,7 +213,7 @@ async function loadAdminReviews() {
   
   const { data: reviews } = await sb
     .from('reviews')
-    .select('*, profiles:user_id(full_name), professionals:professional_id(specialty)')
+    .select('id,user_id,professional_id,rating,comment,is_public,created_at,professionals:professional_id(specialty)')
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -698,7 +697,7 @@ async function loadSuspiciousAccounts() {
   const sb = getSupabase();
   const { data, error } = await sb
     .from('profiles')
-    .select('id,full_name,email,created_at')
+    .select('id,full_name,created_at')
     .eq('suspicious_flag', true)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -717,7 +716,6 @@ async function loadSuspiciousAccounts() {
   tbody.innerHTML = data.map(u => `
     <tr>
       <td>${escapeHtml(u.full_name || '—')}</td>
-      <td style="font-size:0.78rem;">${escapeHtml(u.email || '—')}</td>
       <td style="font-size:0.78rem;color:var(--orange);">${escapeHtml(u.suspicious_reason || '—')}</td>
       <td style="font-size:0.76rem;color:var(--gray);">${new Date(u.created_at).toLocaleDateString('es-AR')}</td>
       <td>
@@ -731,7 +729,7 @@ async function loadHighCancelUsers() {
   const sb = getSupabase();
   const { data, error: e2 } = await sb
     .from('profiles')
-    .select('id,full_name,email')
+    .select('id,full_name')
     .gt('cancel_count', 2)
     .order('cancel_count', { ascending: false })
     .limit(50);
@@ -745,7 +743,6 @@ async function loadHighCancelUsers() {
   tbody.innerHTML = data.map(u => `
     <tr>
       <td>${escapeHtml(u.full_name || '—')}</td>
-      <td style="font-size:0.78rem;">${escapeHtml(u.email || '—')}</td>
       <td><span style="font-weight:700;color:#f87171;">${u.cancel_count}</span></td>
       <td><span class="badge badge-${u.blocked ? 'destacado' : 'disponible'}">${u.blocked ? 'Bloqueado' : 'Activo'}</span></td>
       <td>
