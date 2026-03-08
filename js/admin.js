@@ -1043,11 +1043,12 @@ export async function adminEditAd(adId) {
   document.getElementById('ad-form-image').value     = a.image_url  || '';
   
   // Cargar transformación de imagen guardada
-  const savedTransform = {
-    zoom: a.image_zoom || 1,
-    posX: a.image_posX || 0,
-    posY: a.image_posY || 0
-  };
+  let savedTransform = { zoom: 1, posX: 0, posY: 0 };
+  try {
+    if (a.image_transform) {
+      savedTransform = JSON.parse(a.image_transform);
+    }
+  } catch(e) {}
   document.getElementById('ad-form-image-transform').value = JSON.stringify(savedTransform);
   
   // Resetear estado de imagen
@@ -1117,6 +1118,13 @@ export async function adminSaveAd() {
   try {
     const { data: { user } } = await sb.auth.getUser();
     
+    // Guardar transformación como JSON
+    const imageTransformData = JSON.stringify({
+      zoom: imageTransform.zoom || 1,
+      posX: imageTransform.posX || 0,
+      posY: imageTransform.posY || 0
+    });
+    
     let error;
     if (id) {
       // Actualizar directamente
@@ -1129,9 +1137,7 @@ export async function adminSaveAd() {
         city: city || null,
         active: active,
         image_url: image_url || null,
-        image_zoom: imageTransform.zoom || 1,
-        image_posX: imageTransform.posX || 0,
-        image_posY: imageTransform.posY || 0
+        image_transform: imageTransformData
       }).eq('id', id);
       error = updateError;
     } else {
@@ -1145,9 +1151,7 @@ export async function adminSaveAd() {
         city: city || null,
         active: active,
         image_url: image_url || null,
-        image_zoom: imageTransform.zoom || 1,
-        image_posX: imageTransform.posX || 0,
-        image_posY: imageTransform.posY || 0,
+        image_transform: imageTransformData,
         created_by: user.id
       });
       error = insertError;
