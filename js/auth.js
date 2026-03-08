@@ -20,42 +20,50 @@ async function saveProfessional(sb, userId, data) {
 export async function initAuth() {
   const sb = getSupabase();
   if (!sb) return;
-  
+
+  // sessionHandled evita que onAuthStateChange duplique el work del getSession() inicial
   let sessionHandled = false;
 
   try {
-    // Si la URL tiene un hash de OAuth (Google login), procesarlo primero
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) {
-        sessionHandled = true;
-        await handleSession(session);
+    // Procesar sesión inicial (incluye callback de OAuth con hash o code)
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      sessionHandled = true;
+      await handleSession(session);
+      // Limpiar URL si venía con hash de OAuth
+      if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
         window.history.replaceState(null, '', window.location.pathname);
-        await redirectAfterLogin();
       }
-    } else {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) {
-        sessionHandled = true;
-        await handleSession(session);
-        await redirectAfterLogin();
-      }
+      await redirectAfterLogin();
     }
-    
+
     sb.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, sessionHandled);
+      console.log('[Auth]', event, '| sessionHandled:', sessionHandled);
+
       if (event === 'SIGNED_IN' && session) {
-        if (sessionHandled) { sessionHandled = false; return; } // evitar doble llamada
+        if (sessionHandled) {
+          sessionHandled = false;
+          return; // ya procesado por getSession() arriba
+        }
         await handleSession(session);
         window.history.replaceState(null, '', window.location.pathname);
         await redirectAfterLogin();
+
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Actualizar usuario en store sin redirigir
+        store.setCurrentUser(session.user);
+
       } else if (event === 'SIGNED_OUT') {
         sessionHandled = false;
         handleLogout();
+
+      } else if (event === 'USER_UPDATED' && session) {
+        store.setCurrentUser(session.user);
+        updateAuthUI();
       }
     });
   } catch (e) {
-    console.log('Supabase init error:', e.message);
+    console.error('Auth init error:', e.message);
   }
 }
 
@@ -118,6 +126,7 @@ export async function handleSession(session) {
 export function handleLogout() {
   store.reset();
   updateAuthUI();
+  showPage('home');
 }
 
 export async function loginEmail() {
@@ -236,24 +245,26 @@ export async function registerEmail() {
 
 export async function loginGoogle() {
   const sb = getSupabase();
+  const redirectTo = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo, skipBrowserRedirect: false }
   });
-  if (error) {
-    showToast(error.message, 'error');
-  }
+  if (error) showToast(translateAuthError(error.message), 'error');
 }
 
 export async function logout() {
   const sb = getSupabase();
-  await sb.auth.signOut();
-  
-  const userDropdown = document.getElementById('user-dropdown');
-  if (userDropdown) {
-    userDropdown.style.display = 'none';
+  try {
+    await sb.auth.signOut({ scope: 'local' }); // 'local' evita revocar sesión de otros tabs
+  } catch (e) {
+    console.warn('signOut error (ignorado):', e.message);
   }
-  
+  // Limpiar store y UI sin esperar evento SIGNED_OUT (que a veces no llega con Google)
+  store.reset();
+  updateAuthUI();
+  const userDropdown = document.getElementById('user-dropdown');
+  if (userDropdown) userDropdown.style.display = 'none';
   showPage('home');
   showToast('Sesión cerrada', 'info');
 }

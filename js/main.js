@@ -10,6 +10,8 @@ import { detectLocation } from './geolocation.js';
 import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest,
          addFavorite, openRatingModal, setRating, submitRating,
          acceptJob, rejectJob, startJob, finishJob, cancelJob,
+         confirmJobDate, clientConfirmFinish, submitDispute, reHireJob,
+         previewJobPhoto,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          saveAvailability, saveProfile,
@@ -17,7 +19,7 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
 import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents } from './notifications.js';
-import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith } from './chat.js';
+import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
 import { deleteWorkPhoto } from './upload.js';
 import { initPWA, installPWA, generateManifest, initPWAEvents } from './pwa.js';
@@ -53,8 +55,19 @@ window.rejectJob        = rejectJob;
 window.startJob         = startJob;
 window.finishJob        = finishJob;
 window.cancelJob        = cancelJob;
+window.confirmJobDate   = confirmJobDate;
+window.clientConfirmFinish = clientConfirmFinish;
+window.submitDispute    = submitDispute;
+window.reHireJob        = reHireJob;
+window.previewJobPhoto  = previewJobPhoto;
 window.openChatWith     = openChatWith;
 window.deleteWorkPhoto  = deleteWorkPhoto;
+window.openConfirmFinish = (jobId) => {
+  store._confirmingJobId = jobId;
+  const el = document.getElementById('confirm-finish-comment');
+  if (el) el.value = '';
+  showModal('modal-confirm-finish');
+};
 
 window.showSuscripcion  = showSuscripcion;
 window.subscribePro     = subscribePro;

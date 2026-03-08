@@ -3,16 +3,21 @@ import { store } from './store.js';
 export function showPage(pageId) {
   const prev = document.querySelector('.page.active');
   if (prev) {
-    store.setPreviousPage(prev.id.replace('page-', ''));
+    const prevId = prev.id.replace('page-', '');
+    store.setPreviousPage(prevId);
+    // Limpiar canal realtime al salir del chat
+    if (prevId === 'chat') {
+      import('./chat.js').then(m => m.cleanupChat?.());
+    }
   }
-  
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + pageId);
   if (page) {
     page.classList.add('active');
     window.scrollTo(0, 0);
   }
-  
+
   return pageId;
 }
 

@@ -24,61 +24,97 @@ export function openJobRequest(proId, proName, proUserId) {
 
 export async function submitJobRequest() {
   if (!store.currentUser) return;
-  
-  const sb = getSupabase();
-  const desc = document.getElementById('job-req-desc')?.value.trim();
-  const address = document.getElementById('job-req-address')?.value.trim();
-  const errorEl = document.getElementById('job-req-error');
-  
+
+  const sb       = getSupabase();
+  const desc     = document.getElementById('job-req-desc')?.value.trim();
+  const address  = document.getElementById('job-req-address')?.value.trim();
+  const isUrgent = document.getElementById('job-req-urgent')?.checked || false;
+  const errorEl  = document.getElementById('job-req-error');
+
   if (!desc) {
-    if (errorEl) {
-      errorEl.textContent = 'Describí el trabajo.';
-      errorEl.classList.remove('hidden');
-    }
+    if (errorEl) { errorEl.textContent = 'Describí el trabajo.'; errorEl.classList.remove('hidden'); }
     return;
   }
-  
+
+  // Resolver professional_id
   const proAction = store.currentProIdForAction;
-  let professionalProfileId = null;
-  if (proAction?.userProfileId) {
-    professionalProfileId = proAction.userProfileId;
-  } else {
-    const proId = proAction?.proId || proAction;
-    const pro = store.allProfessionals?.find(x => x.id == proId);
+  let professionalProfileId = proAction?.userProfileId || null;
+  if (!professionalProfileId) {
+    const pro = store.allProfessionals?.find(x => x.id == proAction?.proId);
     professionalProfileId = pro?.user_id || null;
   }
-
-  // Validar que sea un UUID real (36 chars con guiones), no un mock ID como 'p1'
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (professionalProfileId && !uuidRegex.test(professionalProfileId)) {
-    professionalProfileId = null;
+  if (professionalProfileId && !uuidRegex.test(professionalProfileId)) professionalProfileId = null;
+
+  // Recolectar slots de agenda
+  const slots = [1,2,3].map(i => {
+    const date = document.getElementById(`job-req-date-${i}`)?.value;
+    const period = document.getElementById(`job-req-period-${i}`)?.value;
+    return date ? { date, period } : null;
+  }).filter(Boolean);
+
+  const btn = document.getElementById('btn-submit-job');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.7">Enviando...</span>'; }
+
+  // Subir foto si hay una adjunta
+  let photoUrl = null;
+  const photoFile = document.getElementById('job-req-photo')?.files?.[0];
+  if (photoFile && professionalProfileId) {
+    const ext  = photoFile.name.split('.').pop();
+    const path = `job-requests/${store.currentUser.id}/${Date.now()}.${ext}`;
+    const { data: up } = await sb.storage.from('work-photos').upload(path, photoFile, { upsert: true });
+    if (up) {
+      const { data: { publicUrl } } = sb.storage.from('work-photos').getPublicUrl(path);
+      photoUrl = publicUrl;
+    }
   }
 
   const jobPayload = {
-    user_id: store.currentUser.id,
+    user_id:         store.currentUser.id,
     professional_id: professionalProfileId,
-    specialty: document.getElementById('job-req-specialty')?.value || 'General',
-    description: desc,
+    specialty:       document.getElementById('job-req-specialty')?.value || 'General',
+    description:     desc,
     address,
-    status: 'solicitado',
-    created_at: new Date().toISOString()
+    is_urgent:       isUrgent,
+    proposed_dates:  slots,
+    photo_url:       photoUrl,
+    status:          'solicitado',
+    created_at:      new Date().toISOString()
   };
 
-  console.log('=== JOB INSERT PAYLOAD ===', JSON.stringify(jobPayload, null, 2));
-
   const { data, error } = await sb.from('jobs').insert(jobPayload).select();
-  
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-paper-plane"></i>Enviar solicitud'; }
+
   if (error) {
-    console.error('=== JOB INSERT ERROR ===', JSON.stringify(error, null, 2));
-    if (errorEl) {
-      errorEl.textContent = error.message || JSON.stringify(error);
-      errorEl.classList.remove('hidden');
-    }
+    console.error('job insert:', error);
+    if (errorEl) { errorEl.textContent = error.message; errorEl.classList.remove('hidden'); }
     return;
   }
-  
+
+  // Limpiar form
+  ['job-req-desc','job-req-address'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  [1,2,3].forEach(i => { const el = document.getElementById(`job-req-date-${i}`); if(el) el.value=''; });
+  const prev = document.getElementById('job-req-photo-preview');
+  if (prev) { prev.src=''; prev.style.display='none'; }
+  const pname = document.getElementById('job-req-photo-name');
+  if (pname) pname.textContent = '';
+
   closeModal('modal-request-job');
-  showToast('¡Solicitud enviada! El profesional te contactará pronto.', 'success');
+  showToast('¡Solicitud enviada! El profesional elegirá una fecha.', 'success');
+}
+
+// Preview foto adjunta
+export function previewJobPhoto(input) {
+  const file = input.files?.[0];
+  const nameEl = document.getElementById('job-req-photo-name');
+  const prev   = document.getElementById('job-req-photo-preview');
+  if (!file) return;
+  if (nameEl) nameEl.textContent = file.name;
+  if (prev) {
+    prev.src = URL.createObjectURL(file);
+    prev.style.display = 'block';
+  }
 }
 
 export async function loadUserJobs() {
@@ -106,28 +142,34 @@ export async function loadProJobs() {
 }
 
 const STATUS_CSS = {
-  solicitado: 'status-solicitado',
-  aceptado:   'status-aceptado',
-  en_proceso: 'status-en-proceso',
-  finalizado: 'status-finalizado',
-  cancelado:  'status-cancelado',
-  rechazado:  'status-cancelado'
+  solicitado:             'status-solicitado',
+  aceptado:               'status-aceptado',
+  en_proceso:             'status-en-proceso',
+  pendiente_confirmacion: 'status-aceptado',
+  finalizado:             'status-finalizado',
+  cancelado:              'status-cancelado',
+  rechazado:              'status-cancelado',
+  en_disputa:             'status-solicitado'
 };
 const STATUS_LABEL = {
-  solicitado: 'Nuevo',
-  aceptado:   'Aceptado',
-  en_proceso: 'En proceso',
-  finalizado: 'Finalizado',
-  cancelado:  'Cancelado',
-  rechazado:  'Rechazado'
+  solicitado:             'Nuevo',
+  aceptado:               'Aceptado',
+  en_proceso:             'En proceso',
+  pendiente_confirmacion: 'Esperando confirmación',
+  finalizado:             'Finalizado',
+  cancelado:              'Cancelado',
+  rechazado:              'Rechazado',
+  en_disputa:             'En disputa'
 };
 const STATUS_ICON = {
-  solicitado: 'fa-clock',
-  aceptado:   'fa-check',
-  en_proceso: 'fa-gears',
-  finalizado: 'fa-check-circle',
-  cancelado:  'fa-times-circle',
-  rechazado:  'fa-times-circle'
+  solicitado:             'fa-clock',
+  aceptado:               'fa-check',
+  en_proceso:             'fa-gears',
+  pendiente_confirmacion: 'fa-hourglass-half',
+  finalizado:             'fa-check-circle',
+  cancelado:              'fa-times-circle',
+  rechazado:              'fa-times-circle',
+  en_disputa:             'fa-triangle-exclamation'
 };
 
 export function jobItem(j, viewAs) {
@@ -140,29 +182,58 @@ export function jobItem(j, viewAs) {
   const meta        = [j.address, dateStr].filter(Boolean).join(' · ');
   const isUrgent    = j.is_urgent ? `<span style="font-size:0.75rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>` : '';
 
+  // Fecha confirmada
+  let confirmedDateBadge = '';
+  if (j.confirmed_date) {
+    try {
+      const cd = new Date(j.confirmed_date);
+      const fmt = cd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+      confirmedDateBadge = `<span style="font-size:0.78rem;background:rgba(6,182,212,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;"><i class="fa fa-calendar-check" style="margin-right:4px;"></i>${fmt} — ${j.confirmed_period||''}</span>`;
+    } catch {}
+  }
+
+  // Foto adjunta
+  const photoBtn = j.photo_url
+    ? `<button class="btn btn-ghost btn-sm" onclick="window.open('${j.photo_url}','_blank')" title="Ver foto adjunta"><i class="fa fa-image"></i></button>`
+    : '';
+
   // Acciones según rol y estado
   let actions = '';
   if (viewAs === 'pro') {
     if (j.status === 'solicitado') {
       actions = `
+        ${j.proposed_dates?.length ? `<span style="font-size:0.75rem;color:var(--accent);"><i class="fa fa-calendar"></i> ${j.proposed_dates.length} fecha${j.proposed_dates.length>1?'s':''}</span>` : ''}
         <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
         <button class="btn btn-ghost btn-sm" onclick="window.rejectJob('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>
+        ${photoBtn}`;
     } else if (j.status === 'aceptado') {
       actions = `
         <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'en_proceso') {
       actions = `
-        <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Finalizar</button>
+        <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Marcar terminado</button>
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+    } else if (j.status === 'pendiente_confirmacion') {
+      actions = `<span style="font-size:0.82rem;color:var(--gray);">Esperando que el cliente confirme...</span>`;
     }
   } else if (viewAs === 'user') {
     if (['solicitado','aceptado','en_proceso'].includes(j.status)) {
-      actions = `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
         <button class="btn btn-ghost btn-sm" onclick="window.cancelJob('${j.id}')"><i class="fa fa-times"></i>Cancelar</button>`;
+    } else if (j.status === 'pendiente_confirmacion') {
+      actions = `
+        <button class="btn btn-success btn-sm" onclick="window.openConfirmFinish('${j.id}')"><i class="fa fa-check-double"></i>Confirmar cierre</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'finalizado') {
-      actions = `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`;
+      const ratingBtn = j.client_confirmed
+        ? `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`
+        : '';
+      actions = `
+        ${ratingBtn}
+        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Volver a contratar</button>`;
     }
   }
 
@@ -173,7 +244,7 @@ export function jobItem(j, viewAs) {
     <div class="job-info" style="flex:1;min-width:180px;">
       ${desc}
       <div class="job-meta" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;">
-        ${specialty}${isUrgent}
+        ${specialty}${isUrgent}${confirmedDateBadge}
         <span style="font-size:0.8rem;color:var(--gray);">${meta}</span>
       </div>
     </div>
@@ -193,13 +264,75 @@ function escHtml(text) {
 
 export async function acceptJob(jobId) {
   const sb = getSupabase();
+  const { data: job } = await sb.from('jobs').select('proposed_dates').eq('id', jobId).maybeSingle();
+
+  if (job?.proposed_dates?.length) {
+    store._acceptingJobId = jobId;
+    renderDatePickerModal(job.proposed_dates, jobId);
+    return;
+  }
+  // Sin slots: aceptar directo
   const { error } = await sb.from('jobs').update({ status: 'aceptado' }).eq('id', jobId);
-  
   if (!error) {
     showToast('Trabajo aceptado', 'success');
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
+  } else showToast('Error: ' + error.message, 'error');
+}
+
+function renderDatePickerModal(slots, jobId) {
+  let modal = document.getElementById('modal-pick-date');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-pick-date';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
   }
+  const fmtSlot = s => {
+    try {
+      const d = new Date(s.date);
+      return `${d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})} — ${s.period}`;
+    } catch { return s.date + ' — ' + s.period; }
+  };
+  modal.innerHTML = `
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa fa-calendar-check" style="color:var(--accent);margin-right:8px;"></i>Elegí una fecha</div>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">El cliente propuso estas opciones:</p>
+        <div style="display:grid;gap:10px;margin-bottom:20px;">
+          ${slots.map(s => `
+            <button onclick="window.confirmJobDate('${jobId}','${s.date}','${s.period}')"
+              style="background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:14px 18px;text-align:left;cursor:pointer;color:var(--light);transition:border-color .2s;"
+              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <i class="fa fa-clock" style="color:var(--accent);margin-right:8px;"></i>${fmtSlot(s)}
+            </button>`).join('')}
+        </div>
+        <button class="btn btn-ghost btn-block" onclick="document.getElementById('modal-pick-date').style.display='none'">Cancelar</button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+export async function confirmJobDate(jobId, date, period) {
+  const sb = getSupabase();
+  const { error } = await sb.from('jobs').update({
+    status:           'aceptado',
+    confirmed_date:   date,
+    confirmed_period: period
+  }).eq('id', jobId);
+  const modal = document.getElementById('modal-pick-date');
+  if (modal) modal.style.display = 'none';
+  if (!error) {
+    try {
+      const d = new Date(date);
+      const fmt = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+      showToast(`Trabajo aceptado para el ${fmt} — ${period}`, 'success');
+    } catch { showToast('Trabajo aceptado', 'success'); }
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else showToast('Error: ' + error.message, 'error');
 }
 
 export async function updateJobStatus(jobId, status) {
@@ -377,12 +510,61 @@ export async function startJob(jobId) {
 
 export async function finishJob(jobId) {
   const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({ status: 'finalizado' }).eq('id', jobId);
+  // El pro marca "terminado" → espera confirmación del cliente
+  const { error } = await sb.from('jobs').update({ status: 'pendiente_confirmacion' }).eq('id', jobId);
   if (!error) {
-    showToast('¡Trabajo finalizado! El cliente podrá calificarte.', 'success');
+    showToast('Marcaste el trabajo como terminado. Esperando confirmación del cliente.', 'success');
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else showToast('Error: ' + error.message, 'error');
+}
+
+export async function clientConfirmFinish(confirmed) {
+  const jobId = store._confirmingJobId;
+  if (!jobId) return;
+  const sb = getSupabase();
+  const comment = document.getElementById('confirm-finish-comment')?.value.trim();
+
+  if (confirmed) {
+    const { error } = await sb.from('jobs').update({
+      status: 'finalizado',
+      client_confirmed: true,
+      client_comment: comment || null
+    }).eq('id', jobId);
+
+    closeModal('modal-confirm-finish');
+    if (!error) {
+      showToast('¡Trabajo confirmado! Podés calificar al profesional.', 'success');
+      store._confirmingJobId = null;
+      const { loadUserDashboard } = await import('./dashboard.js');
+      await loadUserDashboard();
+      // Abrir modal de calificación automáticamente
+      const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
+      if (job?.professional_id) {
+        setTimeout(() => openRatingModal(job.professional_id, jobId), 600);
+      }
+    }
+  } else {
+    // Abrir modal de disputa
+    closeModal('modal-confirm-finish');
+    store._disputeJobId = jobId;
+    const disputeId = document.getElementById('dispute-job-id');
+    if (disputeId) disputeId.textContent = jobId;
+    showModal('modal-dispute');
+  }
+}
+
+export async function submitDispute() {
+  const jobId = store._disputeJobId;
+  const desc  = document.getElementById('dispute-desc')?.value.trim();
+  if (!jobId || !desc) { showToast('Describí el problema.', 'error'); return; }
+  const sb = getSupabase();
+  await sb.from('jobs').update({ status: 'en_disputa', dispute_desc: desc }).eq('id', jobId);
+  closeModal('modal-dispute');
+  showToast('Reporte enviado. El equipo de TECNIYA se va a comunicar.', 'info');
+  store._disputeJobId = null;
+  const { loadUserDashboard } = await import('./dashboard.js');
+  loadUserDashboard();
 }
 
 export async function cancelJob(jobId) {
@@ -393,4 +575,9 @@ export async function cancelJob(jobId) {
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
+}
+
+// FEATURE 5 — Volver a contratar desde historial
+export function reHireJob(proUserId, proName, proId) {
+  openJobRequest(proId, proName, proUserId);
 }

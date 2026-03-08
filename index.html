@@ -504,31 +504,43 @@
     <div class="chat-sidebar">
       <div class="chat-sidebar-header">
         <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:10px;">Mensajes</h3>
-        <input type="text" class="chat-search" placeholder="Buscar conversación...">
+        <input type="text" class="chat-search" placeholder="Buscar..." id="chat-search-input">
       </div>
       <div class="chat-conversations" id="chat-conversations">
-        <div class="empty-state" style="padding:30px 20px;">
-          <i class="fa fa-comments"></i>
-          <p>No tenés conversaciones</p>
+        <div class="empty-state" style="padding:40px 20px;text-align:center;">
+          <i class="fa fa-comments" style="font-size:2rem;margin-bottom:10px;display:block;color:var(--gray);"></i>
+          <p style="color:var(--gray);font-size:0.88rem;">No tenés conversaciones aún.</p>
         </div>
       </div>
     </div>
     <div class="chat-main">
       <div class="chat-header" id="chat-header" style="display:none;">
         <div class="chat-conv-avatar" id="chat-header-avatar"></div>
-        <div>
+        <div style="flex:1;">
           <div style="font-weight:700;font-size:0.95rem;" id="chat-header-name"></div>
           <div style="font-size:0.78rem;color:var(--gray);" id="chat-header-sub"></div>
         </div>
-        <div style="margin-left:auto;"></div>
       </div>
       <div class="chat-messages" id="chat-messages">
-        <div class="empty-state" style="padding:40px;">
-          <i class="fa fa-comment-dots"></i>
-          <p>Seleccioná una conversación para ver los mensajes.</p>
+        <div class="empty-state" style="padding:60px 20px;text-align:center;">
+          <i class="fa fa-comment-dots" style="font-size:2rem;margin-bottom:10px;display:block;color:var(--gray);"></i>
+          <p style="color:var(--gray);font-size:0.85rem;">Seleccioná una conversación.</p>
         </div>
       </div>
-      <div class="chat-input-bar">
+      <!-- Formulario de presupuesto inline -->
+      <div id="chat-budget-form" style="display:none;padding:12px 16px;border-top:1px solid var(--border);background:rgba(2,6,23,0.9);gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" class="form-input" id="chat-budget-desc" placeholder="Descripción del trabajo" style="flex:2;min-width:160px;padding:8px 12px;">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:100px;">
+          <span style="color:var(--gray);font-size:0.9rem;">$</span>
+          <input type="number" class="form-input" id="chat-budget-price" placeholder="Precio" style="flex:1;padding:8px 12px;">
+        </div>
+        <button class="btn btn-orange btn-sm" id="btn-submit-chat-budget"><i class="fa fa-paper-plane"></i>Enviar</button>
+      </div>
+      <!-- Barra de input -->
+      <div class="chat-input-bar" id="chat-input-bar" style="display:none;">
+        <button class="btn btn-ghost btn-sm chat-tool-btn" id="btn-chat-image" title="Adjuntar foto"><i class="fa fa-image"></i></button>
+        <button class="btn btn-ghost btn-sm chat-tool-btn" id="btn-chat-budget" title="Compartir presupuesto"><i class="fa fa-file-invoice-dollar"></i></button>
+        <input type="file" id="chat-image-input" accept="image/*" style="display:none;">
         <input type="text" class="chat-input" placeholder="Escribí un mensaje..." id="chat-input-field">
         <button class="btn btn-primary btn-sm" id="btn-send-chat"><i class="fa fa-paper-plane"></i></button>
       </div>
@@ -921,29 +933,121 @@
 </div>
 
 <div class="modal-overlay" id="modal-request-job">
-  <div class="modal">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-header">
-      <div class="modal-title">Solicitar trabajo</div>
+      <div class="modal-title"><i class="fa fa-paper-plane" style="color:var(--accent);margin-right:8px;"></i>Nueva solicitud</div>
       <button class="modal-close" data-close="modal-request-job"><i class="fa fa-times"></i></button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Estás solicitando trabajo a <strong id="job-req-pro-name" style="color:var(--light);">Profesional</strong></p>
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Para <strong id="job-req-pro-name" style="color:var(--light);">Profesional</strong></p>
+
+      <!-- Paso 1: Descripción -->
       <div class="form-group">
-        <label class="form-label">Descripción del trabajo</label>
-        <textarea class="form-textarea" id="job-req-desc" placeholder="Describí el trabajo que necesitás..."></textarea>
+        <label class="form-label">¿Qué necesitás? <span style="color:#ef4444;">*</span></label>
+        <textarea class="form-textarea" id="job-req-desc" rows="3" placeholder="Describí el trabajo con el mayor detalle posible..."></textarea>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Dirección</label>
-          <input type="text" class="form-input" id="job-req-address" placeholder="Dirección del trabajo">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha preferida</label>
-          <input type="date" class="form-input" id="job-req-date">
-        </div>
+
+      <!-- Adjuntar foto del problema -->
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="file" id="job-req-photo" accept="image/*" style="display:none;" onchange="window.previewJobPhoto(this)">
+          <span class="btn btn-ghost btn-sm" onclick="document.getElementById('job-req-photo').click()">
+            <i class="fa fa-camera"></i> Adjuntar foto del problema
+          </span>
+          <span id="job-req-photo-name" style="font-size:0.8rem;color:var(--gray);"></span>
+        </label>
+        <img id="job-req-photo-preview" src="" alt="" style="display:none;max-height:120px;border-radius:8px;margin-top:8px;object-fit:cover;">
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Dirección del trabajo</label>
+        <input type="text" class="form-input" id="job-req-address" placeholder="Calle, número, piso...">
+      </div>
+
+      <!-- Agenda: fechas propuestas -->
+      <div class="form-group">
+        <label class="form-label"><i class="fa fa-calendar" style="color:var(--accent);margin-right:6px;"></i>Fechas disponibles <span style="font-size:0.78rem;color:var(--gray);font-weight:400;">(proponé hasta 3 opciones)</span></label>
+        <div style="display:grid;gap:8px;" id="date-slots">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="datetime-local" class="form-input slot-date" id="job-req-date-1" style="flex:1;">
+            <select class="form-select slot-period" id="job-req-period-1" style="width:130px;">
+              <option value="mañana">Mañana</option>
+              <option value="tarde">Tarde</option>
+              <option value="noche">Noche</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="datetime-local" class="form-input slot-date" id="job-req-date-2" style="flex:1;">
+            <select class="form-select slot-period" id="job-req-period-2" style="width:130px;">
+              <option value="mañana">Mañana</option>
+              <option value="tarde">Tarde</option>
+              <option value="noche">Noche</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="datetime-local" class="form-input slot-date" id="job-req-date-3" style="flex:1;">
+            <select class="form-select slot-period" id="job-req-period-3" style="width:130px;">
+              <option value="mañana">Mañana</option>
+              <option value="tarde">Tarde</option>
+              <option value="noche">Noche</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+        </div>
+        <p style="font-size:0.76rem;color:var(--gray);margin-top:6px;">El profesional va a confirmar una de estas fechas.</p>
+      </div>
+
+      <!-- Urgente -->
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem;">
+          <input type="checkbox" id="job-req-urgent" style="accent-color:#ef4444;width:16px;height:16px;">
+          <span><i class="fa fa-bolt" style="color:#ef4444;margin-right:4px;"></i>Es urgente <span style="color:var(--gray);font-size:0.8rem;">(cargo adicional puede aplicar)</span></span>
+        </label>
+      </div>
+
       <div id="job-req-error" class="form-error hidden"></div>
-      <button class="btn btn-primary btn-block" id="btn-submit-job">Enviar solicitud</button>
+      <button class="btn btn-primary btn-block" id="btn-submit-job"><i class="fa fa-paper-plane"></i>Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE 3: Modal confirmación de cierre por cliente -->
+<div class="modal-overlay" id="modal-confirm-finish">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header" style="border-bottom:none;">
+      <div class="modal-title" style="font-size:1.1rem;">✅ ¿El trabajo quedó terminado?</div>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Confirmá que el profesional terminó el trabajo correctamente para liberar el cierre.</p>
+      <div class="form-group">
+        <label class="form-label">Comentario opcional</label>
+        <textarea class="form-textarea" id="confirm-finish-comment" rows="2" placeholder="¿Algo que quieras destacar?"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-success btn-block" id="btn-confirm-finish-yes" onclick="window.clientConfirmFinish(true)"><i class="fa fa-check"></i>Sí, está terminado</button>
+        <button class="btn btn-ghost" style="min-width:120px;" onclick="window.clientConfirmFinish(false)"><i class="fa fa-times"></i>Hay problemas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal disputa -->
+<div class="modal-overlay" id="modal-dispute">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-triangle-exclamation" style="color:#f59e0b;margin-right:8px;"></i>Reportar problema</div>
+      <button class="modal-close" data-close="modal-dispute"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">Describí el problema. El equipo de TECNIYA va a mediar.</p>
+      <div class="form-group">
+        <label class="form-label">¿Qué pasó?</label>
+        <textarea class="form-textarea" id="dispute-desc" rows="3" placeholder="Describí el inconveniente con detalle..."></textarea>
+      </div>
+      <div id="dispute-job-id" style="display:none;"></div>
+      <button class="btn btn-orange btn-block" onclick="window.submitDispute()"><i class="fa fa-paper-plane"></i>Enviar reporte</button>
     </div>
   </div>
 </div>
