@@ -429,6 +429,7 @@
     <div class="admin-sidebar-item" data-tab="admin-ads"><i class="fa fa-bullhorn"></i>Publicidad</div>
     <div class="admin-sidebar-item" data-tab="admin-reviews"><i class="fa fa-star"></i>Reseñas</div>
     <div class="admin-sidebar-item" data-tab="admin-penalties"><i class="fa fa-gavel"></i>Penalizaciones</div>
+    <div class="admin-sidebar-item" data-tab="admin-security"><i class="fa fa-shield-halved"></i>Seguridad</div>
     <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
   </div>
   <div class="admin-content">
@@ -489,6 +490,46 @@
         <thead><tr><th>Título</th><th>Nivel</th><th>Ubicación</th><th>Link</th><th>Activa</th><th>Acciones</th></tr></thead>
         <tbody id="ads-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
       </table></div>
+    </div>
+
+
+    <div id="admin-security" class="admin-tab" style="display:none;">
+      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <i class="fa fa-shield-halved" style="color:var(--accent);"></i> Panel de Seguridad
+      </h3>
+
+      <div class="tabs" style="margin-bottom:20px;">
+        <button class="tab active" onclick="window.switchSecurityTab('sec-suspicious')">Cuentas sospechosas</button>
+        <button class="tab" onclick="window.switchSecurityTab('sec-cancels')">Usuarios con cancelaciones</button>
+        <button class="tab" onclick="window.switchSecurityTab('sec-reports')">Pros con reportes</button>
+      </div>
+
+      <div id="sec-suspicious" class="sec-tab-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Motivo</th><th>Registro</th><th>Acciones</th></tr></thead>
+            <tbody id="suspicious-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="sec-cancels" class="sec-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Cancelaciones</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="cancel-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="sec-reports" class="sec-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Profesional</th><th>Especialidad</th><th>Reportes</th><th>Score</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="report-pros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div id="admin-penalties" class="admin-tab" style="display:none;">
@@ -1546,6 +1587,43 @@
     </div>
     <div class="modal-body">
       <div id="penalty-history-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: reportar profesional -->
+<div class="modal-overlay" id="modal-report-pro">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-flag" style="color:#f87171;margin-right:8px;"></i>Reportar profesional</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-report-pro').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="report-pro-id">
+      <input type="hidden" id="report-job-id">
+      <div class="form-group">
+        <label class="form-label">Motivo del reporte</label>
+        <select class="form-select" id="report-reason">
+          <option value="">Seleccioná un motivo</option>
+          <option value="no_se_presento">👻 No se presentó al trabajo</option>
+          <option value="mal_trato">😠 Mal trato o comportamiento inapropiado</option>
+          <option value="trabajo_incompleto">🔧 Trabajo incompleto o mal hecho</option>
+          <option value="estafa">🚨 Cobro indebido o estafa</option>
+          <option value="otro">📋 Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea class="form-textarea" id="report-desc" placeholder="Describí lo que pasó..."></textarea>
+      </div>
+      <div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;color:var(--gray);">
+        <i class="fa fa-circle-info" style="color:var(--orange);margin-right:6px;"></i>
+        Tu reporte es anónimo y será revisado por el equipo de TECNIYA.
+      </div>
+      <button class="btn btn-danger btn-block" onclick="window.submitProReport()">
+        <i class="fa fa-flag"></i> Enviar reporte
+      </button>
     </div>
   </div>
 </div>

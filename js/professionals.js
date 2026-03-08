@@ -1,5 +1,6 @@
 import { store } from './store.js';
 import { CONFIG, SPECIALTIES_DEFAULT, MOCK_PROS } from './config.js';
+import { renderProWarnings, renderProStats, openReportModal } from './security.js';
 import { getSupabase } from './supabase.js';
 import { showPage, showModal, showToast } from './ui.js';
 import { generateStars, escapeHtml } from './utils.js';
@@ -52,9 +53,13 @@ export async function loadProfessionals() {
       user_id:       p.user_id,
       name:          p.name || p.full_name || 'Profesional',
       specialty:     p.specialties?.[0] || p.specialty,
-      trust_score:   p.trust_score ?? 100,
-      ranking_score: p.ranking_score ?? 100,
-      suspended:     p.suspended || false,
+      trust_score:    p.trust_score    ?? 100,
+      ranking_score:  p.ranking_score  ?? 100,
+      suspended:      p.suspended      || false,
+      completed_jobs: p.completed_jobs || 0,
+      report_count:   p.report_count   || 0,
+      cancel_count:   p.cancel_count   || 0,
+      avg_rating:     p.avg_rating     || null,
       specialties:   p.specialties || (p.specialty ? [p.specialty] : []),
       city:          p.city,
       province:      p.province,
@@ -194,7 +199,11 @@ export function showProProfile(proId) {
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}${p.is_online ? '<span class="badge badge-disponible"><i class="fa fa-circle" style="font-size:0.5rem;"></i>Disponible</span>' : ''}</div>
         <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num" style="font-size:1.1rem;">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos)</span></div>
       </div>
-      <div class="pro-profile-actions">
+      <div class="pro-profile-security">
+          ${renderProWarnings(p)}
+          ${renderProStats(p)}
+        </div>
+        <div class="pro-profile-actions">
         <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${p.name}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
         <button class="btn btn-ghost" onclick="window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
         <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>

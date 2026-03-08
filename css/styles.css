@@ -2360,6 +2360,78 @@ p {
   transition: width 0.6s ease;
 }
 
+
+/* ===== SISTEMA DE SEGURIDAD ===== */
+.pro-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.83rem;
+  margin-bottom: 8px;
+}
+.pro-warning--warning {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.25);
+  color: #fbbf24;
+}
+.pro-warning--danger {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+}
+.pro-warning i { flex-shrink: 0; margin-top: 2px; }
+
+/* Stats del profesional (historial público) */
+.pro-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+.pro-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 6px;
+  text-align: center;
+}
+.pro-stat-num {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--light);
+}
+.pro-stat-label {
+  font-size: 0.68rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+@media (max-width: 480px) {
+  .pro-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Panel seguridad admin */
+.sec-tab-panel { display: none; }
+#sec-suspicious { display: block; }
+
+/* Límite diario — badge en modal de solicitud */
+.daily-limit-badge {
+  font-size: 0.75rem;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.daily-limit-badge.warning { color: var(--orange); }
+.daily-limit-badge.danger  { color: #f87171; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .admin-sidebar { width: 200px; }

@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { registerFingerprint } from './security.js';
 import { getSupabase, onAuthStateChange } from './supabase.js';
 import { showToast, updateAuthUI, showPage, closeModal, showModal } from './ui.js';
 
@@ -103,6 +104,9 @@ export async function handleSession(session) {
   }
 
   updateAuthUI();
+
+  // Registrar huella de dispositivo (anti-duplicados)
+  registerFingerprint(session.user.id).catch(() => {});
 
   // Si es usuario de Google nuevo (sin perfil pro y sin rol definido) → preguntar
   const isGoogle = session.user.app_metadata?.provider === 'google';

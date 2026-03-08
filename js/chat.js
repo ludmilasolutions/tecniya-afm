@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { isSpamMessage } from './security.js';
 import { getSupabase } from './supabase.js';
 import { showToast, showPage } from './ui.js';
 

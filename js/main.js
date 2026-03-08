@@ -24,6 +24,8 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
+import { loadAdminSecurity } from './admin.js';
+import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
 import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification, handleNotifClick } from './notifications.js';
@@ -436,6 +438,16 @@ window.switchPenaltyTab = function(tabId) {
   if (el) el.style.display = 'block';
   document.querySelectorAll('#admin-penalties .tab').forEach((t, i) => {
     const ids = ['pen-tab-pros','pen-tab-reports','pen-tab-history'];
+    t.classList.toggle('active', ids[i] === tabId);
+  });
+};
+
+window.switchSecurityTab = function(tabId) {
+  document.querySelectorAll('.sec-tab-panel').forEach(p => p.style.display = 'none');
+  const el = document.getElementById(tabId);
+  if (el) el.style.display = 'block';
+  const ids = ['sec-suspicious','sec-cancels','sec-reports'];
+  document.querySelectorAll('#admin-security .tab').forEach((t, i) => {
     t.classList.toggle('active', ids[i] === tabId);
   });
 };

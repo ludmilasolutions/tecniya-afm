@@ -682,3 +682,112 @@ window.adminUnsuspend       = adminUnsuspend;
 window.adminToggleUrgent    = adminToggleUrgent;
 window.adminViewPenalties   = adminViewPenalties;
 window.adminFilterReports   = adminFilterReports;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PANEL DE SEGURIDAD
+// ══════════════════════════════════════════════════════════════════════════════
+export async function loadAdminSecurity() {
+  await Promise.all([
+    loadSuspiciousAccounts(),
+    loadHighCancelUsers(),
+    loadHighReportPros(),
+  ]);
+}
+
+async function loadSuspiciousAccounts() {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('profiles')
+    .select('id,full_name,email,device_fingerprint,suspicious_reason,cancel_count,created_at')
+    .eq('suspicious_flag', true)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const tbody = document.getElementById('suspicious-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="adm-empty">Sin cuentas sospechosas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td>${escapeHtml(u.full_name || '—')}</td>
+      <td style="font-size:0.78rem;">${escapeHtml(u.email || '—')}</td>
+      <td style="font-size:0.78rem;color:var(--orange);">${escapeHtml(u.suspicious_reason || '—')}</td>
+      <td style="font-size:0.76rem;color:var(--gray);">${new Date(u.created_at).toLocaleDateString('es-AR')}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="window.adminToggleBlock('${u.id}', true)" title="Bloquear"><i class="fa fa-ban"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="window.adminClearSuspicious('${u.id}')" title="Limpiar flag"><i class="fa fa-check"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadHighCancelUsers() {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('profiles')
+    .select('id,full_name,email,cancel_count,warning_count,blocked')
+    .gt('cancel_count', 2)
+    .order('cancel_count', { ascending: false })
+    .limit(50);
+
+  const tbody = document.getElementById('cancel-users-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="adm-empty">Sin usuarios con cancelaciones excesivas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td>${escapeHtml(u.full_name || '—')}</td>
+      <td style="font-size:0.78rem;">${escapeHtml(u.email || '—')}</td>
+      <td><span style="font-weight:700;color:#f87171;">${u.cancel_count}</span></td>
+      <td><span class="badge badge-${u.blocked ? 'destacado' : 'disponible'}">${u.blocked ? 'Bloqueado' : 'Activo'}</span></td>
+      <td>
+        <button class="btn btn-${u.blocked ? 'success' : 'danger'} btn-sm" onclick="window.adminToggleBlock('${u.id}', ${!u.blocked})">
+          <i class="fa fa-${u.blocked ? 'unlock' : 'ban'}"></i>
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadHighReportPros() {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('professionals')
+    .select('id,user_id,specialty,report_count,cancel_count,ranking_score,suspended,profiles:user_id(full_name)')
+    .gt('report_count', 0)
+    .order('report_count', { ascending: false })
+    .limit(50);
+
+  const tbody = document.getElementById('report-pros-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="adm-empty">Sin profesionales con reportes</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td>${escapeHtml(p.profiles?.full_name || '—')}</td>
+      <td>${escapeHtml(p.specialty || '—')}</td>
+      <td><span style="font-weight:700;color:#f87171;">${p.report_count}</span></td>
+      <td><span style="font-weight:700;color:${p.ranking_score<50?'#f87171':p.ranking_score<80?'var(--orange)':'var(--green)'};">${p.ranking_score}</span></td>
+      <td><span class="badge badge-${p.suspended ? 'destacado' : 'disponible'}">${p.suspended ? 'Suspendido' : 'Activo'}</span></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="window.adminOpenPenaltyModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}')" title="Penalizar"><i class="fa fa-gavel"></i></button>
+        ${p.suspended
+          ? `<button class="btn btn-success btn-sm" onclick="window.adminUnsuspend('${p.id}')"><i class="fa fa-unlock"></i></button>`
+          : `<button class="btn btn-danger btn-sm" onclick="window.adminSuspendModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}')"><i class="fa fa-ban"></i></button>`}
+      </td>
+    </tr>`).join('');
+}
+
+export async function adminClearSuspicious(userId) {
+  const sb = getSupabase();
+  await sb.from('profiles').update({ suspicious_flag: false, suspicious_reason: null }).eq('id', userId);
+  showToast('Flag de sospechoso eliminado', 'success');
+  loadSuspiciousAccounts();
+}
+
+window.adminClearSuspicious = adminClearSuspicious;
+window.loadAdminSecurity    = loadAdminSecurity;

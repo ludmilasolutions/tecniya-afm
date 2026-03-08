@@ -1,5 +1,6 @@
 import { store } from './store.js';
 import { onProCancelJob, onUserCancelJob } from './penalties.js';
+import { checkRequestLimit, isSpamMessage } from './security.js';
 import { getSupabase } from './supabase.js';
 import { showModal, closeModal, showToast } from './ui.js';
 import { formatDate } from './utils.js';
@@ -84,6 +85,13 @@ export function openMultiRequest() {
 }
 
 export async function submitJobRequest() {
+  // Verificar límite diario
+  const limitCheck = await checkRequestLimit();
+  if (!limitCheck.allowed) {
+    showToast(limitCheck.reason || 'Límite diario alcanzado', 'warning');
+    return;
+  }
+
   if (!store.currentUser) return;
 
   const sb       = getSupabase();
