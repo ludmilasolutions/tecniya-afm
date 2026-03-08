@@ -12,6 +12,8 @@ export const store = {
   previousPage: 'home',
   activeFilters: { cert: false, dest: false, online: false },
   currentProIdForAction: null,
+  selectedPros: [],          // acumula hasta MAX_MULTI_REQUEST selecciones
+  MAX_MULTI_REQUEST: 2,
   ratings: { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 },
   deferrePrompt: null,
 
@@ -42,6 +44,7 @@ export const store = {
     this.activePanel = 'user';
     this.previousPage = 'home';
     this.currentProIdForAction = null;
+    this.selectedPros = [];
     this.ratings = { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 };
   }
 };

@@ -39,6 +39,7 @@ export async function loadSpecialties() {
 
 export async function loadProfessionals() {
   const sb = getSupabase();
+
   try {
     if (!sb) throw new Error('no sb');
     const { data, error } = await sb.from('v_professionals_public').select('*').limit(100);
@@ -127,7 +128,7 @@ export function proCard(p) {
   const zones = (p.zones || []).slice(0, 3).map(z => `<span class="zone-tag">${escapeHtml(z)}</span>`).join('');
   const score = Math.round(rankingScore(p));
   
-  return `<div class="pro-card" onclick="window.showProProfile('${p.id}')">
+  return `<div class="pro-card" data-pro-id="${p.id}" onclick="window.showProProfile('${p.id}')">
     <div class="pro-card-header">
       <span class="ranking-score" style="display:${score > 50 ? 'block' : 'none'}">★ ${score}</span>
       <div class="pro-avatar">${initial}${p.is_online ? '<span class="online-dot"></span>' : ''}</div>
@@ -144,7 +145,7 @@ export function proCard(p) {
       <div class="pro-zones">${zones}</div>
     </div>
     <div class="pro-card-footer">
-      <button class="btn btn-ghost" onclick="event.stopPropagation();window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
+      <button class="btn btn-ghost btn-add-multi" data-pro-id="${p.id}" onclick="event.stopPropagation();window.toggleProSelection('${p.id}','${(p.name||'').replace(/'/g,'')}','${p.user_id||''}')" title="Agregar a solicitud múltiple"><i class="fa fa-plus-circle"></i></button>
       <button class="btn btn-primary" onclick="event.stopPropagation();window.openJobRequest('${p.id}','${(p.name || '').replace(/'/g, '')}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar</button>
     </div>
   </div>`;

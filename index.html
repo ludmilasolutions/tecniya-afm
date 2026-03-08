@@ -1266,5 +1266,69 @@
   </div>
 </div>
 
+
+<!-- Barra solicitud múltiple -->
+<div id="multi-request-bar" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1800;
+  background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--accent);border-radius:14px;
+  padding:12px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(6,182,212,0.2);
+  max-width:90vw;flex-wrap:wrap;">
+  <i class="fa fa-users" style="color:var(--accent);font-size:1.1rem;"></i>
+  <span id="multi-req-label" style="font-size:0.88rem;color:var(--light);flex:1;min-width:0;"></span>
+  <button id="multi-req-send-btn" class="btn btn-primary btn-sm" onclick="window.openMultiRequest()">
+    <i class="fa fa-paper-plane"></i> Enviar solicitud
+  </button>
+  <button class="btn btn-ghost btn-sm" onclick="window.clearMultiSelection()" title="Limpiar selección">
+    <i class="fa fa-times"></i>
+  </button>
+</div>
+
+
+<!-- Modal: pro propone fecha alternativa -->
+<div class="modal-overlay" id="modal-propose-date">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-calendar-plus" style="color:var(--accent);margin-right:8px;"></i>Proponer otra fecha</div>
+      <button class="modal-close" data-close="modal-propose-date"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">Ninguna fecha del cliente te sirve. Proponé una alternativa — el cliente la aprobará o rechazará.</p>
+      <div class="form-group">
+        <label class="form-label">Fecha y hora</label>
+        <input type="datetime-local" class="form-input" id="pro-date-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Turno</label>
+        <select class="form-select" id="pro-period-input">
+          <option value="mañana">Mañana</option>
+          <option value="tarde">Tarde</option>
+          <option value="noche">Noche</option>
+          <option value="flexible">Flexible</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="window.submitProposedDate()"><i class="fa fa-paper-plane"></i>Enviar propuesta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: reporte de garantía (cliente) -->
+<div class="modal-overlay" id="modal-warranty-report">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-shield-halved" style="color:#f59e0b;margin-right:8px;"></i>Reportar problema — Garantía</div>
+      <button class="modal-close" data-close="modal-warranty-report"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">Estás dentro del período de garantía de 7 días. El equipo de TECNIYA mediará entre vos y el profesional en un plazo de 48h.</p>
+      <div class="form-group">
+        <label class="form-label">¿Qué problema encontraste?</label>
+        <textarea class="form-textarea" id="warranty-desc" rows="3" placeholder="Describí el problema con detalle..."></textarea>
+      </div>
+      <button class="btn btn-orange btn-block" onclick="window.submitWarrantyReport()"><i class="fa fa-paper-plane"></i>Enviar reporte</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mini-chat pre-aceptación: botón en jobItem para abrir -->
+
 </body>
 </html>

@@ -93,15 +93,29 @@ export async function loadMessages(conversationId) {
 
 // ─── ENVIAR MENSAJE ───────────────────────────────────────────────────────────
 
+const MAX_PRE_ACCEPTANCE_MSGS = 5;
+
 export async function sendMessage(conversationId, content, type = 'text', metadata = null) {
   if (!store.currentUser || !conversationId || !content?.trim()) return null;
   const sb = getSupabase();
   try {
+    // Verificar límite de mensajes pre-aceptación
+    const conv = store._openConv;
+    if (conv?.pre_acceptance) {
+      const { count } = await sb.from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', conversationId);
+      if ((count || 0) >= MAX_PRE_ACCEPTANCE_MSGS) {
+        showToast(`Límite de ${MAX_PRE_ACCEPTANCE_MSGS} mensajes antes de que el profesional acepte. Esperá su respuesta.`, 'warning');
+        return null;
+      }
+    }
     const payload = {
       conversation_id: conversationId,
       sender_id: store.currentUser.id,
       content: content.trim(),
       type,
+      pre_acceptance: conv?.pre_acceptance || false,
       ...(metadata ? { metadata } : {})
     };
 
@@ -174,7 +188,7 @@ export async function sendBudgetMessage(conversationId, budget) {
 
 // ─── CREAR CONVERSACIÓN ───────────────────────────────────────────────────────
 
-export async function createConversation(participantId, jobId = null) {
+export async function createConversation(participantId, jobId = null, isPreAcceptance = false) {
   if (!store.currentUser || !participantId) return null;
   if (!UUID_RE.test(participantId)) {
     console.error('createConversation: participantId inválido:', participantId);
@@ -182,7 +196,6 @@ export async function createConversation(participantId, jobId = null) {
   }
   const sb = getSupabase();
   try {
-    // Buscar conversación existente con dos queries separadas para evitar el .or() con UUID null
     const { data: conv1 } = await sb.from('conversations').select('*')
       .eq('participant_one', store.currentUser.id).eq('participant_two', participantId).maybeSingle();
     const { data: conv2 } = !conv1 ? await sb.from('conversations').select('*')
@@ -194,7 +207,7 @@ export async function createConversation(participantId, jobId = null) {
 
     const { data: conv, error } = await sb
       .from('conversations')
-      .insert({ participant_one: store.currentUser.id, participant_two: participantId, job_id: jobId })
+      .insert({ participant_one: store.currentUser.id, participant_two: participantId, job_id: jobId, pre_acceptance: isPreAcceptance })
       .select().single();
 
     if (error) throw error;
@@ -380,6 +393,8 @@ function updateMessageReadStatus(msg) {
 
 export async function openConversation(conversationId) {
   currentConversationId = conversationId;
+  // Guardar metadata de la conv para el límite pre-aceptación
+  store._openConv = null;
 
   // Suscribir realtime antes de cargar para no perder mensajes
   subscribeToConversation(conversationId);
@@ -594,16 +609,14 @@ export async function loadChatPage() {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function openChatWith(userId) {
+export async function openChatWith(userId, jobId = null, isPreAcceptance = false) {
   if (!store.currentUser) {
     const { showModal } = await import('./ui.js');
     showModal('modal-login');
     return;
   }
-  // Validar UUID antes de enviar a Supabase
   if (!userId || userId === 'null' || userId === 'undefined' || !UUID_RE.test(userId)) {
     showToast('No se puede abrir el chat: usuario no encontrado.', 'error');
-    console.warn('openChatWith: userId inválido:', userId);
     return;
   }
   if (userId === store.currentUser.id) {
@@ -611,11 +624,40 @@ export async function openChatWith(userId) {
     return;
   }
   showPage('chat');
-  const result = await createConversation(userId);
+  const result = await createConversation(userId, jobId, isPreAcceptance);
   if (result?.conversation) {
+    store._openConv = result.conversation;
     await openConversation(result.conversation.id);
+    // Mostrar aviso de límite si es pre-aceptación
+    if (result.conversation.pre_acceptance) {
+      const sb = getSupabase();
+      const { count } = await sb.from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', result.conversation.id);
+      renderPreAcceptanceBanner(count || 0);
+    }
   } else {
     showToast('No se pudo iniciar la conversación. Intentá de nuevo.', 'error');
+  }
+}
+
+function renderPreAcceptanceBanner(msgCount) {
+  const bar = document.getElementById('chat-input-bar');
+  if (!bar) return;
+  let banner = document.getElementById('pre-acceptance-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'pre-acceptance-banner';
+    banner.style.cssText = 'padding:8px 16px;background:rgba(245,158,11,0.1);border-top:1px solid rgba(245,158,11,0.3);font-size:0.8rem;color:#f59e0b;display:flex;align-items:center;gap:8px;';
+    bar.parentNode.insertBefore(banner, bar);
+  }
+  const remaining = Math.max(0, MAX_PRE_ACCEPTANCE_MSGS - msgCount);
+  if (remaining === 0) {
+    banner.innerHTML = '<i class="fa fa-lock"></i> Límite de mensajes previos alcanzado. Esperá que el profesional acepte para continuar.';
+    document.getElementById('chat-input-field').disabled = true;
+    document.getElementById('btn-send-chat').disabled = true;
+  } else {
+    banner.innerHTML = `<i class="fa fa-comment-dots"></i> Chat de diagnóstico — ${remaining} mensaje${remaining !== 1 ? 's' : ''} disponible${remaining !== 1 ? 's' : ''} antes de la aceptación.`;
   }
 }
 

@@ -101,6 +101,10 @@ function notifItemHTML(n) {
     new_message:  { icon: 'fa-comments',     color: 'var(--accent)'  },
     new_review:   { icon: 'fa-star',         color: '#fbbf24'        },
     dispute:      { icon: 'fa-triangle-exclamation', color: '#f59e0b'},
+    job_started:  { icon: 'fa-play-circle',          color: C.green   },
+    reminder_24h: { icon: 'fa-calendar-clock',       color: '#f59e0b' },
+    reminder_1h:  { icon: 'fa-hourglass-half',       color: '#f97316' },
+    no_response_alert: { icon: 'fa-clock-rotate-left', color: '#ef4444' },
   };
   const { icon, color } = iconMap[n.type] || { icon: 'fa-bell', color: 'var(--gray)' };
   const date = n.created_at ? formatDateTime(n.created_at) : '';

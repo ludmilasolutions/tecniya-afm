@@ -7,11 +7,15 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
-import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest,
+import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
+         updateProCardSelection, openMultiRequest,
+         showUrgentModal, sendUrgentRequest,
          addFavorite, openRatingModal, setRating, submitRating,
          acceptJob, rejectJob, openRejectModal, startJob, finishJob,
          cancelJob, openCancelModal,
          confirmJobDate, clientConfirmFinish, submitDispute, reHireJob,
+         openProposeDateModal, submitProposedDate, approveProDate, rejectProDate,
+         openWarrantyReport, submitWarrantyReport,
          previewJobPhoto,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
@@ -43,7 +47,14 @@ window.clearFilters     = clearFilters;
 window.filterByType     = filterByType;
 window.toggleFilter     = toggleFilter;
 
-window.openJobRequest   = openJobRequest;
+window.openJobRequest        = openJobRequest;
+window.toggleProSelection    = toggleProSelection;
+window.openMultiRequest      = openMultiRequest;
+window.clearMultiSelection   = () => {
+  store.selectedPros = [];
+  updateMultiProBadge();
+  updateProCardSelection();
+};
 window.submitJobRequest = submitJobRequest;
 window.showUrgentModal  = showUrgentModal;
 window.sendUrgentRequest= sendUrgentRequest;
@@ -61,9 +72,15 @@ window.openRejectModal  = openRejectModal;
 window.confirmJobDate   = confirmJobDate;
 window.clientConfirmFinish = clientConfirmFinish;
 window.submitDispute    = submitDispute;
-window.reHireJob        = reHireJob;
+window.reHireJob             = reHireJob;
+window.openProposeDateModal  = openProposeDateModal;
+window.submitProposedDate    = submitProposedDate;
+window.approveProDate        = approveProDate;
+window.rejectProDate         = rejectProDate;
+window.openWarrantyReport    = openWarrantyReport;
+window.submitWarrantyReport  = submitWarrantyReport;
 window.previewJobPhoto  = previewJobPhoto;
-window.openChatWith     = openChatWith;
+window.openChatWith     = (userId, jobId, isPre) => openChatWith(userId, jobId, isPre);
 window.deleteWorkPhoto  = deleteWorkPhoto;
 
 // Helpers modales cancelar/rechazar
