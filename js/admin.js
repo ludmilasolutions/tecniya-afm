@@ -1037,7 +1037,12 @@ export async function adminSaveAd() {
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
   const active    = document.getElementById('ad-form-active')?.checked ?? true;
-  const image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
+  let image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
+  // Rechazar base64 — solo URLs externas
+  if (image_url && image_url.startsWith('data:')) {
+    showToast('Usá una URL de imagen externa, no un archivo subido', 'warning');
+    image_url = null;
+  }
 
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
@@ -1090,6 +1095,19 @@ export async function adminSaveAd() {
 window.adminNewAd  = adminNewAd;
 window.adminEditAd = adminEditAd;
 window.adminSaveAd = adminSaveAd;
+
+export function adminPreviewImageUrl() {
+  const url = document.getElementById('ad-form-image')?.value?.trim();
+  const thumb = document.getElementById('ad-form-image-thumb');
+  const prev  = document.getElementById('ad-form-image-preview');
+  if (url && !url.startsWith('data:') && thumb && prev) {
+    thumb.src = url;
+    prev.style.display = 'block';
+  } else if (prev) {
+    prev.style.display = 'none';
+  }
+}
+window.adminPreviewImageUrl = adminPreviewImageUrl;
 
 export function adminPreviewAdImage(event) {
   const file = event.target.files[0];
