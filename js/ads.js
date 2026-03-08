@@ -76,6 +76,8 @@ export function showAd(level) {
 
   if (titleEl) {
     titleEl.textContent = ad.title || 'Publicidad';
+    titleEl.style.color = '#fff';
+    titleEl.style.backgroundColor = 'red';
     console.log('[showAd] Asignado title:', titleEl.textContent);
   }
   if (descEl) {
