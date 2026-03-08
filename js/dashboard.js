@@ -136,6 +136,7 @@ export async function loadUserHistory() {
 }
 
 
+export async function loadUserBudgets() {
   if (!store.currentUser) return;
   const sb = getSupabase();
   try {
