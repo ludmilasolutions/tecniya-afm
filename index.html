@@ -1796,11 +1796,14 @@
           <div style="font-size:0.88rem;font-weight:600;">Publicidad activa</div>
           <div style="font-size:0.75rem;color:var(--gray);">Visible para los usuarios</div>
         </div>
-        <label style="position:relative;display:inline-block;width:48px;height:26px;">
-          <input type="checkbox" id="ad-form-active" checked style="opacity:0;width:0;height:0;">
-          <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--gray2);transition:0.3s;border-radius:26px;"></span>
-          <span style="position:absolute;content:'';height:20px;width:20px;left:3px;bottom:3px;background-color:white;transition:0.3s;border-radius:50%;"></span>
-        </label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="ad-active-label" style="font-size:0.8rem;color:var(--green);font-weight:600;">Sí</span>
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;">
+            <input type="checkbox" id="ad-form-active" checked style="display:none;" onchange="document.getElementById('ad-active-label').textContent=this.checked?'Sí':'No';document.getElementById('ad-active-label').style.color=this.checked?'var(--green)':'var(--gray)';">
+            <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--accent);transition:0.3s;border-radius:26px;"></span>
+            <span class="toggle-knob" style="position:absolute;content:'';height:20px;width:20px;left:3px;bottom:3px;background-color:white;transition:0.3s;border-radius:50%;"></span>
+          </label>
+        </div>
       </div>
 
       <button class="btn btn-primary btn-block" onclick="window.adminSaveAd()" style="margin-top:16px;">

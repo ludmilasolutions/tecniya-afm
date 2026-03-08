@@ -203,23 +203,24 @@ export async function uploadAdImage(file) {
 
   const timestamp = Date.now();
   const fileExt = file.name.split('.').pop();
-  const fileName = `ads/${timestamp}.${fileExt}`;
-  const filePath = `${BUCKETS.ADS}/${fileName}`;
+  const fileName = `${timestamp}.${fileExt}`;
 
   const { data, error } = await sb.storage
-    .from(BUCKETS.ADS)
-    .upload(filePath, file, {
-      contentType: file.type
+    .from('ads')
+    .upload(fileName, file, {
+      contentType: file.type,
+      upsert: false
     });
 
   if (error) {
+    console.error('Upload error:', error);
     showToast('Error al subir imagen: ' + error.message, 'error');
     return null;
   }
 
   const { data: { publicUrl } } = sb.storage
-    .from(BUCKETS.ADS)
-    .getPublicUrl(filePath);
+    .from('ads')
+    .getPublicUrl(fileName);
 
   return publicUrl;
 }

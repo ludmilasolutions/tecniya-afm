@@ -2922,3 +2922,29 @@ p {
 #ad-image-preview-container img {
   transition: all 0.2s ease;
 }
+
+/* ===== TOGGLE SWITCH ===== */
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider .toggle-knob,
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.toggle-switch .toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:not(:checked) + .toggle-slider {
+  background-color: var(--gray2);
+}

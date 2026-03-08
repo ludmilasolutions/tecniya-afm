@@ -1069,7 +1069,7 @@ export async function adminSaveAd() {
   const level    = document.getElementById('ad-form-level')?.value || 'local';
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
-  const active    = document.getElementById('ad-form-active')?.checked ?? true;
+  const active   = document.getElementById('ad-form-active')?.checked ?? true;
   
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
@@ -1080,7 +1080,7 @@ export async function adminSaveAd() {
     const { uploadAdImage } = await import('./upload.js');
     image_url = await uploadAdImage(adImageState.file);
     if (!image_url) {
-      showToast('Error al subir imagen', 'error');
+      showToast('Error al subir imagen. Podés usar una URL externa.', 'error');
       return;
     }
   }
