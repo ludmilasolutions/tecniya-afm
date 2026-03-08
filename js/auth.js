@@ -276,9 +276,12 @@ export async function redirectAfterLogin() {
     const { loadAdminData } = await import('./admin.js');
     loadAdminData();
   } else {
-    // Siempre aterrizar en el panel cliente.
-    // El panel pro solo se activa cuando el usuario lo elige desde el menú.
+    // SIEMPRE aterrizar en panel cliente al iniciar sesión.
+    // El pro elige cambiar al panel profesional manualmente desde el menú.
+    // Forzar reset del panel aunque quedara 'pro' de una sesión anterior.
     store.setActivePanel('user');
+    const { updateAuthUI } = await import('./ui.js');
+    updateAuthUI();
     showPage('user-dashboard');
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
