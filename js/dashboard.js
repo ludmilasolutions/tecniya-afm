@@ -116,7 +116,26 @@ export async function loadFavorites() {
   }
 }
 
-export async function loadUserBudgets() {
+export async function loadUserHistory() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  try {
+    const { data: jobs } = await sb
+      .from('jobs')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .in('status', ['finalizado', 'cancelado', 'rechazado'])
+      .order('created_at', { ascending: false });
+
+    const histEl = document.getElementById('user-history-list');
+    if (!histEl) return;
+    histEl.innerHTML = jobs?.length
+      ? jobs.map(j => jobItem(j, 'user')).join('')
+      : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+  } catch (e) { console.error('loadUserHistory:', e); }
+}
+
+
   if (!store.currentUser) return;
   const sb = getSupabase();
   try {

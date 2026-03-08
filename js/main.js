@@ -10,7 +10,8 @@ import { detectLocation } from './geolocation.js';
 import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest,
          contactPro, addFavorite, openRatingModal, setRating, submitRating,
          initJobsEventListeners } from './jobs.js';
-import { loadUserDashboard, loadProDashboard, saveAvailability, saveProfile,
+import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
+         saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF, sendBudgetWhatsApp } from './dashboard.js';
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
@@ -164,9 +165,16 @@ async function initApp() {
   on('btn-urgent-dash',  'click', showUrgentModal);
   on('btn-save-profile', 'click', saveProfile);
 
-  // Tabs del dashboard de usuario
+  // Tabs del dashboard de usuario — data-tab (no data-panel)
   document.querySelectorAll('#user-tabs .tab').forEach(tab => {
-    tab.addEventListener('click', e => switchTab(e, tab.dataset.panel));
+    tab.addEventListener('click', e => {
+      switchTab(e, tab.dataset.tab);
+      // Cargar datos cuando se abre el tab correspondiente
+      const t = tab.dataset.tab;
+      if (t === 'tab-favoritos')  loadFavorites();
+      if (t === 'tab-historial')  loadUserHistory();
+      if (t === 'tab-presupuestos') loadUserBudgets();
+    });
   });
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
@@ -186,9 +194,11 @@ async function initApp() {
     if (store.currentPro) await uploadWorkPhoto(file, store.currentPro.id);
   });
 
-  // Tabs del dashboard profesional
+  // Tabs del dashboard profesional — data-tab
   document.querySelectorAll('#pro-tabs .tab').forEach(tab => {
-    tab.addEventListener('click', e => switchTab(e, tab.dataset.panel));
+    tab.addEventListener('click', e => {
+      switchTab(e, tab.dataset.tab);
+    });
   });
 
   // ── ADMIN ────────────────────────────────────────────────────────────────

@@ -102,10 +102,11 @@ export function scrollToSearch() {
 }
 
 export function switchTab(event, tabId) {
-  const container = event.target.closest('.page') || document;
+  const clickedTab = event.target.closest('.tab') || event.target;
+  const container = clickedTab.closest('[id$="-tabs"]')?.parentElement || document;
   container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   container.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
+  clickedTab.classList.add('active');
   const panel = document.getElementById(tabId);
   if (panel) panel.classList.add('active');
 }
@@ -165,42 +166,48 @@ export function updateAuthUI() {
   const isLogged = !!store.currentUser;
   
   const navAuthBtns = document.getElementById('nav-auth-btns');
-  if (navAuthBtns) {
-    navAuthBtns.style.display = isLogged ? 'none' : 'flex';
-  }
+  if (navAuthBtns) navAuthBtns.style.display = isLogged ? 'none' : 'flex';
   
   const userMenu = document.getElementById('nav-user-menu');
-  if (userMenu) {
-    userMenu.style.display = isLogged ? 'flex' : 'none';
-  }
+  if (userMenu) userMenu.style.display = isLogged ? 'flex' : 'none';
   
   const notifBtn = document.getElementById('notif-btn');
-  if (notifBtn) {
-    notifBtn.style.display = isLogged ? 'flex' : 'none';
-  }
+  if (notifBtn) notifBtn.style.display = isLogged ? 'flex' : 'none';
   
   const mobileLoginLink = document.getElementById('mobile-login-link');
-  if (mobileLoginLink) {
-    mobileLoginLink.style.display = isLogged ? 'none' : 'block';
-  }
+  if (mobileLoginLink) mobileLoginLink.style.display = isLogged ? 'none' : 'block';
   
   const mobilePanelLink = document.getElementById('mobile-panel-link');
-  if (mobilePanelLink) {
-    mobilePanelLink.style.display = isLogged ? 'block' : 'none';
-  }
+  if (mobilePanelLink) mobilePanelLink.style.display = isLogged ? 'block' : 'none';
   
   if (isLogged) {
-    const name = store.currentUser.user_metadata?.full_name || store.currentUser.email || 'U';
-    const initial = name.charAt(0).toUpperCase();
+    const meta = store.currentUser.user_metadata || {};
+    const name = meta.full_name || meta.name || store.currentUser.email || 'U';
+    const avatarUrl = meta.avatar_url || meta.picture || null;
     
+    // Avatar: foto de Google o inicial
     const userAvatarBtn = document.getElementById('user-avatar-btn');
     if (userAvatarBtn) {
-      userAvatarBtn.textContent = initial;
+      if (avatarUrl) {
+        userAvatarBtn.innerHTML = `<img src="${avatarUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="${name}">`;
+      } else {
+        userAvatarBtn.textContent = name.charAt(0).toUpperCase();
+      }
     }
     
-    const dashUserName = document.getElementById('dash-user-name');
-    if (dashUserName) {
-      dashUserName.textContent = name.split(' ')[0];
+    // Nombre en el menú desplegable
+    const menuUserName = document.getElementById('menu-user-name');
+    if (menuUserName) menuUserName.textContent = name.split(' ')[0];
+
+    // Label del dashboard en el menú según rol
+    const menuDashLabel = document.getElementById('menu-dashboard-label');
+    if (menuDashLabel) {
+      const labels = { admin: 'Panel Admin', professional: 'Mi Panel Pro', user: 'Mi Panel' };
+      menuDashLabel.textContent = labels[store.currentRole] || 'Mi Panel';
     }
+
+    // Nombre de bienvenida en dashboard
+    const dashUserName = document.getElementById('dash-user-name');
+    if (dashUserName) dashUserName.textContent = name.split(' ')[0];
   }
 }
