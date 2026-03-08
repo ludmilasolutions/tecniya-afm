@@ -24,7 +24,7 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
-import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
+import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
 import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification, handleNotifClick } from './notifications.js';
 import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat, closeChat } from './chat.js';
@@ -429,3 +429,13 @@ async function initApp() {
 }
 
 window.addEventListener('DOMContentLoaded', initApp);
+
+window.switchPenaltyTab = function(tabId) {
+  document.querySelectorAll('.pen-tab-panel').forEach(p => p.style.display = 'none');
+  const el = document.getElementById(tabId);
+  if (el) el.style.display = 'block';
+  document.querySelectorAll('#admin-penalties .tab').forEach((t, i) => {
+    const ids = ['pen-tab-pros','pen-tab-reports','pen-tab-history'];
+    t.classList.toggle('active', ids[i] === tabId);
+  });
+};

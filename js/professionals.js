@@ -52,6 +52,9 @@ export async function loadProfessionals() {
       user_id:       p.user_id,
       name:          p.name || p.full_name || 'Profesional',
       specialty:     p.specialties?.[0] || p.specialty,
+      trust_score:   p.trust_score ?? 100,
+      ranking_score: p.ranking_score ?? 100,
+      suspended:     p.suspended || false,
       specialties:   p.specialties || (p.specialty ? [p.specialty] : []),
       city:          p.city,
       province:      p.province,
@@ -145,6 +148,19 @@ export function proCard(p) {
       <div class="pro-badges">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}</div>
     </div>
     <div class="pro-card-body">
+      <div class="pro-trust" title="Confiabilidad basada en trabajos completados y comportamiento">
+        <span style="font-size:0.72rem;color:var(--gray);">Confiabilidad</span>
+        <div class="trust-score-bar">
+          <div class="trust-score-fill" style="width:${p.trust_score||100}%;background:${
+            (p.trust_score||100) >= 80 ? 'var(--green)' :
+            (p.trust_score||100) >= 50 ? 'var(--orange)' : '#f87171'
+          };"></div>
+        </div>
+        <span style="font-size:0.72rem;font-weight:700;color:${
+          (p.trust_score||100) >= 80 ? 'var(--green)' :
+          (p.trust_score||100) >= 50 ? 'var(--orange)' : '#f87171'
+        };">${p.trust_score||100}%</span>
+      </div>
       <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas)</span></div>
       <div class="pro-desc">${escapeHtml(p.description) || 'Profesional disponible para trabajos técnicos en tu zona.'}</div>
       <div class="pro-zones">${zones}</div>

@@ -408,3 +408,277 @@ window.adminToggleAd = adminToggleAd;
 window.adminDeleteAd = adminDeleteAd;
 window.adminDeleteReview = adminDeleteReview;
 window.adminViewAuditLog = adminViewAuditLog;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SISTEMA DE PENALIZACIONES — funciones admin
+// ══════════════════════════════════════════════════════════════════════════════
+import {
+  applyPenalty, revertPenalty, suspendPro, unsuspendPro,
+  setUrgentBlock, blockUserTemp, loadPenalties, loadReports, reviewReport,
+  PENALTY_WEIGHTS
+} from './penalties.js';
+
+// ─── Cargar panel de penalizaciones ───────────────────────────────────────────
+export async function loadAdminPenalties() {
+  await Promise.all([
+    loadPenaltiesList(),
+    loadReportsList('pending'),
+    loadPenalizedPros(),
+  ]);
+}
+
+async function loadPenaltiesList() {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('penalties')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(80);
+
+  const tbody = document.getElementById('penalties-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="adm-empty">Sin penalizaciones registradas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => {
+    const typeLabel = {
+      cancel: 'Cancelación', no_response: 'Sin respuesta', bad_review: 'Mala reseña',
+      report: 'Reporte', warning: 'Advertencia', suspension: 'Suspensión',
+    }[p.type] || p.type;
+    const deltaHtml = p.delta < 0
+      ? `<span class="penalty-delta neg">${p.delta}</span>`
+      : `<span class="penalty-delta">—</span>`;
+    const statusHtml = p.reverted
+      ? '<span class="badge badge-disponible">Revertida</span>'
+      : '<span class="badge badge-destacado">Activa</span>';
+    return `<tr>
+      <td style="font-size:0.76rem;color:var(--gray2);">${p.id.slice(0,8)}…</td>
+      <td><span class="penalty-type-badge type-${p.type}">${typeLabel}</span></td>
+      <td style="font-size:0.82rem;">${escapeHtml(p.description || '—')}</td>
+      <td>${deltaHtml}</td>
+      <td>${statusHtml}</td>
+      <td>
+        ${!p.reverted ? `<button class="btn btn-ghost btn-sm" onclick="window.adminRevertPenalty('${p.id}')" title="Revertir"><i class="fa fa-rotate-left"></i></button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadReportsList(status) {
+  const sb = getSupabase();
+  let q = sb.from('reports')
+    .select('id,reason,description,status,created_at,professional_id,reporter_id')
+    .order('created_at', { ascending: false }).limit(80);
+  if (status !== 'all') q = q.eq('status', status);
+  const { data } = await q;
+
+  const tbody = document.getElementById('reports-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="adm-empty">Sin reportes</td></tr>';
+    return;
+  }
+  const reasonLabel = {
+    estafa: '🚨 Estafa', mal_trato: '😠 Mal trato',
+    trabajo_incompleto: '🔧 Trabajo incompleto',
+    no_se_presento: '👻 No se presentó', otro: '📋 Otro'
+  };
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="font-size:0.76rem;color:var(--gray2);">${r.id.slice(0,8)}…</td>
+      <td>${reasonLabel[r.reason] || r.reason}</td>
+      <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.description || '—')}</td>
+      <td style="font-size:0.76rem;color:var(--gray);">${new Date(r.created_at).toLocaleDateString('es-AR')}</td>
+      <td><span class="badge badge-${r.status==='pending'?'nuevo':r.status==='confirmed'?'destacado':'disponible'}">${r.status}</span></td>
+      <td style="display:flex;gap:4px;">
+        ${r.status === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="window.adminConfirmReport('${r.id}','${r.professional_id}')" title="Confirmar"><i class="fa fa-check"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="window.adminDismissReport('${r.id}')" title="Desestimar"><i class="fa fa-xmark"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadPenalizedPros() {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('professionals')
+    .select('id,user_id,specialty,ranking_score,trust_score,cancel_count,report_count,warning_count,suspended,urgent_blocked,profiles:user_id(full_name)')
+    .or('ranking_score.lt.80,suspended.eq.true,report_count.gt.0,cancel_count.gt.0')
+    .order('ranking_score', { ascending: true })
+    .limit(60);
+
+  const tbody = document.getElementById('penalized-pros-tbody');
+  if (!tbody) return;
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="adm-empty">Sin profesionales penalizados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => {
+    const scoreColor = p.ranking_score >= 80 ? 'var(--green)' : p.ranking_score >= 50 ? 'var(--orange)' : '#f87171';
+    const statusBadge = p.suspended
+      ? '<span class="badge badge-destacado">Suspendido</span>'
+      : '<span class="badge badge-disponible">Activo</span>';
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="chat-conv-avatar" style="width:30px;height:30px;font-size:0.72rem;">${p.profiles?.full_name?.charAt(0)||'P'}</div>
+          ${escapeHtml(p.profiles?.full_name || '—')}
+        </div>
+      </td>
+      <td>${escapeHtml(p.specialty||'—')}</td>
+      <td><span style="font-weight:700;color:${scoreColor};">${p.ranking_score}</span></td>
+      <td>
+        <span title="Cancelaciones" style="margin-right:6px;">❌ ${p.cancel_count||0}</span>
+        <span title="Reportes" style="margin-right:6px;">🚨 ${p.report_count||0}</span>
+        <span title="Advertencias">⚠️ ${p.warning_count||0}</span>
+      </td>
+      <td>${statusBadge}</td>
+      <td>${p.urgent_blocked ? '<span style="color:#f87171;font-size:0.78rem;">Bloqueado</span>' : '<span style="color:var(--green);font-size:0.78rem;">OK</span>'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="window.adminOpenPenaltyModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}')" title="Penalizar"><i class="fa fa-gavel"></i></button>
+        ${p.suspended
+          ? `<button class="btn btn-success btn-sm" onclick="window.adminUnsuspend('${p.id}')" title="Levantar suspensión"><i class="fa fa-unlock"></i></button>`
+          : `<button class="btn btn-danger btn-sm" onclick="window.adminSuspendModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}')" title="Suspender"><i class="fa fa-ban"></i></button>`}
+        <button class="btn btn-${p.urgent_blocked?'success':'orange'} btn-sm" onclick="window.adminToggleUrgent('${p.id}',${!p.urgent_blocked})" title="${p.urgent_blocked?'Habilitar urgentes':'Bloquear urgentes'}"><i class="fa fa-bolt"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="window.adminViewPenalties('${p.id}')" title="Ver historial"><i class="fa fa-clock-rotate-left"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Acciones admin penalizaciones ────────────────────────────────────────────
+export async function adminRevertPenalty(penaltyId) {
+  if (!confirm('¿Revertir esta penalización?')) return;
+  const sb = getSupabase();
+  const { data: { user } } = await sb.auth.getUser();
+  try {
+    await revertPenalty(penaltyId, user.id);
+    showToast('Penalización revertida', 'success');
+    loadAdminPenalties();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+export async function adminConfirmReport(reportId, proId) {
+  const sb = getSupabase();
+  const { data: { user } } = await sb.auth.getUser();
+  await reviewReport(reportId, 'confirmed', user.id);
+  // Aplicar penalización al pro
+  await applyPenalty({
+    targetId: proId, targetType: 'professional',
+    type: 'report', description: 'Reporte de usuario confirmado por admin',
+    delta: PENALTY_WEIGHTS.report, adminId: user.id,
+  });
+  showToast('Reporte confirmado — penalización aplicada', 'success');
+  loadAdminPenalties();
+}
+
+export async function adminDismissReport(reportId) {
+  const sb = getSupabase();
+  const { data: { user } } = await sb.auth.getUser();
+  await reviewReport(reportId, 'dismissed', user.id);
+  showToast('Reporte desestimado', 'info');
+  loadReportsList('pending');
+}
+
+export async function adminOpenPenaltyModal(proId, name) {
+  document.getElementById('penalty-modal-pro-id').value = proId;
+  document.getElementById('penalty-modal-title').textContent = `Penalizar a ${name}`;
+  document.getElementById('modal-penalty').classList.add('open');
+}
+
+export async function adminSubmitPenalty() {
+  const sb = getSupabase();
+  const proId = document.getElementById('penalty-modal-pro-id')?.value;
+  const type  = document.getElementById('penalty-modal-type')?.value;
+  const desc  = document.getElementById('penalty-modal-desc')?.value?.trim();
+  if (!type || !desc) { showToast('Completá tipo y descripción', 'warning'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  try {
+    await applyPenalty({
+      targetId: proId, targetType: 'professional',
+      type, description: desc,
+      delta: PENALTY_WEIGHTS[type] ?? 0,
+      adminId: user.id,
+    });
+    showToast('Penalización aplicada', 'success');
+    document.getElementById('modal-penalty')?.classList.remove('open');
+    loadAdminPenalties();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+export async function adminSuspendModal(proId, name) {
+  document.getElementById('suspend-modal-pro-id').value = proId;
+  document.getElementById('suspend-modal-title').textContent = `Suspender a ${name}`;
+  document.getElementById('modal-suspend').classList.add('open');
+}
+
+export async function adminSubmitSuspend() {
+  const sb = getSupabase();
+  const proId  = document.getElementById('suspend-modal-pro-id')?.value;
+  const reason = document.getElementById('suspend-modal-reason')?.value?.trim();
+  const days   = parseInt(document.getElementById('suspend-modal-days')?.value) || 7;
+  if (!reason) { showToast('Ingresá el motivo', 'warning'); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  try {
+    await suspendPro({ proId, reason, days, adminId: user.id });
+    showToast(`Profesional suspendido por ${days} días`, 'success');
+    document.getElementById('modal-suspend')?.classList.remove('open');
+    loadAdminPenalties();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+export async function adminUnsuspend(proId) {
+  if (!confirm('¿Levantar la suspensión?')) return;
+  await unsuspendPro(proId);
+  showToast('Suspensión levantada', 'success');
+  loadAdminPenalties();
+}
+
+export async function adminToggleUrgent(proId, blocked) {
+  await setUrgentBlock(proId, blocked);
+  showToast(blocked ? 'Trabajos urgentes bloqueados' : 'Trabajos urgentes habilitados', 'success');
+  loadPenalizedPros();
+}
+
+export async function adminViewPenalties(proId) {
+  const penalties = await loadPenalties(proId);
+  const list = document.getElementById('penalty-history-list');
+  if (!list) return;
+  list.innerHTML = penalties.length
+    ? penalties.map(p => `
+        <div class="penalty-history-item ${p.reverted ? 'reverted' : ''}">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="penalty-type-badge type-${p.type}">${p.type}</span>
+            <span style="font-size:0.82rem;">${escapeHtml(p.description||'')}</span>
+            ${p.delta ? `<span class="penalty-delta neg">${p.delta}</span>` : ''}
+          </div>
+          <div style="font-size:0.72rem;color:var(--gray);margin-top:3px;">
+            ${new Date(p.created_at).toLocaleString('es-AR')}
+            ${p.reverted ? ' · <span style="color:var(--green)">Revertida</span>' : ''}
+            ${!p.reverted ? `<button class="btn btn-ghost btn-sm" style="padding:2px 8px;margin-left:8px;" onclick="window.adminRevertPenalty('${p.id}')">Revertir</button>` : ''}
+          </div>
+        </div>`).join('')
+    : '<p style="color:var(--gray);font-size:0.85rem;">Sin penalizaciones</p>';
+  document.getElementById('modal-penalty-history')?.classList.add('open');
+}
+
+export async function adminFilterReports(status) {
+  document.querySelectorAll('.report-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-status="${status}"]`)?.classList.add('active');
+  await loadReportsList(status);
+}
+
+window.adminRevertPenalty   = adminRevertPenalty;
+window.adminConfirmReport   = adminConfirmReport;
+window.adminDismissReport   = adminDismissReport;
+window.adminOpenPenaltyModal= adminOpenPenaltyModal;
+window.adminSubmitPenalty   = adminSubmitPenalty;
+window.adminSuspendModal    = adminSuspendModal;
+window.adminSubmitSuspend   = adminSubmitSuspend;
+window.adminUnsuspend       = adminUnsuspend;
+window.adminToggleUrgent    = adminToggleUrgent;
+window.adminViewPenalties   = adminViewPenalties;
+window.adminFilterReports   = adminFilterReports;

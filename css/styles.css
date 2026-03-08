@@ -2292,6 +2292,74 @@ p {
   border-color: rgba(79,70,229,0.4);
 }
 
+
+/* ===== SISTEMA DE PENALIZACIONES ===== */
+.pen-tab-panel {
+  display: none;
+}
+.pen-tab-panel.active,
+#pen-tab-pros {
+  display: block;
+}
+.penalty-delta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gray);
+}
+.penalty-delta.neg {
+  color: #f87171;
+}
+.penalty-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.type-warning    { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+.type-cancel     { background: rgba(239,68,68,0.12);   color: #f87171; }
+.type-no_response{ background: rgba(100,116,139,0.15); color: var(--gray); }
+.type-bad_review { background: rgba(249,115,22,0.12);  color: var(--orange); }
+.type-report     { background: rgba(239,68,68,0.2);    color: #ef4444; }
+.type-suspension { background: rgba(15,23,42,0.4);     color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+.penalty-history-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.penalty-history-item.reverted {
+  opacity: 0.5;
+}
+.report-filter-btn.active {
+  background: rgba(79,70,229,0.2);
+  border-color: var(--primary);
+  color: var(--light);
+}
+.adm-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--gray);
+  font-size: 0.88rem;
+}
+
+/* Score visual en perfil pro (confiabilidad pública) */
+.trust-score-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.trust-score-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .admin-sidebar { width: 200px; }

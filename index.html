@@ -428,6 +428,7 @@
     <div class="admin-sidebar-item" data-tab="admin-subs"><i class="fa fa-crown"></i>Suscripciones</div>
     <div class="admin-sidebar-item" data-tab="admin-ads"><i class="fa fa-bullhorn"></i>Publicidad</div>
     <div class="admin-sidebar-item" data-tab="admin-reviews"><i class="fa fa-star"></i>Reseñas</div>
+    <div class="admin-sidebar-item" data-tab="admin-penalties"><i class="fa fa-gavel"></i>Penalizaciones</div>
     <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
   </div>
   <div class="admin-content">
@@ -489,6 +490,82 @@
         <tbody id="ads-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
       </table></div>
     </div>
+
+    <div id="admin-penalties" class="admin-tab" style="display:none;">
+      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <i class="fa fa-gavel" style="color:var(--orange);"></i> Sistema de Penalizaciones
+      </h3>
+
+      <!-- Stats rápidas -->
+      <div class="stats-row" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-active" style="color:var(--orange);">—</div>
+          <div class="stat-label">Penalizaciones activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-reports" style="color:#f87171;">—</div>
+          <div class="stat-label">Reportes pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-suspended" style="color:var(--gray);">—</div>
+          <div class="stat-label">Suspendidos</div>
+        </div>
+      </div>
+
+      <!-- Tabs internas -->
+      <div class="tabs" style="margin-bottom:20px;">
+        <button class="tab active" onclick="window.switchPenaltyTab('pen-tab-pros')">Profesionales en riesgo</button>
+        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-reports')">Reportes</button>
+        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-history')">Historial</button>
+      </div>
+
+      <!-- Sub-tab: Pros penalizados -->
+      <div id="pen-tab-pros" class="pen-tab-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Profesional</th><th>Especialidad</th>
+              <th>Score</th><th>Incidentes</th>
+              <th>Estado</th><th>Urgentes</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="penalized-pros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Reportes -->
+      <div id="pen-tab-reports" class="pen-tab-panel" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm report-filter-btn active" data-status="pending" onclick="window.adminFilterReports('pending')">Pendientes</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="confirmed" onclick="window.adminFilterReports('confirmed')">Confirmados</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="dismissed" onclick="window.adminFilterReports('dismissed')">Desestimados</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="all" onclick="window.adminFilterReports('all')">Todos</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>ID</th><th>Motivo</th><th>Descripción</th>
+              <th>Fecha</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="reports-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Historial -->
+      <div id="pen-tab-history" class="pen-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>ID</th><th>Tipo</th><th>Descripción</th>
+              <th>Delta</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="penalties-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="admin-reviews" class="admin-tab" style="display:none;">
       <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Reseñas</h2>
       <div class="admin-table-wrap"><table class="admin-table">
@@ -1396,6 +1473,80 @@
       </button>
     </div>
     <input type="file" id="fchat-image-input" accept="image/*" style="display:none">
+  </div>
+</div>
+
+
+<!-- Modal: aplicar penalización manual -->
+<div class="modal-overlay" id="modal-penalty">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="penalty-modal-title">Aplicar penalización</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-penalty').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="penalty-modal-pro-id">
+      <div class="form-group">
+        <label class="form-label">Tipo de penalización</label>
+        <select class="form-select" id="penalty-modal-type">
+          <option value="warning">⚠️ Advertencia (sin bajar score)</option>
+          <option value="cancel">❌ Cancelación (-10 score)</option>
+          <option value="no_response">⏱ Sin respuesta (-3 score)</option>
+          <option value="bad_review">⭐ Mala reseña (-8 score)</option>
+          <option value="report">🚨 Reporte confirmado (-15 score)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo / descripción</label>
+        <textarea class="form-textarea" id="penalty-modal-desc" placeholder="Describí el motivo de la penalización..."></textarea>
+      </div>
+      <button class="btn btn-danger btn-block" onclick="window.adminSubmitPenalty()">
+        <i class="fa fa-gavel"></i> Aplicar penalización
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: suspender profesional -->
+<div class="modal-overlay" id="modal-suspend">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="suspend-modal-title">Suspender profesional</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-suspend').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="suspend-modal-pro-id">
+      <div class="form-group">
+        <label class="form-label">Duración (días)</label>
+        <select class="form-select" id="suspend-modal-days">
+          <option value="3">3 días</option>
+          <option value="7" selected>7 días</option>
+          <option value="15">15 días</option>
+          <option value="30">30 días</option>
+          <option value="0">Indefinido</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo</label>
+        <textarea class="form-textarea" id="suspend-modal-reason" placeholder="Motivo de la suspensión..."></textarea>
+      </div>
+      <button class="btn btn-danger btn-block" onclick="window.adminSubmitSuspend()">
+        <i class="fa fa-ban"></i> Confirmar suspensión
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: historial de penalizaciones de un pro -->
+<div class="modal-overlay" id="modal-penalty-history">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Historial de penalizaciones</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-penalty-history').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="penalty-history-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
   </div>
 </div>
 

@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { onProCancelJob, onUserCancelJob } from './penalties.js';
 import { getSupabase } from './supabase.js';
 import { showModal, closeModal, showToast } from './ui.js';
 import { formatDate } from './utils.js';
