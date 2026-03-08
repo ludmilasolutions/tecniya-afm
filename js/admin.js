@@ -1046,7 +1046,17 @@ export async function adminEditAd(adId) {
   let savedTransform = { zoom: 1, posX: 0, posY: 0 };
   try {
     if (a.image_transform) {
-      savedTransform = JSON.parse(a.image_transform);
+      if (typeof a.image_transform === 'string') {
+        savedTransform = JSON.parse(a.image_transform);
+      } else {
+        savedTransform = { 
+          zoom: a.image_transform.zoom || 1, 
+          posX: a.image_transform.posX || 0, 
+          posY: a.image_transform.posY || 0 
+        };
+      }
+    } else if (a.image_zoom) {
+      savedTransform = { zoom: a.image_zoom || 1, posX: a.image_posX || 0, posY: a.image_posY || 0 };
     }
   } catch(e) {}
   document.getElementById('ad-form-image-transform').value = JSON.stringify(savedTransform);
@@ -1113,22 +1123,21 @@ export async function adminSaveAd() {
   // Rechazar base64 - no guardar en la base de datos
   if (image_url && image_url.startsWith('data:')) {
     image_url = null;
-  }
-
   try {
     const { data: { user } } = await sb.auth.getUser();
     
-    // Guardar transformación como JSON
-    const imageTransformData = JSON.stringify({
+    // Guardar transformación como JSON solo si hay valores custom
+    const hasCustomTransform = imageTransform.zoom !== 1 || imageTransform.posX !== 0 || imageTransform.posY !== 0;
+    const imageTransformData = hasCustomTransform ? JSON.stringify({
       zoom: imageTransform.zoom || 1,
       posX: imageTransform.posX || 0,
       posY: imageTransform.posY || 0
-    });
+    }) : null;
     
     let error;
     if (id) {
       // Actualizar directamente
-      const { error: updateError } = await sb.from('ads').update({
+      const updateData = {
         title: title,
         description: desc || null,
         link: link || null,
@@ -1136,13 +1145,16 @@ export async function adminSaveAd() {
         province: province || null,
         city: city || null,
         active: active,
-        image_url: image_url || null,
-        image_transform: imageTransformData
-      }).eq('id', id);
+        image_url: image_url || null
+      };
+      if (imageTransformData) {
+        updateData.image_transform = imageTransformData;
+      }
+      const { error: updateError } = await sb.from('ads').update(updateData).eq('id', id);
       error = updateError;
     } else {
       // Insertar directamente
-      const { error: insertError } = await sb.from('ads').insert({
+      const insertData = {
         title: title,
         description: desc || null,
         link: link || null,
@@ -1151,9 +1163,12 @@ export async function adminSaveAd() {
         city: city || null,
         active: active,
         image_url: image_url || null,
-        image_transform: imageTransformData,
         created_by: user.id
-      });
+      };
+      if (imageTransformData) {
+        insertData.image_transform = imageTransformData;
+      }
+      const { error: insertError } = await sb.from('ads').insert(insertData);
       error = insertError;
     }
 

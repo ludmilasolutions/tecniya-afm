@@ -47,21 +47,45 @@ function renderAdBanner(ad) {
     banner.id = 'custom-ad-banner';
     banner.style.cssText = `
       position: relative;
-      width: 100%;
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 20px 28px;
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(6, 182, 212, 0.2));
-      border: 1px solid rgba(79, 70, 229, 0.4);
-      border-radius: 14px;
+      width: 100vw;
+      max-width: 100vw;
+      margin-left: calc(-50vw + 50%);
+      margin-right: calc(-50vw + 50%);
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(6, 182, 212, 0.25));
+      border-top: 1px solid rgba(79, 70, 229, 0.3);
+      border-bottom: 1px solid rgba(79, 70, 229, 0.3);
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 24px;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 16px;
       box-sizing: border-box;
     `;
+    
+    // Estilos responsive en JavaScript
+    const style = document.createElement('style');
+    style.id = 'ad-banner-responsive-style';
+    style.textContent = `
+      @media (max-width: 768px) {
+        #custom-ad-banner {
+          flex-direction: column !important;
+          text-align: center !important;
+          gap: 16px !important;
+          padding: 20px 16px !important;
+        }
+        #custom-ad-banner .ad-banner-img {
+          width: 100% !important;
+          height: auto !important;
+          max-width: 200px !important;
+        }
+        #custom-ad-banner .ad-banner-text {
+          width: 100% !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
     banner.onclick = () => {
       if (ad.link && ad.link !== '#') {
         window.open(ad.link, '_blank');
@@ -73,7 +97,6 @@ function renderAdBanner(ad) {
     if (searchSection && searchSection.parentElement) {
       searchSection.parentElement.insertBefore(banner, searchSection);
     } else {
-      // Fallback: insertar en el container
       const container = document.querySelector('.container');
       if (container) {
         container.insertBefore(banner, container.firstChild);
@@ -82,34 +105,49 @@ function renderAdBanner(ad) {
   }
 
   // Aplicar transformación de imagen guardada
-  const imgZoom = ad.image_zoom || 1;
-  const imgPosX = ad.image_posX || 0;
-  const imgPosY = ad.image_posY || 0;
-  const imgStyle = `width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.3);transform:scale(${imgZoom}) translate(${imgPosX}px, ${imgPosY}px);`;
+  let imgTransform = { zoom: 1, posX: 0, posY: 0 };
+  try {
+    if (ad.image_transform) {
+      if (typeof ad.image_transform === 'string') {
+        imgTransform = JSON.parse(ad.image_transform);
+      } else {
+        imgTransform = { 
+          zoom: ad.image_transform.zoom || 1, 
+          posX: ad.image_transform.posX || 0, 
+          posY: ad.image_transform.posY || 0 
+        };
+      }
+    } else if (ad.image_zoom) {
+      imgTransform = { zoom: ad.image_zoom || 1, posX: ad.image_posX || 0, posY: ad.image_posY || 0 };
+    }
+  } catch(e) {
+    console.warn('Error parsing image_transform:', e);
+  }
   
-  // Imagen más grande - 80px en vez de 50px
+  const imgStyle = `width:120px;height:120px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.4);transform:scale(${imgTransform.zoom}) translate(${imgTransform.posX}px, ${imgTransform.posY}px);`;
+  
   const imageHtml = ad.image_url 
-    ? `<img src="${ad.image_url}" style="${imgStyle}" alt="${ad.title}">`
-    : `<div style="width:80px;height:80px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,0.3);"><i class="fa fa-bullhorn"></i></div>`;
+    ? `<img src="${ad.image_url}" class="ad-banner-img" style="${imgStyle}" alt="${ad.title}">`
+    : `<div class="ad-banner-img" style="width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:36px;box-shadow:0 4px 20px rgba(0,0,0,0.4);flex-shrink:0;"><i class="fa fa-bullhorn"></i></div>`;
   
-  // Sin badge de nivel - solo título y descripción
   banner.innerHTML = `
     ${imageHtml}
-    <div style="flex: 1; min-width: 0;">
-      <div style="font-weight: 700; font-size: 1.15rem; color: #f8fafc; margin-bottom: 4px;">${ad.title || 'Publicidad'}</div>
-      <div style="font-size: 0.9rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
+    <div class="ad-banner-text" style="flex: 1; min-width: 0;">
+      <div style="font-weight: 700; font-size: 1.4rem; color: #fff; margin-bottom: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${ad.title || 'Publicidad'}</div>
+      <div style="font-size: 1rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
+    </div>
+    <div style="flex-shrink: 0; padding: 12px 24px; background: rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 0.95rem; font-weight: 600; white-space: nowrap;">
+      <i class="fa fa-external-link" style="margin-right:8px;"></i> Ver más
     </div>
   `;
   
   banner.onmouseenter = () => {
-    banner.style.borderColor = 'rgba(79, 70, 229, 0.7)';
-    banner.style.transform = 'translateY(-2px)';
-    banner.style.boxShadow = '0 8px 25px rgba(79, 70, 229, 0.3)';
+    banner.style.background = 'linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.35))';
+    banner.style.transform = 'scale(1.01)';
   };
   banner.onmouseleave = () => {
-    banner.style.borderColor = 'rgba(79, 70, 229, 0.4)';
-    banner.style.transform = 'translateY(0)';
-    banner.style.boxShadow = 'none';
+    banner.style.background = 'linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(6, 182, 212, 0.25))';
+    banner.style.transform = 'scale(1)';
   };
 }
 
