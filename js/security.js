@@ -92,23 +92,24 @@ export function getDeviceFingerprint() {
 export async function registerFingerprint(userId) {
   const sb = getSupabase();
   const fp = getDeviceFingerprint();
+  try {
+    const { error: e1 } = await sb.from('profiles')
+      .update({ device_fingerprint: fp }).eq('id', userId);
+    if (e1) return; // columna aún no existe — migración pendiente
 
-  // Guardar fingerprint (sin IP real — eso requiere Edge Function)
-  await sb.from('profiles').update({ device_fingerprint: fp }).eq('id', userId);
+    const { data: others, error: e2 } = await sb.from('profiles')
+      .select('id')
+      .eq('device_fingerprint', fp)
+      .neq('id', userId);
+    if (e2 || !others?.length) return;
 
-  // Buscar otras cuentas con mismo fingerprint
-  const { data: others } = await sb.from('profiles')
-    .select('id, full_name, email')
-    .eq('device_fingerprint', fp)
-    .neq('id', userId);
-
-  if (others && others.length >= 2) {
-    // Marcar como sospechoso en DB
-    await sb.from('profiles').update({
-      suspicious_flag: true,
-      suspicious_reason: `Dispositivo compartido con ${others.length} cuenta(s) más`,
-    }).eq('id', userId);
-  }
+    if (others.length >= 2) {
+      await sb.from('profiles').update({
+        suspicious_flag: true,
+        suspicious_reason: `Dispositivo compartido con ${others.length} cuenta(s) más`,
+      }).eq('id', userId);
+    }
+  } catch { /* migración pendiente */ }
 }
 
 // ── ADVERTENCIAS EN PERFIL DEL PRO ────────────────────────────────────────────

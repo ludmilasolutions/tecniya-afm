@@ -41,7 +41,7 @@ async function loadAdminUsers() {
   
   const { data: users } = await sb
     .from('profiles')
-    .select('id,full_name,email,role,blocked,created_at')
+    .select('id,full_name,email,role,created_at')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -75,7 +75,7 @@ async function loadAdminPros() {
   
   const { data: pros } = await sb
     .from('professionals')
-    .select('*, profiles:user_id(full_name, email, avatar_url)')
+    .select('id,user_id,specialty,avg_rating,is_featured,created_at,profiles:user_id(full_name,email)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -115,9 +115,9 @@ async function loadAdminPros() {
 async function loadAdminJobs() {
   const sb = getSupabase();
   
-  const { data: jobs } = await sb
+  const { data: jobs, error: jobErr } = await sb
     .from('jobs')
-    .select('*, profiles:user_id(full_name), professionals:professional_id(specialty)')
+    .select('id,user_id,professional_id,status,created_at,profiles:user_id(full_name),professionals:professional_id(specialty)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -696,12 +696,17 @@ export async function loadAdminSecurity() {
 
 async function loadSuspiciousAccounts() {
   const sb = getSupabase();
-  const { data } = await sb
+  const { data, error } = await sb
     .from('profiles')
-    .select('id,full_name,email,device_fingerprint,suspicious_reason,cancel_count,created_at')
+    .select('id,full_name,email,created_at')
     .eq('suspicious_flag', true)
     .order('created_at', { ascending: false })
     .limit(50);
+  if (error) {
+    const tbody = document.getElementById('suspicious-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="adm-empty" style="color:var(--orange);">Ejecutá security_migration.sql para activar esta función</td></tr>';
+    return;
+  }
 
   const tbody = document.getElementById('suspicious-tbody');
   if (!tbody) return;
@@ -724,9 +729,9 @@ async function loadSuspiciousAccounts() {
 
 async function loadHighCancelUsers() {
   const sb = getSupabase();
-  const { data } = await sb
+  const { data, error: e2 } = await sb
     .from('profiles')
-    .select('id,full_name,email,cancel_count,warning_count,blocked')
+    .select('id,full_name,email')
     .gt('cancel_count', 2)
     .order('cancel_count', { ascending: false })
     .limit(50);
