@@ -2,6 +2,21 @@ import { store } from './store.js';
 import { getSupabase, onAuthStateChange } from './supabase.js';
 import { showToast, updateAuthUI, showPage, closeModal, showModal } from './ui.js';
 
+// Helper: insert o update de professionals sin depender de UNIQUE constraint en DB
+async function saveProfessional(sb, userId, data) {
+  const { data: existing } = await sb.from('professionals')
+    .select('id').eq('user_id', userId).maybeSingle();
+  if (existing) {
+    return sb.from('professionals').update(data)
+      .eq('user_id', userId).select().maybeSingle();
+  } else {
+    return sb.from('professionals').insert({ user_id: userId, ...data })
+      .select().maybeSingle();
+  }
+}
+
+
+
 export async function initAuth() {
   const sb = getSupabase();
   if (!sb) return;
@@ -196,7 +211,15 @@ export async function registerEmail() {
         province,
         whatsapp,
         description: ''
-      }, { onConflict: 'user_id', ignoreDuplicates: true });
+      });
+      // Guardar pro sin depender de UNIQUE constraint
+      await saveProfessional(sb, data.user.id, {
+        specialty: specialty || 'General',
+        city,
+        province,
+        whatsapp,
+        description: ''
+      });
     }
   }
 
@@ -306,14 +329,13 @@ export async function activateProProfile() {
   const btn = document.getElementById('btn-activate-pro');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Activando...</span>'; }
 
-  const { data: newPro, error } = await sb.from('professionals').upsert({
-    user_id: store.currentUser.id,
+  const { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, {
     specialty,
     city,
     province,
     whatsapp,
     description: ''
-  }, { onConflict: 'user_id' }).select().maybeSingle();
+  });
 
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-wrench"></i>Activar perfil profesional'; }
 
@@ -375,13 +397,12 @@ export async function confirmChosenRole() {
 
   // Si eligió profesional, crear registro en professionals
   if (role === 'professional') {
-    const { data: newPro } = await sb.from('professionals').upsert({
-      user_id: userId,
+    const { data: newPro } = await saveProfessional(sb, userId, {
       specialty,
       city,
       province,
       description: ''
-    }, { onConflict: 'user_id' }).select().maybeSingle();
+    });
     store.setCurrentPro(newPro);
   }
 
