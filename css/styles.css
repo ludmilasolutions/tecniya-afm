@@ -2887,3 +2887,64 @@ p {
     transform: translateY(100%);
   }
 }
+
+/* ===== ADMIN ADS TABLE ===== */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray);
+  display: inline-block;
+}
+.status-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+#modal-ad-form .form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+#modal-ad-form input[type="checkbox"]:checked + span {
+  background-color: var(--accent);
+}
+#modal-ad-form input[type="checkbox"]:checked + span:before {
+  transform: translateX(22px);
+}
+
+/* ===== AD IMAGE UPLOAD ===== */
+#ad-image-upload-area:hover {
+  border-color: var(--accent) !important;
+  background: rgba(6, 182, 212, 0.05);
+}
+
+#ad-image-preview-container img {
+  transition: all 0.2s ease;
+}
+
+/* ===== TOGGLE SWITCH ===== */
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider .toggle-knob,
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+.toggle-switch .toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:not(:checked) + .toggle-slider {
+  background-color: var(--gray2);
+}
