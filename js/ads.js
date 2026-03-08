@@ -80,8 +80,8 @@ export function showAd(level) {
   
   // FORZAR display:block ya que el CSS tiene display:none
   if (adSection) {
-    adSection.style.display = 'block';
-    console.log('[DEBUG] Forzado display:block en ad-section');
+    adSection.setAttribute('style', 'display: block !important; visibility: visible !important; opacity: 1 !important;');
+    console.log('[DEBUG] Forzado display:block en ad-section con !important');
   }
   
   const computedSection = adSection ? window.getComputedStyle(adSection) : null;
