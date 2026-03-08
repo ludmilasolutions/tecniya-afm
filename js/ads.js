@@ -15,30 +15,39 @@ export async function loadAds() {
   }
   
   store.setAllAds(allAds);
+  // Mostrar inmediatamente y también después de que el DOM esté seguro
   showAd('nacional');
+  setTimeout(() => showAd('nacional'), 300);
 }
 
 export function showAd(level) {
-  const filtered = allAds.filter(a => a.level === level || !a.level);
-  const ad = filtered[Math.floor(Math.random() * filtered.length)] || allAds[0];
-  
+  if (!allAds || allAds.length === 0) return;
+
+  // Buscar por nivel exacto, sino nacional, sino cualquiera
+  let filtered = allAds.filter(a => a.level === level);
+  if (!filtered.length) filtered = allAds.filter(a => a.level === 'nacional' || !a.level);
+  if (!filtered.length) filtered = allAds;
+
+  const ad = filtered[Math.floor(Math.random() * filtered.length)];
   if (!ad) return;
-  
-  const titleEl = document.getElementById('ad-title');
-  const descEl = document.getElementById('ad-desc');
-  const badgeEl = document.getElementById('ad-level-badge');
+
+  const titleEl  = document.getElementById('ad-title');
+  const descEl   = document.getElementById('ad-desc');
+  const badgeEl  = document.getElementById('ad-level-badge');
   const bannerEl = document.getElementById('ad-banner-main');
-  
-  if (titleEl) titleEl.textContent = ad.title || ad.name || 'Publicidad';
-  if (descEl) descEl.textContent = ad.description || '';
-  
+
+  if (titleEl)  titleEl.textContent  = ad.title || 'Publicidad';
+  if (descEl)   descEl.textContent   = ad.description || '';
   if (badgeEl) {
-    badgeEl.textContent = level.charAt(0).toUpperCase() + level.slice(1);
-    badgeEl.className = `ad-level-badge ad-level-${level}`;
+    const lbl = ad.level || level;
+    badgeEl.textContent = lbl.charAt(0).toUpperCase() + lbl.slice(1);
+    badgeEl.className   = `ad-level-badge ad-level-${lbl}`;
   }
-  
   if (bannerEl) {
     bannerEl.dataset.link = ad.link || '#';
+    if (ad.image_url) {
+      bannerEl.style.backgroundImage = `url(${ad.image_url})`;
+    }
   }
 }
 
