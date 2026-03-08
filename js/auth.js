@@ -252,7 +252,7 @@ function showAuthError(el, msg) {
 function setBtnLoading(btn, loadingText, resetText) {
   if (!btn) return;
   if (loadingText) {
-    btn.innerHTML = \`<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle;"></span>\${loadingText}\`;
+    btn.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle;"></span>${loadingText}`;
     btn.disabled = true;
   } else {
     btn.innerHTML = resetText || btn.dataset.originalText || 'Confirmar';
