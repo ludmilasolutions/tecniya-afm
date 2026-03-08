@@ -430,6 +430,7 @@
     <div class="admin-sidebar-item" data-tab="admin-reviews"><i class="fa fa-star"></i>Reseñas</div>
     <div class="admin-sidebar-item" data-tab="admin-penalties"><i class="fa fa-gavel"></i>Penalizaciones</div>
     <div class="admin-sidebar-item" data-tab="admin-security"><i class="fa fa-shield-halved"></i>Seguridad</div>
+    <div class="admin-sidebar-item" onclick="window.adminViewAuditLog()"><i class="fa fa-scroll"></i>Auditoría</div>
     <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
   </div>
   <div class="admin-content">
@@ -1624,6 +1625,110 @@
       <button class="btn btn-danger btn-block" onclick="window.submitProReport()">
         <i class="fa fa-flag"></i> Enviar reporte
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: editar usuario (admin) -->
+<div class="modal-overlay" id="modal-edit-user">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-user-pen" style="color:var(--accent);margin-right:8px;"></i>Editar usuario</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-edit-user').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id">
+
+      <!-- Info de solo lectura -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;font-size:0.8rem;color:var(--gray);display:flex;flex-direction:column;gap:4px;">
+        <div><span style="color:var(--gray2);">ID:</span> <span id="edit-user-id-display" style="font-family:monospace;font-size:0.72rem;"></span></div>
+        <div><span style="color:var(--gray2);">Registro:</span> <span id="edit-user-created"></span></div>
+        <div style="display:flex;gap:16px;margin-top:4px;">
+          <span>❌ Cancelaciones: <strong id="edit-user-cancel-count" style="color:#f87171;">0</strong></span>
+          <span>⚠️ Advertencias: <strong id="edit-user-warning-count" style="color:#fbbf24;">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Nombre -->
+      <div class="form-group">
+        <label class="form-label">Nombre completo</label>
+        <input class="form-input" type="text" id="edit-user-name" placeholder="Nombre completo">
+      </div>
+
+      <!-- Rol -->
+      <div class="form-group">
+        <label class="form-label">Rol</label>
+        <select class="form-select" id="edit-user-role">
+          <option value="user">👤 Usuario</option>
+          <option value="admin">🛡️ Admin</option>
+        </select>
+      </div>
+
+      <!-- Bloqueado -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:16px;">
+        <div>
+          <div style="font-size:0.88rem;font-weight:600;">Cuenta bloqueada</div>
+          <div style="font-size:0.75rem;color:var(--gray);">El usuario no podrá iniciar sesión</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="edit-user-blocked" style="width:18px;height:18px;cursor:pointer;">
+        </label>
+      </div>
+
+      <!-- Acciones rápidas -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="window.adminResetCancelCount(document.getElementById('edit-user-id').value)" style="font-size:0.78rem;">
+          <i class="fa fa-rotate-left"></i> Resetear contadores
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="window.adminUnblockUntil(document.getElementById('edit-user-id').value)" style="font-size:0.78rem;color:var(--green);">
+          <i class="fa fa-unlock"></i> Desbloquear
+        </button>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="window.adminSaveUser()">
+        <i class="fa fa-floppy-disk"></i> Guardar cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: ver profesional (admin) -->
+<div class="modal-overlay" id="modal-view-pro">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-user-tie" style="color:var(--accent);margin-right:8px;"></i>Perfil del profesional</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-view-pro').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="view-pro-body">
+      <div style="text-align:center;padding:40px;color:var(--gray);">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: ver trabajo (admin) -->
+<div class="modal-overlay" id="modal-view-job">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-briefcase" style="color:var(--accent);margin-right:8px;"></i>Detalle del trabajo</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-view-job').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="view-job-body">
+      <div style="text-align:center;padding:40px;color:var(--gray);">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: audit log (admin) -->
+<div class="modal-overlay" id="modal-audit-log">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-scroll" style="color:var(--accent);margin-right:8px;"></i>Log de auditoría</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-audit-log').classList.remove('open')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="audit-log-body" style="padding:0;max-height:60vh;overflow-y:auto;">
+      <div style="text-align:center;padding:40px;color:var(--gray);">Cargando...</div>
     </div>
   </div>
 </div>

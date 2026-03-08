@@ -41,7 +41,7 @@ async function loadAdminUsers() {
   
   const { data: users } = await sb
     .from('profiles')
-    .select('id,full_name,role,created_at')
+    .select('id,full_name,role,blocked,cancel_count,warning_count,created_at')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -74,7 +74,7 @@ async function loadAdminPros() {
   
   const { data: pros } = await sb
     .from('professionals')
-    .select('id,user_id,specialty,avg_rating,is_featured,created_at,profiles:user_id(full_name)')
+    .select('id,user_id,specialty,city,avg_rating,is_featured,suspended,ranking_score,cancel_count,report_count,created_at,profiles:user_id(full_name,blocked)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -86,29 +86,35 @@ async function loadAdminPros() {
     return;
   }
 
-  tbody.innerHTML = pros.map(p => `
-    <tr>
+  tbody.innerHTML = pros.map(p => {
+    const sc = p.ranking_score ?? 100;
+    const scColor = sc >= 80 ? 'var(--green)' : sc >= 50 ? 'var(--orange)' : '#f87171';
+    const estado = p.suspended ? '<span class="badge badge-destacado">Suspendido</span>'
+                 : p.profiles?.blocked ? '<span class="badge badge-destacado">Bloqueado</span>'
+                 : '<span class="badge badge-disponible">Activo</span>';
+    return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="chat-conv-avatar" style="width:32px;height:32px;font-size:0.75rem;">
             ${p.profiles?.full_name?.charAt(0) || 'P'}
           </div>
-          ${escapeHtml(p.profiles?.full_name || '-')}
+          <div>
+            <div>${escapeHtml(p.profiles?.full_name || '-')}</div>
+            <div style="font-size:0.72rem;color:var(--gray);">${escapeHtml(p.city || '')}</div>
+          </div>
         </div>
       </td>
       <td>${escapeHtml(p.specialty || '-')}</td>
-      <td>${escapeHtml(p.city || '-')}</td>
-      <td>${p.avg_rating ? p.avg_rating.toFixed(1) : '-'}</td>
-      <td>${p.is_featured ? '<span class="badge badge-destacado">Sí</span>' : '<span style="color:var(--gray);">No</span>'}</td>
-      <td>
-        <button class="btn btn-ghost btn-sm" onclick="window.adminViewPro('${p.id}')" title="Ver"><i class="fa fa-eye"></i></button>
-        <button class="btn btn-${p.is_featured ? 'danger' : 'accent'} btn-sm" onclick="window.adminToggleFeatured('${p.id}', ${!p.is_featured})" title="${p.is_featured ? 'Quitar destacado' : 'Destacar'}">
-          <i class="fa fa-crown"></i>
-        </button>
-        <button class="btn btn-danger btn-sm" onclick="window.adminBlockPro('${p.user_id}')" title="Bloquear"><i class="fa fa-ban"></i></button>
+      <td>${p.avg_rating ? p.avg_rating.toFixed(1)+'★' : '—'}</td>
+      <td><span style="font-weight:700;color:${scColor};">${sc}</span></td>
+      <td>${estado} ${p.is_featured ? '<span class="badge badge-nuevo" style="margin-left:4px;">★</span>' : ''}</td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="window.adminViewPro('${p.id}')" title="Ver detalle"><i class="fa fa-eye"></i></button>
+        <button class="btn btn-${p.is_featured ? 'danger' : 'accent'} btn-sm" onclick="window.adminToggleFeatured('${p.id}',${!p.is_featured})" title="${p.is_featured ? 'Quitar destacado' : 'Destacar'}"><i class="fa fa-crown"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="window.adminOpenPenaltyModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}')" title="Penalizar"><i class="fa fa-gavel"></i></button>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function loadAdminJobs() {
@@ -116,7 +122,7 @@ async function loadAdminJobs() {
   
   const { data: jobs, error: jobErr } = await sb
     .from('jobs')
-    .select('id,user_id,professional_id,status,created_at,profiles:user_id(full_name)')
+    .select('id,user_id,professional_id,status,specialty,address,created_at,is_urgent,profiles:user_id(full_name)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -132,7 +138,7 @@ async function loadAdminJobs() {
     <tr>
       <td style="font-size:0.78rem;color:var(--gray2);">${j.id.slice(0, 8)}...</td>
       <td>${escapeHtml(j.profiles?.full_name || '-')}</td>
-      <td>${j.professional_id ? j.professional_id.slice(0,8)+'…' : '-'}</td>
+      <td>${escapeHtml(j.specialty || '-')}${j.is_urgent ? ' <i class="fa fa-bolt" style="color:var(--orange);font-size:0.7rem;"></i>' : ''}</td>
       <td><span class="job-status status-${j.status}">${j.status}</span></td>
       <td>${j.created_at ? formatDate(j.created_at) : '-'}</td>
       <td>
@@ -255,7 +261,61 @@ export function switchAdminTab(tabId) {
 }
 
 export async function adminEditUser(userId) {
-  showToast('Función de edición en desarrollo', 'info');
+  const sb = getSupabase();
+  const { data: u } = await sb
+    .from('profiles')
+    .select('id,full_name,role,blocked,blocked_until,cancel_count,warning_count,created_at')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (!u) { showToast('Usuario no encontrado', 'error'); return; }
+
+  // Cargar datos en el modal
+  document.getElementById('edit-user-id').value        = u.id;
+  document.getElementById('edit-user-name').value      = u.full_name || '';
+  document.getElementById('edit-user-role').value      = u.role || 'user';
+  document.getElementById('edit-user-blocked').checked = u.blocked || false;
+  document.getElementById('edit-user-cancel-count').textContent  = u.cancel_count  || 0;
+  document.getElementById('edit-user-warning-count').textContent = u.warning_count || 0;
+  document.getElementById('edit-user-created').textContent       = u.created_at ? new Date(u.created_at).toLocaleDateString('es-AR') : '-';
+  document.getElementById('edit-user-id-display').textContent    = u.id;
+
+  document.getElementById('modal-edit-user').classList.add('open');
+}
+
+export async function adminSaveUser() {
+  const sb  = getSupabase();
+  const uid = document.getElementById('edit-user-id')?.value;
+  const full_name = document.getElementById('edit-user-name')?.value?.trim();
+  const role      = document.getElementById('edit-user-role')?.value;
+  const blocked   = document.getElementById('edit-user-blocked')?.checked;
+
+  if (!full_name) { showToast('El nombre no puede estar vacío', 'warning'); return; }
+
+  const { error } = await sb.from('profiles')
+    .update({ full_name, role, blocked })
+    .eq('id', uid);
+
+  if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+
+  showToast('Usuario actualizado', 'success');
+  document.getElementById('modal-edit-user')?.classList.remove('open');
+  loadAdminData();
+}
+
+export async function adminResetCancelCount(userId) {
+  const sb = getSupabase();
+  await sb.from('profiles').update({ cancel_count: 0, warning_count: 0 }).eq('id', userId);
+  showToast('Contadores reseteados', 'success');
+  adminEditUser(userId);
+}
+
+export async function adminUnblockUntil(userId) {
+  const sb = getSupabase();
+  await sb.from('profiles').update({ blocked: false, blocked_until: null }).eq('id', userId);
+  showToast('Usuario desbloqueado', 'success');
+  adminEditUser(userId);
+  loadAdminData();
 }
 
 export async function adminToggleBlock(userId, blocked) {
@@ -289,11 +349,130 @@ export async function adminBlockPro(userId) {
 }
 
 export async function adminViewPro(proId) {
-  showToast('Ver perfil profesional', 'info');
+  const sb = getSupabase();
+  const { data: p } = await sb
+    .from('professionals')
+    .select('*,profiles:user_id(full_name,avatar_url,blocked,cancel_count)')
+    .eq('id', proId)
+    .maybeSingle();
+  if (!p) { showToast('Profesional no encontrado', 'error'); return; }
+
+  const el = document.getElementById('view-pro-body');
+  if (!el) return;
+
+  const trustColor = (p.trust_score||100) >= 80 ? 'var(--green)' : (p.trust_score||100) >= 50 ? 'var(--orange)' : '#f87171';
+  const scoreColor = (p.ranking_score||100) >= 80 ? 'var(--green)' : (p.ranking_score||100) >= 50 ? 'var(--orange)' : '#f87171';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div class="chat-conv-avatar" style="width:52px;height:52px;font-size:1.2rem;flex-shrink:0;">
+        ${p.profiles?.full_name?.charAt(0) || 'P'}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;">${escapeHtml(p.profiles?.full_name || '—')}</div>
+        <div style="font-size:0.82rem;color:var(--gray);">${escapeHtml(p.specialty || '—')} · ${escapeHtml(p.city || '—')}, ${escapeHtml(p.province || '—')}</div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+          ${p.is_featured ? '<span class="badge badge-destacado">Destacado</span>' : ''}
+          ${p.is_certified ? '<span class="badge badge-certificado">Certificado</span>' : ''}
+          ${p.suspended ? '<span class="badge badge-destacado">Suspendido</span>' : '<span class="badge badge-disponible">Activo</span>'}
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;">
+      <div class="pro-stat-item"><span class="pro-stat-num" style="color:${scoreColor}">${p.ranking_score||100}</span><span class="pro-stat-label">Score</span></div>
+      <div class="pro-stat-item"><span class="pro-stat-num" style="color:${trustColor}">${p.trust_score||100}%</span><span class="pro-stat-label">Confianza</span></div>
+      <div class="pro-stat-item"><span class="pro-stat-num">${p.avg_rating ? p.avg_rating.toFixed(1)+'★' : '—'}</span><span class="pro-stat-label">Rating</span></div>
+      <div class="pro-stat-item"><span class="pro-stat-num" style="color:var(--green)">${p.completed_jobs||0}</span><span class="pro-stat-label">Completados</span></div>
+      <div class="pro-stat-item"><span class="pro-stat-num" style="color:#f87171">${p.cancel_count||0}</span><span class="pro-stat-label">Cancelaciones</span></div>
+      <div class="pro-stat-item"><span class="pro-stat-num" style="color:var(--orange)">${p.report_count||0}</span><span class="pro-stat-label">Reportes</span></div>
+    </div>
+
+    <div style="font-size:0.82rem;color:var(--gray);display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+      <div>📞 ${escapeHtml(p.whatsapp || p.phone || '—')}</div>
+      <div>📍 ${escapeHtml(p.address || '—')}</div>
+      <div>💰 $${p.hourly_rate || '—'}/hr · ${p.years_experience || 0} años de exp.</div>
+      ${p.suspension_reason ? `<div style="color:var(--orange);">⚠️ Motivo suspensión: ${escapeHtml(p.suspension_reason)}</div>` : ''}
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-${p.is_featured ? 'danger' : 'accent'} btn-sm" onclick="window.adminToggleFeatured('${p.id}',${!p.is_featured});document.getElementById('modal-view-pro').classList.remove('open');">
+        <i class="fa fa-crown"></i> ${p.is_featured ? 'Quitar destacado' : 'Destacar'}
+      </button>
+      ${p.suspended
+        ? `<button class="btn btn-success btn-sm" onclick="window.adminUnsuspend('${p.id}');document.getElementById('modal-view-pro').classList.remove('open');"><i class="fa fa-unlock"></i> Levantar suspensión</button>`
+        : `<button class="btn btn-danger btn-sm" onclick="document.getElementById('modal-view-pro').classList.remove('open');window.adminSuspendModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}');"><i class="fa fa-ban"></i> Suspender</button>`}
+      <button class="btn btn-ghost btn-sm" onclick="window.adminOpenPenaltyModal('${p.id}','${escapeHtml(p.profiles?.full_name||'')}');document.getElementById('modal-view-pro').classList.remove('open');">
+        <i class="fa fa-gavel"></i> Penalizar
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="window.adminViewPenalties('${p.id}');document.getElementById('modal-view-pro').classList.remove('open');">
+        <i class="fa fa-clock-rotate-left"></i> Historial
+      </button>
+    </div>
+  `;
+  document.getElementById('modal-view-pro').classList.add('open');
 }
 
 export async function adminViewJob(jobId) {
-  showToast('Ver detalles del trabajo', 'info');
+  const sb = getSupabase();
+  const { data: j } = await sb
+    .from('jobs')
+    .select('*,profiles:user_id(full_name)')
+    .eq('id', jobId)
+    .maybeSingle();
+  if (!j) { showToast('Trabajo no encontrado', 'error'); return; }
+
+  const el = document.getElementById('view-job-body');
+  if (!el) return;
+
+  const statusLabels = {
+    solicitado:'📋 Solicitado', aceptado:'✅ Aceptado', en_proceso:'🔧 En proceso',
+    pendiente_confirmacion:'⏳ Pendiente confirmación', finalizado:'🏁 Finalizado',
+    cancelado:'❌ Cancelado', rechazado:'🚫 Rechazado', en_disputa:'⚖️ En disputa',
+    fecha_propuesta_pro:'📅 Fecha propuesta'
+  };
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="job-status status-${j.status}">${statusLabels[j.status]||j.status}</span>
+        <span style="font-size:0.75rem;color:var(--gray);">${j.id.slice(0,8)}…</span>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px;font-size:0.83rem;display:flex;flex-direction:column;gap:6px;">
+        <div><strong>Cliente:</strong> ${escapeHtml(j.profiles?.full_name || '—')}</div>
+        <div><strong>Especialidad:</strong> ${escapeHtml(j.specialty || '—')}</div>
+        <div><strong>Dirección:</strong> ${escapeHtml(j.address || '—')}</div>
+        <div><strong>Descripción:</strong> ${escapeHtml(j.description || '—')}</div>
+        ${j.scheduled_date ? `<div><strong>Fecha:</strong> ${j.scheduled_date} ${j.scheduled_time||''}</div>` : ''}
+        ${j.is_urgent ? '<div style="color:var(--orange);"><i class="fa fa-bolt"></i> Urgente</div>' : ''}
+        ${j.cancellation_reason ? `<div style="color:#f87171;"><strong>Motivo cancelación:</strong> ${escapeHtml(j.cancellation_reason)}</div>` : ''}
+        ${j.dispute_desc ? `<div style="color:var(--orange);"><strong>Disputa:</strong> ${escapeHtml(j.dispute_desc)}</div>` : ''}
+        ${j.warranty_until ? `<div style="color:var(--green);"><i class="fa fa-shield-halved"></i> Garantía hasta: ${new Date(j.warranty_until).toLocaleDateString('es-AR')}</div>` : ''}
+        <div style="color:var(--gray);font-size:0.75rem;">Creado: ${j.created_at ? new Date(j.created_at).toLocaleString('es-AR') : '—'}</div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${j.status !== 'finalizado' && j.status !== 'cancelado' ? `
+          <button class="btn btn-danger btn-sm" onclick="window.adminCancelJob('${j.id}');document.getElementById('modal-view-job').classList.remove('open');">
+            <i class="fa fa-times"></i> Cancelar trabajo
+          </button>` : ''}
+        ${j.status === 'en_disputa' ? `
+          <button class="btn btn-success btn-sm" onclick="window.adminResolveDispute('${j.id}');document.getElementById('modal-view-job').classList.remove('open');">
+            <i class="fa fa-gavel"></i> Resolver disputa
+          </button>` : ''}
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-view-job').classList.add('open');
+}
+
+export async function adminResolveDispute(jobId) {
+  if (!confirm('¿Marcar esta disputa como resuelta?')) return;
+  const sb = getSupabase();
+  await sb.from('jobs').update({ status: 'finalizado', completed_at: new Date().toISOString() }).eq('id', jobId);
+  showToast('Disputa resuelta — trabajo marcado como finalizado', 'success');
+  loadAdminJobs();
 }
 
 export async function adminCancelJob(jobId) {
@@ -367,15 +546,30 @@ export async function adminDeleteReview(reviewId) {
 
 export async function adminViewAuditLog() {
   const sb = getSupabase();
-  
   const { data: logs } = await sb
     .from('audit_log')
-    .select('*, profiles:user_id(full_name)')
+    .select('id,action,table_name,created_at,profiles:user_id(full_name)')
     .order('created_at', { ascending: false })
     .limit(100);
 
-  console.log('Audit Log:', logs);
-  showToast('Revisa la consola para ver el log de auditoría', 'info');
+  const el = document.getElementById('audit-log-body');
+  if (!el) return;
+
+  if (!logs?.length) {
+    el.innerHTML = '<p style="color:var(--gray);text-align:center;padding:20px;">Sin registros de auditoría</p>';
+  } else {
+    el.innerHTML = logs.map(l => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);font-size:0.8rem;">
+        <div>
+          <span style="color:var(--accent);font-weight:600;">${escapeHtml(l.action||'—')}</span>
+          <span style="color:var(--gray);margin:0 6px;">en</span>
+          <span style="color:var(--light);">${escapeHtml(l.table_name||'—')}</span>
+          <span style="color:var(--gray);margin-left:8px;">por ${escapeHtml(l.profiles?.full_name||'Sistema')}</span>
+        </div>
+        <span style="color:var(--gray);font-size:0.72rem;">${new Date(l.created_at).toLocaleString('es-AR')}</span>
+      </div>`).join('');
+  }
+  document.getElementById('modal-audit-log').classList.add('open');
 }
 
 export function filterAdminTable(query, tableId) {
@@ -395,18 +589,22 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.adminEditUser = adminEditUser;
+window.adminEditUser         = adminEditUser;
+window.adminViewPro           = adminViewPro;
+window.adminViewJob           = adminViewJob;
+window.adminResolveDispute    = adminResolveDispute;
+window.adminViewAuditLog      = adminViewAuditLog;
+window.adminSaveUser          = adminSaveUser;
+window.adminResetCancelCount  = adminResetCancelCount;
+window.adminUnblockUntil      = adminUnblockUntil;
 window.adminToggleBlock = adminToggleBlock;
 window.adminToggleFeatured = adminToggleFeatured;
 window.adminBlockPro = adminBlockPro;
-window.adminViewPro = adminViewPro;
-window.adminViewJob = adminViewJob;
 window.adminCancelJob = adminCancelJob;
 window.adminCancelSubscription = adminCancelSubscription;
 window.adminToggleAd = adminToggleAd;
 window.adminDeleteAd = adminDeleteAd;
 window.adminDeleteReview = adminDeleteReview;
-window.adminViewAuditLog = adminViewAuditLog;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SISTEMA DE PENALIZACIONES — funciones admin
