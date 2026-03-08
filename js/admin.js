@@ -1013,7 +1013,17 @@ export function adminNewAd() {
   document.getElementById('ad-form-city').value      = '';
   document.getElementById('ad-form-active').checked  = true;
   document.getElementById('ad-form-image').value     = '';
-  document.getElementById('ad-form-image-preview').style.display = 'none';
+  document.getElementById('ad-form-image-file').value = '';
+  document.getElementById('ad-form-image-preview-url').style.display = 'none';
+  document.getElementById('ad-image-url-input').style.display = 'none';
+  document.getElementById('ad-image-url-input').value = '';
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'block';
+  document.getElementById('ad-image-status').innerHTML = '<i class="fa fa-times"></i> Sin imagen';
+  
+  // Resetear estado de imagen
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: null, isFromUrl: false };
+  
   document.getElementById('ad-form-modal-title').textContent = 'Nueva publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1031,14 +1041,21 @@ export async function adminEditAd(adId) {
   document.getElementById('ad-form-city').value      = a.city      || '';
   document.getElementById('ad-form-active').checked  = a.active    ?? true;
   document.getElementById('ad-form-image').value     = a.image_url  || '';
-  const prev = document.getElementById('ad-form-image-preview');
-  const thumb = document.getElementById('ad-form-image-thumb');
-  if (a.image_url && prev && thumb) {
-    thumb.src = a.image_url;
-    prev.style.display = 'block';
-  } else if (prev) {
-    prev.style.display = 'none';
+  
+  // Resetear estado de imagen
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: a.image_url || null, isFromUrl: !!a.image_url };
+  
+  if (a.image_url) {
+    document.getElementById('ad-image-editor').style.display = 'none';
+    document.getElementById('ad-image-upload-area').style.display = 'none';
+    document.getElementById('ad-form-image-preview-url').style.display = 'block';
+    document.getElementById('ad-form-image-thumb').src = a.image_url;
+  } else {
+    document.getElementById('ad-image-editor').style.display = 'none';
+    document.getElementById('ad-image-upload-area').style.display = 'block';
+    document.getElementById('ad-form-image-preview-url').style.display = 'none';
   }
+  
   document.getElementById('ad-form-modal-title').textContent = 'Editar publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1053,14 +1070,25 @@ export async function adminSaveAd() {
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
   const active    = document.getElementById('ad-form-active')?.checked ?? true;
+  
+  if (!title) { showToast('El título es obligatorio', 'warning'); return; }
+
+  // Subir imagen a Supabase si es un archivo
   let image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
-  // Rechazar base64 — solo URLs externas
+  if (!image_url && adImageState.file) {
+    showToast('Subiendo imagen...', 'info');
+    const { uploadAdImage } = await import('./upload.js');
+    image_url = await uploadAdImage(adImageState.file);
+    if (!image_url) {
+      showToast('Error al subir imagen', 'error');
+      return;
+    }
+  }
+  
+  // Rechazar base64 - no guardar en la base de datos
   if (image_url && image_url.startsWith('data:')) {
-    showToast('Usá una URL de imagen externa, no un archivo subido', 'warning');
     image_url = null;
   }
-
-  if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
   try {
     const { data: { user } } = await sb.auth.getUser();
@@ -1125,6 +1153,127 @@ export function adminPreviewImageUrl() {
 }
 window.adminPreviewImageUrl = adminPreviewImageUrl;
 
+let adImageState = {
+  file: null,
+  zoom: 1,
+  posX: 0,
+  posY: 0,
+  uploadedUrl: null,
+  isFromUrl: false
+};
+
+export async function adImageFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('La imagen debe ser menor a 5MB', 'warning');
+    return;
+  }
+  
+  adImageState = {
+    file: file,
+    zoom: 1,
+    posX: 0,
+    posY: 0,
+    uploadedUrl: null,
+    isFromUrl: false
+  };
+  
+  document.getElementById('ad-image-upload-area').style.display = 'none';
+  document.getElementById('ad-image-editor').style.display = 'block';
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('ad-image-preview-img').src = e.target.result;
+    adImageUpdatePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function adImageUpdatePreview() {
+  const img = document.getElementById('ad-image-preview-img');
+  const container = document.getElementById('ad-image-preview-container');
+  if (!img || !container) return;
+  
+  const containerW = container.offsetWidth;
+  const containerH = container.offsetHeight;
+  
+  img.style.width = (containerW * adImageState.zoom) + 'px';
+  img.style.left = (containerW / 2 - (containerW * adImageState.zoom) / 2 + adImageState.posX) + 'px';
+  img.style.top = (containerH / 2 - (containerH * adImageState.zoom) / 2 + adImageState.posY) + 'px';
+  
+  document.getElementById('ad-form-image-transform').value = JSON.stringify({
+    zoom: adImageState.zoom,
+    posX: adImageState.posX,
+    posY: adImageState.posY
+  });
+}
+
+export function adImageZoomIn() {
+  adImageState.zoom = Math.min(adImageState.zoom + 0.2, 3);
+  adImageUpdatePreview();
+}
+
+export function adImageZoomOut() {
+  adImageState.zoom = Math.max(adImageState.zoom - 0.2, 0.5);
+  adImageUpdatePreview();
+}
+
+export function adImageMoveUp() { adImageState.posY -= 10; adImageUpdatePreview(); }
+export function adImageMoveDown() { adImageState.posY += 10; adImageUpdatePreview(); }
+export function adImageMoveLeft() { adImageState.posX -= 10; adImageUpdatePreview(); }
+export function adImageMoveRight() { adImageState.posX += 10; adImageUpdatePreview(); }
+
+export function adImageClear() {
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: null, isFromUrl: false };
+  document.getElementById('ad-form-image').value = '';
+  document.getElementById('ad-form-image-file').value = '';
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'block';
+  document.getElementById('ad-image-status').innerHTML = '<i class="fa fa-times"></i> Sin imagen';
+}
+
+export function adImageUrlChanged(url) {
+  if (!url) return;
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: url, isFromUrl: true };
+  document.getElementById('ad-form-image').value = url;
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'none';
+  document.getElementById('ad-form-image-preview-url').style.display = 'block';
+  document.getElementById('ad-form-image-thumb').src = url;
+}
+
+export async function adImageUploadAndGetUrl() {
+  if (adImageState.isFromUrl && adImageState.uploadedUrl) {
+    return adImageState.uploadedUrl;
+  }
+  
+  if (adImageState.file) {
+    showToast('Subiendo imagen...', 'info');
+    const { uploadAdImage } = await import('./upload.js');
+    const url = await uploadAdImage(adImageState.file);
+    if (url) {
+      adImageState.uploadedUrl = url;
+      showToast('Imagen subida', 'success');
+      return url;
+    }
+  }
+  
+  return null;
+}
+
+window.adImageFileSelected = adImageFileSelected;
+window.adImageZoomIn = adImageZoomIn;
+window.adImageZoomOut = adImageZoomOut;
+window.adImageMoveUp = adImageMoveUp;
+window.adImageMoveDown = adImageMoveDown;
+window.adImageMoveLeft = adImageMoveLeft;
+window.adImageMoveRight = adImageMoveRight;
+window.adImageClear = adImageClear;
+window.adImageUrlChanged = adImageUrlChanged;
+window.adImageUploadAndGetUrl = adImageUploadAndGetUrl;
+
 export function adminPreviewAdImage(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -1135,7 +1284,6 @@ export function adminPreviewAdImage(event) {
     const urlInput = document.getElementById('ad-form-image');
     if (thumb) thumb.src = e.target.result;
     if (prev)  prev.style.display = 'block';
-    // Guardar base64 en el campo URL por ahora (sin storage)
     if (urlInput) urlInput.value = e.target.result;
   };
   reader.readAsDataURL(file);

@@ -1721,11 +1721,52 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label"><i class="fa fa-image"></i> Imagen del banner <span style="color:var(--gray);font-size:0.75rem;">(URL pública)</span></label>
-        <input class="form-input" type="url" id="ad-form-image" placeholder="https://ejemplo.com/imagen.jpg" onchange="document.getElementById('ad-form-image-preview').style.display=this.value?'block':'none';document.getElementById('ad-form-image-thumb').src=this.value;">
-        <div id="ad-form-image-preview" style="margin-top:8px;display:none;">
+        <label class="form-label"><i class="fa fa-image"></i> Imagen del banner</label>
+        
+        <!-- Input para subir archivo -->
+        <div id="ad-image-upload-area" style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px;" onclick="document.getElementById('ad-form-image-file').click()">
+          <input type="file" id="ad-form-image-file" accept="image/*" style="display:none;" onchange="window.adImageFileSelected(this)">
+          <div style="color:var(--accent);font-size:24px;margin-bottom:8px;"><i class="fa fa-cloud-upload"></i></div>
+          <div style="font-size:0.85rem;color:var(--gray);">Click para subir una imagen</div>
+          <div style="font-size:0.72rem;color:var(--gray2);margin-top:4px;">PNG, JPG - Máx 5MB</div>
+        </div>
+        
+        <!-- Editor de imagen -->
+        <div id="ad-image-editor" style="display:none;margin-top:12px;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageZoomIn()"><i class="fa fa-search-plus"></i> Zoom +</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageZoomOut()"><i class="fa fa-search-minus"></i> Zoom -</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveUp()"><i class="fa fa-arrow-up"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveDown()"><i class="fa fa-arrow-down"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveLeft()"><i class="fa fa-arrow-left"></i></button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="window.adImageMoveRight()"><i class="fa fa-arrow-right"></i></button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="window.adImageClear()"><i class="fa fa-times"></i> Quitar</button>
+          </div>
+          
+          <!-- Contenedor de previsualización -->
+          <div id="ad-image-preview-container" style="width:100%;height:150px;overflow:hidden;border-radius:8px;background:var(--darker);border:1px solid var(--border);position:relative;">
+            <img id="ad-image-preview-img" src="" style="position:absolute;max-width:none;transform-origin:center;">
+          </div>
+          
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input type="hidden" id="ad-form-image">
+            <input type="hidden" id="ad-form-image-transform" value="">
+            <span id="ad-image-status" style="font-size:0.72rem;color:var(--green);"><i class="fa fa-check"></i> Imagen lista</span>
+          </div>
+        </div>
+        
+        <!-- Preview de URL manual -->
+        <div id="ad-form-image-preview-url" style="margin-top:8px;display:none;">
           <img id="ad-form-image-thumb" style="width:100%;max-height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border);" src="">
-          <div style="font-size:0.72rem;color:var(--gray);margin-top:4px;">Vista previa</div>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:4px;" onclick="document.getElementById('ad-form-image').value='';document.getElementById('ad-form-image-preview-url').style.display='none';"><i class="fa fa-times"></i> Quitar URL</button>
+        </div>
+        
+        <!-- Alternativa: URL manual -->
+        <div style="margin-top:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="document.getElementById('ad-image-url-input').style.display=document.getElementById('ad-image-url-input').style.display==='none'?'block':'none';">
+            <i class="fa fa-link"></i> Usar URL externa
+          </button>
+          <input class="form-input" type="url" id="ad-image-url-input" placeholder="https://ejemplo.com/imagen.jpg" style="display:none;margin-top:8px;" onchange="window.adImageUrlChanged(this.value)">
         </div>
       </div>
 

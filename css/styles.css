@@ -2912,3 +2912,13 @@ p {
 #modal-ad-form input[type="checkbox"]:checked + span:before {
   transform: translateX(22px);
 }
+
+/* ===== AD IMAGE UPLOAD ===== */
+#ad-image-upload-area:hover {
+  border-color: var(--accent) !important;
+  background: rgba(6, 182, 212, 0.05);
+}
+
+#ad-image-preview-container img {
+  transition: all 0.2s ease;
+}
