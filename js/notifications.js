@@ -26,10 +26,16 @@ export async function setupNotifBadge() {
   
   const sb = getSupabase();
   try {
-    const { data } = await sb.from('notifications')
+    const { data, error } = await sb.from('notifications')
       .select('*')
       .eq('user_id', store.currentUser.id)
       .eq('read', false);
+
+    if (error) {
+      // 403 = tabla sin RLS permisiva — ignorar silenciosamente
+      console.warn('notifications:', error.code, error.message);
+      return;
+    }
     
     if (data && data.length > 0) {
       const badge = document.getElementById('notif-badge');
@@ -77,7 +83,8 @@ export async function markAllRead() {
   if (!store.currentUser) return;
   
   const sb = getSupabase();
-  await sb.from('notifications').update({ read: true }).eq('user_id', store.currentUser.id);
+  const { error: mErr } = await sb.from('notifications').update({ read: true }).eq('user_id', store.currentUser.id);
+  if (mErr) console.warn('markAllRead:', mErr.message);
   
   const badge = document.getElementById('notif-badge');
   if (badge) {

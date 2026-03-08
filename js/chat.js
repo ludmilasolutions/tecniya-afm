@@ -151,10 +151,10 @@ export async function sendImageMessage(conversationId, file) {
     showToast('Subiendo imagen...', 'info');
     const ext  = file.name.split('.').pop();
     const path = `chat/${store.currentUser.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await sb.storage.from('chat-images').upload(path, file, { contentType: file.type });
+    const { error: upErr } = await sb.storage.from('work-photos').upload(path, file, { contentType: file.type });
     if (upErr) throw upErr;
 
-    const { data: { publicUrl } } = sb.storage.from('chat-images').getPublicUrl(path);
+    const { data: { publicUrl } } = sb.storage.from('work-photos').getPublicUrl(path);
     await sendMessage(conversationId, publicUrl, 'image');
   } catch (e) {
     console.error('sendImageMessage:', e);

@@ -219,7 +219,7 @@ async function loadProReviews(proUserId, proId) {
 
   const { data: reviews } = await sb
     .from('reviews')
-    .select('*, reviewer:profiles!reviewer_id(full_name)')
+    .select('id, professional_id, user_id, rating, comment, puntualidad, calidad, precio, comunicacion, created_at')
     .eq('professional_id', proUserId)
     .order('created_at', { ascending: false })
     .limit(10);
@@ -232,8 +232,16 @@ async function loadProReviews(proUserId, proId) {
     return;
   }
 
+  // Cargar nombres por separado para evitar join con FK nombrada
+  const reviewerIds = [...new Set(reviews.map(r => r.user_id).filter(Boolean))];
+  const namesMap = {};
+  if (reviewerIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id, full_name').in('id', reviewerIds);
+    (profiles || []).forEach(p => { namesMap[p.id] = p.full_name; });
+  }
+
   container.innerHTML = reviews.map(r => {
-    const name    = r.reviewer?.full_name || 'Usuario';
+    const name    = namesMap?.[r.user_id] || 'Usuario';
     const stars   = generateStars(parseFloat(r.rating) || 0);
     const date    = r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '';
     return `<div class="review-item">
