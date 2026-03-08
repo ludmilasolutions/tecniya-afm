@@ -40,7 +40,7 @@ export async function loadUserDashboard() {
       .eq('user_id', store.currentUser.id)
       .order('created_at', { ascending: false });
 
-    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso'].includes(j.status));
+    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa'].includes(j.status));
     const done    = (jobs || []).filter(j => j.status === 'finalizado');
     const history = (jobs || []).filter(j => ['finalizado','cancelado','rechazado'].includes(j.status));
 

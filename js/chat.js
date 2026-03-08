@@ -648,11 +648,12 @@ function renderPreAcceptanceBanner(msgCount) {
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'pre-acceptance-banner';
-    banner.style.cssText = 'padding:8px 16px;background:rgba(245,158,11,0.1);border-top:1px solid rgba(245,158,11,0.3);font-size:0.8rem;color:#f59e0b;display:flex;align-items:center;gap:8px;';
+    banner.className = 'pre-acceptance-banner';
     bar.parentNode.insertBefore(banner, bar);
   }
   const remaining = Math.max(0, MAX_PRE_ACCEPTANCE_MSGS - msgCount);
   if (remaining === 0) {
+    banner.className = 'pre-acceptance-banner locked';
     banner.innerHTML = '<i class="fa fa-lock"></i> Límite de mensajes previos alcanzado. Esperá que el profesional acepte para continuar.';
     document.getElementById('chat-input-field').disabled = true;
     document.getElementById('btn-send-chat').disabled = true;
