@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { initFloatChat, toggleFloatChat, fchatGoList, fchatSearch, fchatOpenConv, fchatSend, fchatKeydown, fchatSendImage, openFloatChatWith, updateFChatBadge } from './floatChat.js';
 window.__store = store;
 import { initSupabase } from './supabase.js';
 import { initAuth, redirectAfterLogin, initAuthEventListeners, chooseRole, confirmChosenRole, activateProProfile } from './auth.js';
@@ -25,7 +26,7 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
-import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification } from './notifications.js';
+import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification, handleNotifClick } from './notifications.js';
 import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat, closeChat } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
 import { deleteWorkPhoto } from './upload.js';
@@ -119,6 +120,13 @@ window.adminToggleFeatured= adminToggleFeatured;
 window.adminDeleteAd      = adminDeleteAd;
 window.filterAdminTable   = filterAdminTable;
 
+window.toggleFloatChat        = toggleFloatChat;
+window.fchatGoList            = fchatGoList;
+window.fchatSearch            = fchatSearch;
+window.fchatOpenConv          = fchatOpenConv;
+window.fchatSend              = fchatSend;
+window.fchatKeydown           = fchatKeydown;
+window.fchatSendImage         = fchatSendImage;
 window.toggleNotifPanel = toggleNotifPanel;
 window.markAllRead      = markAllRead;
 
@@ -241,7 +249,7 @@ async function initApp() {
     }
   });
   on('menu-profile',       'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
-  on('menu-chat',          'click', e => { e.preventDefault(); showPage('chat'); loadChatPage(); hideUserMenu(); });
+  // menu-chat ahora abre el chat flotante (manejado inline en el HTML)
   on('menu-logout',        'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
 
   // Switch entre panel cliente y profesional
