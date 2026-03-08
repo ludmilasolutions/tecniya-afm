@@ -67,17 +67,25 @@ export function showAd(level) {
   const imgReal = document.getElementById('ad-img-real');
   const imgPlaceholder = document.getElementById('ad-img-placeholder');
   
-  console.log('  - ad-title:', !!titleEl);
-  console.log('  - ad-desc:', !!descEl);
-  console.log('  - ad-level-badge:', !!badgeEl);
-  console.log('  - ad-banner-main:', !!bannerEl);
-  console.log('  - ad-img-real:', !!imgReal);
-  console.log('  - ad-img-placeholder:', !!imgPlaceholder);
+  console.log('  - ad-title:', !!titleEl, titleEl);
+  console.log('  - ad-desc:', !!descEl, descEl);
+  console.log('  - ad-level-badge:', !!badgeEl, badgeEl);
+  console.log('  - ad-banner-main:', !!bannerEl, bannerEl);
+  console.log('  - ad-img-real:', !!imgReal, imgReal);
+  console.log('  - ad-img-placeholder:', !!imgPlaceholder, imgPlaceholder);
+  
+  // DEBUG: Forzar visibilidad
+  if (bannerEl) {
+    bannerEl.style.display = 'flex !important';
+    bannerEl.style.background = 'red';
+    bannerEl.style.minHeight = '100px';
+    bannerEl.style.position = 'relative';
+    bannerEl.style.zIndex = '9999';
+    console.log('[DEBUG] banner forzado a visible');
+  }
 
   if (titleEl) {
     titleEl.textContent = ad.title || 'Publicidad';
-    titleEl.style.color = '#fff';
-    titleEl.style.backgroundColor = 'red';
     console.log('[showAd] Asignado title:', titleEl.textContent);
   }
   if (descEl) {
