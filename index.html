@@ -507,39 +507,26 @@
         <input type="text" class="chat-search" placeholder="Buscar conversación...">
       </div>
       <div class="chat-conversations" id="chat-conversations">
-        <div class="chat-conv-item active">
-          <div class="chat-conv-avatar">JL</div>
-          <div class="chat-conv-info">
-            <div class="chat-conv-name">Juan López</div>
-            <div class="chat-conv-last">Ok, paso el jueves a las 9...</div>
-          </div>
-        </div>
-        <div class="chat-conv-item">
-          <div class="chat-conv-avatar" style="background:linear-gradient(135deg,var(--orange),#dc2626);">MR</div>
-          <div class="chat-conv-info">
-            <div class="chat-conv-name">María Rodríguez</div>
-            <div class="chat-conv-last">El presupuesto sería de $15.000</div>
-          </div>
+        <div class="empty-state" style="padding:30px 20px;">
+          <i class="fa fa-comments"></i>
+          <p>No tenés conversaciones</p>
         </div>
       </div>
     </div>
     <div class="chat-main">
-      <div class="chat-header">
-        <div class="chat-conv-avatar">JL</div>
+      <div class="chat-header" id="chat-header" style="display:none;">
+        <div class="chat-conv-avatar" id="chat-header-avatar"></div>
         <div>
-          <div style="font-weight:700;font-size:0.95rem;">Juan López</div>
-          <div style="font-size:0.78rem;color:var(--green);">● En línea</div>
+          <div style="font-weight:700;font-size:0.95rem;" id="chat-header-name"></div>
+          <div style="font-size:0.78rem;color:var(--gray);" id="chat-header-sub"></div>
         </div>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button class="btn btn-whatsapp btn-sm"><i class="fa-brands fa-whatsapp"></i>WhatsApp</button>
-        </div>
+        <div style="margin-left:auto;"></div>
       </div>
       <div class="chat-messages" id="chat-messages">
-        <div class="msg received"><div class="msg-bubble">Hola, vi tu solicitud de trabajo. ¿Podés contarme más sobre el problema?</div><div class="msg-time">10:23</div></div>
-        <div class="msg sent"><div class="msg-bubble">Sí claro, se me rompió el calefón. Necesito que lo revisen y si es posible reemplazarlo.</div><div class="msg-time">10:25</div></div>
-        <div class="msg received"><div class="msg-bubble">Perfecto. ¿Qué marca y modelo tiene? Así puedo traer los repuestos.</div><div class="msg-time">10:26</div></div>
-        <div class="msg sent"><div class="msg-bubble">Es un Orbis de 11 litros, tiene como 5 años.</div><div class="msg-time">10:28</div></div>
-        <div class="msg received"><div class="msg-bubble">Ok, paso el jueves a las 9. El presupuesto inicial es de $8.500 más repuestos si se necesitan.</div><div class="msg-time">10:30</div></div>
+        <div class="empty-state" style="padding:40px;">
+          <i class="fa fa-comment-dots"></i>
+          <p>Seleccioná una conversación para ver los mensajes.</p>
+        </div>
       </div>
       <div class="chat-input-bar">
         <input type="text" class="chat-input" placeholder="Escribí un mensaje..." id="chat-input-field">

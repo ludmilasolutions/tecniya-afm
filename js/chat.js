@@ -264,12 +264,32 @@ export function renderMessages(messages) {
 
 export async function openConversation(conversationId) {
   currentConversationId = conversationId;
-  
+
   const messages = await loadMessages(conversationId);
   renderMessages(messages);
 
   const conversations = await loadConversations();
   renderConversationList(conversations);
+
+  // Actualizar header con datos del interlocutor
+  const conv = conversations.find(c => c.id === conversationId);
+  const header = document.getElementById('chat-header');
+  if (header && conv) {
+    const other = conv.other_user;
+    const name = other?.full_name || 'Usuario';
+    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const avatarEl = document.getElementById('chat-header-avatar');
+    const nameEl   = document.getElementById('chat-header-name');
+    const subEl    = document.getElementById('chat-header-sub');
+    if (avatarEl) {
+      avatarEl.textContent = other?.avatar_url ? '' : initials;
+      avatarEl.style.backgroundImage = other?.avatar_url ? `url(${other.avatar_url})` : '';
+      avatarEl.style.backgroundSize = 'cover';
+    }
+    if (nameEl) nameEl.textContent = name;
+    if (subEl)  subEl.textContent  = conv.job?.description ? `Trabajo: ${conv.job.description}` : '';
+    header.style.display = '';
+  }
 }
 
 export function sendChatMsg(event) {

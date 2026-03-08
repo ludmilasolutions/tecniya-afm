@@ -184,8 +184,8 @@ export function showProProfile(proId) {
         </div>
         <div class="card">
           <h3 style="font-size:1rem;margin-bottom:16px;"><i class="fa fa-star" style="color:var(--orange);margin-right:8px;"></i>Reseñas</h3>
-          <div class="reviews-list">
-            <div class="review-item"><div class="review-top"><span class="reviewer-name">Usuario verificado</span><div class="stars">${generateStars(5)}</div></div><div class="review-text">Excelente trabajo, muy puntual y profesional. Lo recomiendo totalmente.</div><div class="review-categories"><div class="review-cat"><div class="review-cat-label">Puntualidad</div><div class="review-cat-score">5.0</div></div><div class="review-cat"><div class="review-cat-label">Calidad</div><div class="review-cat-score">5.0</div></div><div class="review-cat"><div class="review-cat-label">Precio</div><div class="review-cat-score">4.5</div></div><div class="review-cat"><div class="review-cat-label">Comunicación</div><div class="review-cat-score">5.0</div></div></div></div>
+          <div class="reviews-list" id="pro-profile-reviews-${p.id}">
+            <div class="empty-state" style="padding:24px;"><i class="fa fa-star"></i><p style="font-size:0.85rem;">Aún no tiene reseñas.</p></div>
           </div>
         </div>
       </div>
@@ -209,6 +209,48 @@ export function showProProfile(proId) {
     </div>`;
   
   showPage('pro-profile');
+  loadProReviews(p.user_id || p.id, p.id);
+}
+
+async function loadProReviews(proUserId, proId) {
+  const { getSupabase } = await import('./supabase.js');
+  const sb = getSupabase();
+  if (!sb) return;
+
+  const { data: reviews } = await sb
+    .from('reviews')
+    .select('*, reviewer:profiles!reviewer_id(full_name)')
+    .eq('professional_id', proUserId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const container = document.getElementById(`pro-profile-reviews-${proId}`);
+  if (!container) return;
+
+  if (!reviews?.length) {
+    container.innerHTML = `<div class="empty-state" style="padding:24px;"><i class="fa fa-star"></i><p style="font-size:0.85rem;">Aún no tiene reseñas.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = reviews.map(r => {
+    const name    = r.reviewer?.full_name || 'Usuario';
+    const stars   = generateStars(parseFloat(r.rating) || 0);
+    const date    = r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '';
+    return `<div class="review-item">
+      <div class="review-top">
+        <span class="reviewer-name">${escapeHtml(name)}</span>
+        <div class="stars">${stars}</div>
+        <span style="font-size:0.75rem;color:var(--gray);margin-left:auto;">${date}</span>
+      </div>
+      ${r.comment ? `<div class="review-text">${escapeHtml(r.comment)}</div>` : ''}
+      <div class="review-categories">
+        ${r.puntualidad ? `<div class="review-cat"><div class="review-cat-label">Puntualidad</div><div class="review-cat-score">${r.puntualidad}</div></div>` : ''}
+        ${r.calidad     ? `<div class="review-cat"><div class="review-cat-label">Calidad</div><div class="review-cat-score">${r.calidad}</div></div>` : ''}
+        ${r.precio      ? `<div class="review-cat"><div class="review-cat-label">Precio</div><div class="review-cat-score">${r.precio}</div></div>` : ''}
+        ${r.comunicacion? `<div class="review-cat"><div class="review-cat-label">Comunicación</div><div class="review-cat-score">${r.comunicacion}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function getCurrentPageFromStore() {
