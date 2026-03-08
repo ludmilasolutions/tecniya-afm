@@ -182,7 +182,11 @@ export async function markAllRead() {
 export async function createNotification(userId, type, title, message) {
   if (!userId) return;
   const sb = getSupabase();
-  await sb.from('notifications').insert({ user_id: userId, type, title, message });
+  // RPC con SECURITY DEFINER para insertar notificaciones a otros usuarios sin que RLS lo bloquee
+  const { error } = await sb.rpc('create_notification', {
+    p_user_id: userId, p_type: type, p_title: title, p_message: message
+  });
+  if (error) console.warn('createNotification:', error.message);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
