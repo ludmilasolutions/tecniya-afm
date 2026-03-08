@@ -26,15 +26,18 @@ export async function loadAds() {
 }
 
 export function showAd(level) {
-  if (!allAds || allAds.length === 0) return;
+  // Leer siempre del store para evitar problemas con módulos importados dinámicamente
+  const ads = store.allAds?.length ? store.allAds : allAds;
+  if (!ads || ads.length === 0) return;
 
   // Buscar por nivel exacto, sino nacional, sino cualquiera
-  let filtered = allAds.filter(a => a.level === level);
-  if (!filtered.length) filtered = allAds.filter(a => a.level === 'nacional' || !a.level);
-  if (!filtered.length) filtered = allAds;
+  let filtered = ads.filter(a => a.level === level);
+  if (!filtered.length) filtered = ads.filter(a => a.level === 'nacional' || !a.level);
+  if (!filtered.length) filtered = ads;
 
   const ad = filtered[Math.floor(Math.random() * filtered.length)];
   if (!ad) return;
+  allAds = ads; // sincronizar variable local
 
   const titleEl  = document.getElementById('ad-title');
   const descEl   = document.getElementById('ad-desc');
