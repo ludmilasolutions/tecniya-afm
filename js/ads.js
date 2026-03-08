@@ -75,12 +75,32 @@ export function showAd(level) {
   console.log('  - ad-img-placeholder:', !!imgPlaceholder, imgPlaceholder);
   
   // DEBUG: Forzar visibilidad
+  const adSection = document.querySelector('.ad-section');
+  const adContent = document.querySelector('.ad-content');
+  console.log('[DEBUG] ad-section:', !!adSection, adSection);
+  console.log('[DEBUG] ad-content:', !!adContent, adContent);
+  
+  if (adSection) {
+    adSection.style.display = 'block !important';
+    adSection.style.visibility = 'visible !important';
+    adSection.style.opacity = '1 !important';
+    adSection.style.position = 'relative';
+    adSection.style.zIndex = '99999';
+    console.log('[DEBUG] ad-section forzado');
+  }
+  if (adContent) {
+    adContent.style.display = 'flex !important';
+    console.log('[DEBUG] ad-content forzado');
+  }
   if (bannerEl) {
     bannerEl.style.display = 'flex !important';
-    bannerEl.style.background = 'red';
-    bannerEl.style.minHeight = '100px';
-    bannerEl.style.position = 'relative';
-    bannerEl.style.zIndex = '9999';
+    bannerEl.style.background = 'red !important';
+    bannerEl.style.minHeight = '150px';
+    bannerEl.style.position = 'fixed';
+    bannerEl.style.top = '0';
+    bannerEl.style.left = '0';
+    bannerEl.style.width = '100%';
+    bannerEl.style.zIndex = '999999';
     console.log('[DEBUG] banner forzado a visible');
   }
 
