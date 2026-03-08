@@ -116,7 +116,7 @@ async function loadAdminJobs() {
   
   const { data: jobs, error: jobErr } = await sb
     .from('jobs')
-    .select('id,user_id,professional_id,status,created_at,profiles:user_id(full_name),professionals:professional_id(specialty)')
+    .select('id,user_id,professional_id,status,created_at,profiles:user_id(full_name)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -132,7 +132,7 @@ async function loadAdminJobs() {
     <tr>
       <td style="font-size:0.78rem;color:var(--gray2);">${j.id.slice(0, 8)}...</td>
       <td>${escapeHtml(j.profiles?.full_name || '-')}</td>
-      <td>${escapeHtml(j.professionals?.specialty || '-')}</td>
+      <td>${j.professional_id ? j.professional_id.slice(0,8)+'…' : '-'}</td>
       <td><span class="job-status status-${j.status}">${j.status}</span></td>
       <td>${j.created_at ? formatDate(j.created_at) : '-'}</td>
       <td>
@@ -148,7 +148,7 @@ async function loadAdminSubscriptions() {
   
   const { data: subs } = await sb
     .from('subscriptions')
-    .select('id,professional_id,user_id,type,status,starts_at,ends_at,cancelled_at,created_at,professionals:professional_id(specialty)')
+    .select('id,professional_id,user_id,type,status,starts_at,ends_at,cancelled_at,created_at')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -162,7 +162,7 @@ async function loadAdminSubscriptions() {
 
   tbody.innerHTML = subs.map(s => `
     <tr>
-      <td>${escapeHtml(s.professionals?.specialty || '-')}</td>
+      <td>${'-'}</td>
       <td><span class="badge badge-${s.type === 'destacado' ? 'destacado' : 'nuevo'}">${s.type}</span></td>
       <td>${s.starts_at ? formatDate(s.starts_at) : '-'}</td>
       <td>${s.ends_at ? formatDate(s.ends_at) : '-'}</td>
@@ -213,7 +213,7 @@ async function loadAdminReviews() {
   
   const { data: reviews } = await sb
     .from('reviews')
-    .select('id,user_id,professional_id,rating,comment,is_public,created_at,professionals:professional_id(specialty)')
+    .select('id,user_id,professional_id,rating,comment,is_public,created_at')
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -228,7 +228,7 @@ async function loadAdminReviews() {
   tbody.innerHTML = reviews.map(r => `
     <tr>
       <td>${escapeHtml(r.profiles?.full_name || '-')}</td>
-      <td>${escapeHtml(r.professionals?.specialty || '-')}</td>
+      <td>${'-'}</td>
       <td><span style="color:var(--orange);font-weight:700;">${r.rating?.toFixed(1) || '-'}</span></td>
       <td>${escapeHtml(r.comment?.substring(0, 50) || '-')}${r.comment?.length > 50 ? '...' : ''}</td>
       <td>
