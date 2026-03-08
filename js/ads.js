@@ -78,9 +78,14 @@ export function showAd(level) {
   const adSection = document.querySelector('.ad-section');
   const adContent = document.querySelector('.ad-content');
   
-  alert('DEBUG: showAd ejecutado! Banner debe verse ARRIBA DE TODO con fondo ROJO');
-  console.log('[DEBUG] ad-section:', !!adSection, adSection);
-  console.log('[DEBUG] ad-content:', !!adContent, adContent);
+  // Crear banner de debug directamente en el body
+  const debugBanner = document.createElement('div');
+  debugBanner.id = 'debug-banner';
+  debugBanner.textContent = 'BANNER DEBUG: ' + ad.title;
+  debugBanner.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:200px;background:red;color:white;font-size:30px;z-index:9999999;display:flex;align-items:center;justify-content:center;';
+  document.body.appendChild(debugBanner);
+  console.log('[DEBUG] Banner debug creado');
+  alert('DEBUG: Banner rojo creado en la parte superior de la página!');
   
   if (adSection) {
     adSection.style.display = 'block !important';
