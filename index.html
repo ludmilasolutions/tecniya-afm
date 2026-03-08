@@ -68,7 +68,7 @@
           <a href="#" id="menu-switch-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-right-left"></i><span id="menu-switch-pro-label">Panel Profesional</span></a>
           <a href="#" id="menu-activate-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-plus-circle"></i>Unirme como profesional</a>
           <a href="#" id="menu-profile" class="user-menu-item"><i class="fa fa-user"></i>Mi Perfil</a>
-          <a href="#" id="menu-chat" class="user-menu-item"><i class="fa fa-comments"></i>Mensajes</a>
+          <a href="#" id="menu-chat" class="user-menu-item" onclick="event.preventDefault();window.hideUserMenu?.();window.toggleFloatChat();"><i class="fa fa-comments"></i>Mensajes</a>
           <a href="#" id="menu-logout" class="user-menu-item user-menu-item--danger"><i class="fa fa-right-from-bracket"></i>Salir</a>
         </div>
       </div>
@@ -1332,6 +1332,72 @@
 </div>
 
 <!-- Mini-chat pre-aceptación: botón en jobItem para abrir -->
+
+
+<!-- ═══ CHAT FLOTANTE ═══════════════════════════════════════════════════════ -->
+<div id="fchat-bubble" class="fchat-bubble hidden" onclick="window.toggleFloatChat()">
+  <i class="fa fa-comment-dots"></i>
+  <span class="fchat-badge hidden" id="fchat-badge">0</span>
+</div>
+
+<div id="fchat-panel" class="fchat-panel">
+  <!-- Cabecera del panel -->
+  <div class="fchat-panel-header">
+    <div class="fchat-panel-header-left">
+      <i class="fa fa-comment-dots" style="color:var(--accent);"></i>
+      <span class="fchat-panel-title">Mensajes</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="fchat-icon-btn" id="fchat-new-btn" title="Nueva conversación" onclick="window.fchatGoList()">
+        <i class="fa fa-pencil"></i>
+      </button>
+      <button class="fchat-icon-btn" onclick="window.toggleFloatChat()">
+        <i class="fa fa-chevron-down"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Vista: lista de conversaciones -->
+  <div id="fchat-view-list" class="fchat-view">
+    <div class="fchat-search-wrap">
+      <i class="fa fa-search fchat-search-icon"></i>
+      <input class="fchat-search" id="fchat-search" placeholder="Buscar conversación..." oninput="window.fchatSearch(this.value)">
+    </div>
+    <div class="fchat-conv-list" id="fchat-conv-list">
+      <div class="fchat-empty"><i class="fa fa-comments"></i><p>Sin conversaciones aún</p></div>
+    </div>
+  </div>
+
+  <!-- Vista: chat abierto -->
+  <div id="fchat-view-chat" class="fchat-view fchat-view--hidden">
+    <div class="fchat-chat-header" id="fchat-chat-header">
+      <button class="fchat-icon-btn" onclick="window.fchatGoList()">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <div class="fchat-chat-avatar" id="fchat-chat-avatar">?</div>
+      <div class="fchat-chat-info">
+        <div class="fchat-chat-name" id="fchat-chat-name">—</div>
+        <div class="fchat-chat-sub" id="fchat-chat-sub"></div>
+      </div>
+    </div>
+    <!-- Banner pre-aceptación -->
+    <div id="fchat-pre-banner" class="pre-acceptance-banner hidden"></div>
+    <!-- Mensajes -->
+    <div class="fchat-messages" id="fchat-messages"></div>
+    <!-- Input -->
+    <div class="fchat-input-bar">
+      <button class="fchat-icon-btn" onclick="window.fchatSendImage()" title="Imagen">
+        <i class="fa fa-image"></i>
+      </button>
+      <input class="fchat-input" id="fchat-input" placeholder="Escribí un mensaje..."
+             onkeydown="window.fchatKeydown(event)">
+      <button class="fchat-send-btn" onclick="window.fchatSend()" id="fchat-send-btn">
+        <i class="fa fa-paper-plane"></i>
+      </button>
+    </div>
+    <input type="file" id="fchat-image-input" accept="image/*" style="display:none">
+  </div>
+</div>
 
 </body>
 </html>
