@@ -99,21 +99,28 @@ export async function uploadWorkPhoto(file, professionalId, title = '', descript
 }
 
 export async function deleteWorkPhoto(photoId, photoUrl) {
+  if (!confirm('¿Eliminar esta foto?')) return;
   const sb = getSupabase();
-  
-  const fileName = photoUrl.split('/').pop();
-  const filePath = `${BUCKETS.WORK_PHOTOS}/${fileName}`;
 
-  await sb.storage
-    .from(BUCKETS.WORK_PHOTOS)
-    .remove([filePath]);
+  if (photoUrl) {
+    const fileName = photoUrl.split('/').pop();
+    await sb.storage.from(BUCKETS.WORK_PHOTOS).remove([`${fileName}`]);
+  } else {
+    const { data: photo } = await sb.from('work_photos').select('photo_url').eq('id', photoId).maybeSingle();
+    if (photo?.photo_url) {
+      const match = photo.photo_url.match(/work-photos\/(.+)$/);
+      if (match) await sb.storage.from(BUCKETS.WORK_PHOTOS).remove([match[1]]);
+    }
+  }
 
-  await sb
-    .from('work_photos')
-    .delete()
-    .eq('id', photoId);
-
-  showToast('Foto eliminada', 'success');
+  const { error } = await sb.from('work_photos').delete().eq('id', photoId);
+  if (!error) {
+    showToast('Foto eliminada', 'success');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else {
+    showToast('Error al eliminar: ' + error.message, 'error');
+  }
 }
 
 export async function uploadCertification(file, professionalId, name, issuer = '', expiryDate = null) {
@@ -335,24 +342,3 @@ export function initUploadEvents() {
   }
 }
 
-export async function deleteWorkPhoto(photoId) {
-  const sb = getSupabase();
-  if (!confirm('¿Eliminar esta foto?')) return;
-  // Obtener URL para borrar del storage
-  const { data: photo } = await sb.from('work_photos').select('photo_url').eq('id', photoId).maybeSingle();
-  if (photo?.photo_url) {
-    // Extraer path relativo del bucket
-    const url = photo.photo_url;
-    const match = url.match(/work-photos\/(.+)$/);
-    if (match) {
-      await sb.storage.from('work-photos').remove([match[1]]);
-    }
-  }
-  const { error } = await sb.from('work_photos').delete().eq('id', photoId);
-  if (!error) {
-    const { showToast } = await import('./ui.js');
-    showToast('Foto eliminada', 'success');
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  }
-}
