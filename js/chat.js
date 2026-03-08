@@ -341,3 +341,20 @@ export async function loadChatPage() {
 
 window.startChatWithPro = startChatWithPro;
 window.openConversation = openConversation;
+
+// Alias para abrir chat con cualquier user_id (pro o cliente)
+export async function openChatWith(userId) {
+  if (!store.currentUser) {
+    const { showModal } = await import('./ui.js');
+    showModal('modal-login');
+    return;
+  }
+  if (userId === store.currentUser.id) {
+    const { showToast } = await import('./ui.js');
+    showToast('No podés chatear con vos mismo.', 'warning');
+    return;
+  }
+  const { showPage } = await import('./ui.js');
+  showPage('chat');
+  await startChatWithPro(userId, '');
+}

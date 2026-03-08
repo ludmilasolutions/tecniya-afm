@@ -8,16 +8,18 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
 import { openJobRequest, submitJobRequest, showUrgentModal, sendUrgentRequest,
-         contactPro, addFavorite, openRatingModal, setRating, submitRating,
+         addFavorite, openRatingModal, setRating, submitRating,
+         acceptJob, rejectJob, startJob, finishJob, cancelJob,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          saveAvailability, saveProfile,
-         saveProProfile, saveBudget, generateBudgetPDF, sendBudgetWhatsApp } from './dashboard.js';
+         saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
 import { loadAdminData, switchAdminTab, adminToggleBlock, adminToggleFeatured,
          adminDeleteAd, filterAdminTable } from './admin.js';
 import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents } from './notifications.js';
-import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage } from './chat.js';
+import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
+import { deleteWorkPhoto } from './upload.js';
 import { initPWA, installPWA, generateManifest, initPWAEvents } from './pwa.js';
 import { initStorage, initUploadEvents } from './upload.js';
 
@@ -42,11 +44,17 @@ window.openJobRequest   = openJobRequest;
 window.submitJobRequest = submitJobRequest;
 window.showUrgentModal  = showUrgentModal;
 window.sendUrgentRequest= sendUrgentRequest;
-window.contactPro       = contactPro;
 window.addFavorite      = addFavorite;
 window.openRatingModal  = openRatingModal;
 window.setRating        = setRating;
 window.submitRating     = submitRating;
+window.acceptJob        = acceptJob;
+window.rejectJob        = rejectJob;
+window.startJob         = startJob;
+window.finishJob        = finishJob;
+window.cancelJob        = cancelJob;
+window.openChatWith     = openChatWith;
+window.deleteWorkPhoto  = deleteWorkPhoto;
 
 window.showSuscripcion  = showSuscripcion;
 window.subscribePro     = subscribePro;
@@ -68,7 +76,6 @@ window.saveProfile      = saveProfile;
 window.saveProProfile   = saveProProfile;
 window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
-window.sendBudgetWhatsApp=sendBudgetWhatsApp;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;
@@ -130,11 +137,6 @@ window.checkPassStrength = (val) => {
 
 window.closeMobileMenu = () => {
   document.getElementById('mobile-nav')?.classList.remove('open');
-};
-
-window.acceptJob = async (jobId) => {
-  const { acceptJob } = await import('./jobs.js');
-  acceptJob(jobId);
 };
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
@@ -269,13 +271,17 @@ async function initApp() {
   on('btn-new-budget',        'click', () => showModal('modal-new-budget'));
   on('btn-save-budget',       'click', saveBudget);
   on('btn-pdf-budget',        'click', generateBudgetPDF);
-  on('btn-whatsapp-budget',   'click', sendBudgetWhatsApp);
-  on('btn-upload-photo',      'click', () => document.getElementById('pro-cert-file')?.click());
-  on('pro-cert-file',         'change', async e => {
+  on('btn-upload-photo',      'click', () => document.getElementById('photo-upload-input')?.click());
+  on('photo-upload-input',    'change', async e => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!store.currentUser) return;
+    const title = prompt('Título de la foto (opcional):') || '';
     const { uploadWorkPhoto } = await import('./upload.js');
-    if (store.currentPro) await uploadWorkPhoto(file, store.currentPro.id);
+    await uploadWorkPhoto(file, store.currentUser.id, title);
+    e.target.value = '';
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
   });
 
   // Tabs del dashboard profesional — data-tab

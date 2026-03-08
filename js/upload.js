@@ -334,3 +334,25 @@ export function initUploadEvents() {
     });
   }
 }
+
+export async function deleteWorkPhoto(photoId) {
+  const sb = getSupabase();
+  if (!confirm('¿Eliminar esta foto?')) return;
+  // Obtener URL para borrar del storage
+  const { data: photo } = await sb.from('work_photos').select('photo_url').eq('id', photoId).maybeSingle();
+  if (photo?.photo_url) {
+    // Extraer path relativo del bucket
+    const url = photo.photo_url;
+    const match = url.match(/work-photos\/(.+)$/);
+    if (match) {
+      await sb.storage.from('work-photos').remove([match[1]]);
+    }
+  }
+  const { error } = await sb.from('work_photos').delete().eq('id', photoId);
+  if (!error) {
+    const { showToast } = await import('./ui.js');
+    showToast('Foto eliminada', 'success');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  }
+}

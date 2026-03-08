@@ -247,6 +247,23 @@ export async function loadProDashboard() {
   }
 
   await loadProWorkPhotos();
+  loadProAvailability();
+}
+
+function loadProAvailability() {
+  const avail = store.currentPro?.availability || {};
+  const dias = avail.dias || [];
+  ['lun','mar','mie','jue','vie','sab','dom'].forEach(d => {
+    const labels = { lun:'Lunes', mar:'Martes', mie:'Miércoles', jue:'Jueves', vie:'Viernes', sab:'Sábado', dom:'Domingo' };
+    const el = document.getElementById(`dia-${d}`);
+    if (el) el.checked = dias.includes(labels[d]);
+  });
+  const desde = document.getElementById('hora-desde');
+  const hasta  = document.getElementById('hora-hasta');
+  const urg    = document.getElementById('urgencias');
+  if (desde && avail.desde) desde.value = avail.desde;
+  if (hasta && avail.hasta) hasta.value = avail.hasta;
+  if (urg)   urg.checked = !!avail.urgencias;
 }
 
 async function loadProBudgets() {
@@ -302,9 +319,13 @@ async function loadProWorkPhotos() {
     }
 
     el.innerHTML = photos.map(p => `
-      <div class="photo-thumb" style="background-image:url('${p.photo_url}');background-size:cover;background-position:center;">
+      <div class="photo-thumb" style="position:relative;background-image:url('${p.photo_url}');background-size:cover;background-position:center;">
+        <button onclick="window.deleteWorkPhoto('${p.id}')" title="Eliminar"
+          style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;">
+          <i class="fa fa-times"></i></button>
+        ${p.title ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:#fff;font-size:0.7rem;padding:4px 6px;">${p.title}</div>` : ''}
       </div>
-    `).join('');
+    `).join('')
   } catch (e) { console.error('loadProWorkPhotos:', e); }
 }
 
@@ -337,20 +358,18 @@ export async function saveProProfile() {
   const city      = document.getElementById('pro-edit-city')?.value.trim();
   const province  = document.getElementById('pro-edit-province')?.value.trim();
   const zones     = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
-  const whatsapp  = document.getElementById('pro-edit-whatsapp')?.value.trim();
-
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     sb.from('professionals').update({
-      specialty, description: desc, city, province, zones, whatsapp,
+      specialty, description: desc, city, province, zones,
       updated_at: new Date().toISOString()
-    }).eq('id', store.currentPro.id),
+    }).eq('user_id', store.currentUser.id),
     sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
   ]);
 
   if (e1 || e2) { showToast('Error al guardar', 'error'); }
   else {
     // Actualizar store local
-    Object.assign(store.currentPro, { specialty, description: desc, city, province, zones, whatsapp });
+    Object.assign(store.currentPro, { specialty, description: desc, city, province, zones });
     showToast('Perfil actualizado', 'success');
     showPage('pro-dashboard');
   }
@@ -365,11 +384,15 @@ export async function saveAvailability() {
   const urgencias = document.getElementById('urgencias')?.checked;
 
   const { error } = await sb.from('professionals').update({
-    availability: { dias, desde, hasta, urgencias }
-  }).eq('id', store.currentPro.id);
+    availability: { dias, desde, hasta, urgencias },
+    is_online: urgencias
+  }).eq('user_id', store.currentUser.id);
 
-  if (error) { showToast('Error al guardar', 'error'); }
-  else { showToast('Disponibilidad actualizada', 'success'); }
+  if (error) { console.error('saveAvailability:', error); showToast('Error al guardar: ' + error.message, 'error'); }
+  else {
+    if (store.currentPro) Object.assign(store.currentPro, { availability: { dias, desde, hasta, urgencias } });
+    showToast('Disponibilidad actualizada', 'success');
+  }
 }
 
 export async function saveBudget() {

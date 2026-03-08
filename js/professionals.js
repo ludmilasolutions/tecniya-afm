@@ -144,7 +144,7 @@ export function proCard(p) {
       <div class="pro-zones">${zones}</div>
     </div>
     <div class="pro-card-footer">
-      <button class="btn btn-ghost" onclick="event.stopPropagation();window.contactPro('${p.id}','${(p.whatsapp || '').replace(/'/g, '')}')"><i class="fa-brands fa-whatsapp"></i>Contactar</button>
+      <button class="btn btn-ghost" onclick="event.stopPropagation();window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
       <button class="btn btn-primary" onclick="event.stopPropagation();window.openJobRequest('${p.id}','${(p.name || '').replace(/'/g, '')}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar</button>
     </div>
   </div>`;
@@ -171,7 +171,7 @@ export function showProProfile(proId) {
       </div>
       <div class="pro-profile-actions">
         <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${p.name}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
-        <button class="btn btn-whatsapp" onclick="window.contactPro('${p.id}','${p.whatsapp || ''}')"><i class="fa-brands fa-whatsapp"></i>WhatsApp</button>
+        <button class="btn btn-ghost" onclick="window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
         <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>
       </div>
     </div>

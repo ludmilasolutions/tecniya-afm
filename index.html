@@ -372,7 +372,10 @@
       </div>
     </div>
     <div class="tab-panel" id="tab-pro-fotos">
-      <div style="margin-bottom:16px;"><button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button></div>
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
+        <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+      </div>
       <div class="photos-grid" id="pro-work-photos">
         <div class="photo-thumb"><i class="fa fa-image"></i></div>
         <div class="photo-thumb"><i class="fa fa-image"></i></div>
@@ -611,11 +614,7 @@
         <input type="text" class="form-input" id="pro-edit-zones" placeholder="Ej: Centro, Palermo, Belgrano">
       </div>
       <div class="form-group">
-        <label class="form-label">WhatsApp</label>
-        <input type="tel" class="form-input" id="pro-edit-whatsapp" placeholder="+54 11 1234-5678">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Certificación (PDF o imagen)</label>
+        <label class="form-label">Certificación <span style="color:var(--gray);font-weight:400;">(PDF o imagen)</span></label>
         <input type="file" class="form-input" id="pro-cert-file" accept=".pdf,.jpg,.png" style="padding:8px;">
       </div>
       <button class="btn btn-primary" id="btn-save-pro-profile">Guardar perfil</button>
@@ -1080,7 +1079,6 @@
       <div style="display:flex;gap:10px;">
         <button class="btn btn-primary" style="flex:1;" id="btn-save-budget"><i class="fa fa-save"></i>Guardar</button>
         <button class="btn btn-ghost" id="btn-pdf-budget"><i class="fa fa-file-pdf"></i>PDF</button>
-        <button class="btn btn-whatsapp" id="btn-whatsapp-budget"><i class="fa-brands fa-whatsapp"></i></button>
       </div>
     </div>
   </div>

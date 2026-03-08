@@ -9,14 +9,16 @@ export function openJobRequest(proId, proName, proUserId) {
     showToast('Iniciá sesión para solicitar trabajos', 'info');
     return;
   }
-  
-  // Guardar tanto el id de professionals como el user_id (que referencia profiles)
+  // Bloquear si el usuario es el mismo profesional
+  const resolvedUserId = proUserId || store.allProfessionals?.find(x => x.id == proId)?.user_id;
+  if (resolvedUserId && resolvedUserId === store.currentUser.id) {
+    showToast('No podés enviarte trabajos a vos mismo.', 'warning');
+    return;
+  }
   const p = store.allProfessionals?.find(x => x.id == proId);
-  store.setCurrentProIdForAction({ proId, userProfileId: proUserId || p?.user_id || proId });
-  
+  store.setCurrentProIdForAction({ proId, userProfileId: resolvedUserId || proId });
   const proNameEl = document.getElementById('job-req-pro-name');
   if (proNameEl) proNameEl.textContent = proName;
-  
   showModal('modal-request-job');
 }
 
@@ -103,32 +105,90 @@ export async function loadProJobs() {
   }
 }
 
+const STATUS_CSS = {
+  solicitado: 'status-solicitado',
+  aceptado:   'status-aceptado',
+  en_proceso: 'status-en-proceso',
+  finalizado: 'status-finalizado',
+  cancelado:  'status-cancelado',
+  rechazado:  'status-cancelado'
+};
+const STATUS_LABEL = {
+  solicitado: 'Nuevo',
+  aceptado:   'Aceptado',
+  en_proceso: 'En proceso',
+  finalizado: 'Finalizado',
+  cancelado:  'Cancelado',
+  rechazado:  'Rechazado'
+};
+const STATUS_ICON = {
+  solicitado: 'fa-clock',
+  aceptado:   'fa-check',
+  en_proceso: 'fa-gears',
+  finalizado: 'fa-check-circle',
+  cancelado:  'fa-times-circle',
+  rechazado:  'fa-times-circle'
+};
+
 export function jobItem(j, viewAs) {
-  const statusMap = {
-    solicitado: 'status-solicitado',
-    aceptado: 'status-aceptado',
-    en_proceso: 'status-en-proceso',
-    finalizado: 'status-finalizado',
-    cancelado: 'status-cancelado'
-  };
-  const statusLabel = {
-    solicitado: 'Solicitado',
-    aceptado: 'Aceptado',
-    en_proceso: 'En proceso',
-    finalizado: 'Finalizado',
-    cancelado: 'Cancelado'
-  };
-  
-  return `<div class="job-item">
-    <div class="job-icon" style="background:rgba(79,70,229,0.1);color:var(--primary);"><i class="fa fa-briefcase"></i></div>
-    <div class="job-info">
-      <div class="job-title">${j.description || 'Trabajo técnico'}</div>
-      <div class="job-meta">${j.address || ''} · ${j.created_at ? formatDate(j.created_at) : ''}</div>
+  const statusCss   = STATUS_CSS[j.status]   || '';
+  const statusTxt   = STATUS_LABEL[j.status] || j.status;
+  const statusIcon  = STATUS_ICON[j.status]  || 'fa-briefcase';
+  const dateStr     = j.created_at ? formatDate(j.created_at) : '';
+  const specialty   = j.specialty ? `<span style="font-size:0.78rem;background:rgba(79,70,229,0.12);color:var(--primary);padding:2px 8px;border-radius:20px;">${j.specialty}</span>` : '';
+  const desc        = j.description ? `<div class="job-title">${escHtml(j.description)}</div>` : '';
+  const meta        = [j.address, dateStr].filter(Boolean).join(' · ');
+  const isUrgent    = j.is_urgent ? `<span style="font-size:0.75rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>` : '';
+
+  // Acciones según rol y estado
+  let actions = '';
+  if (viewAs === 'pro') {
+    if (j.status === 'solicitado') {
+      actions = `
+        <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.rejectJob('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+    } else if (j.status === 'aceptado') {
+      actions = `
+        <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+    } else if (j.status === 'en_proceso') {
+      actions = `
+        <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Finalizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+    }
+  } else if (viewAs === 'user') {
+    if (['solicitado','aceptado','en_proceso'].includes(j.status)) {
+      actions = `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.cancelJob('${j.id}')"><i class="fa fa-times"></i>Cancelar</button>`;
+    } else if (j.status === 'finalizado') {
+      actions = `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`;
+    }
+  }
+
+  return `<div class="job-item" style="flex-wrap:wrap;gap:10px;padding:16px;">
+    <div class="job-icon" style="background:rgba(79,70,229,0.1);color:var(--primary);flex-shrink:0;">
+      <i class="fa ${statusIcon}"></i>
     </div>
-    <span class="job-status ${statusMap[j.status] || ''}">${statusLabel[j.status] || j.status}</span>
-    ${j.status === 'finalizado' && viewAs === 'user' ? `<button class="btn btn-ghost btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i></button>` : ''}
-    ${j.status === 'solicitado' && viewAs === 'pro' ? `<button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')">Aceptar</button>` : ''}
+    <div class="job-info" style="flex:1;min-width:180px;">
+      ${desc}
+      <div class="job-meta" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;">
+        ${specialty}${isUrgent}
+        <span style="font-size:0.8rem;color:var(--gray);">${meta}</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span class="job-status ${statusCss}">${statusTxt}</span>
+      ${actions}
+    </div>
   </div>`;
+}
+
+function escHtml(text) {
+  if (!text) return '';
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
 }
 
 export async function acceptJob(jobId) {
@@ -195,14 +255,6 @@ export async function sendUrgentRequest() {
   }
 }
 
-export function contactPro(proId, whatsapp) {
-  if (whatsapp && whatsapp !== '') {
-    const num = whatsapp.replace(/\D/g, '');
-    window.open(`https://wa.me/${num}?text=Hola! Te contacto desde TECNIYA para consultar sobre tus servicios.`, '_blank');
-  } else {
-    showToast('Este profesional no tiene WhatsApp registrado', 'info');
-  }
-}
 
 export async function addFavorite(proId) {
   if (!store.currentUser) {
@@ -301,4 +353,44 @@ export async function initJobsEventListeners() {
     const { loadSpecialties } = await import('./professionals.js');
     await loadSpecialties();
   }
+}
+
+export async function rejectJob(jobId) {
+  const sb = getSupabase();
+  const { error } = await sb.from('jobs').update({ status: 'rechazado' }).eq('id', jobId);
+  if (!error) {
+    showToast('Trabajo rechazado.', 'info');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else showToast('Error: ' + error.message, 'error');
+}
+
+export async function startJob(jobId) {
+  const sb = getSupabase();
+  const { error } = await sb.from('jobs').update({ status: 'en_proceso' }).eq('id', jobId);
+  if (!error) {
+    showToast('¡Trabajo iniciado!', 'success');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else showToast('Error: ' + error.message, 'error');
+}
+
+export async function finishJob(jobId) {
+  const sb = getSupabase();
+  const { error } = await sb.from('jobs').update({ status: 'finalizado' }).eq('id', jobId);
+  if (!error) {
+    showToast('¡Trabajo finalizado! El cliente podrá calificarte.', 'success');
+    const { loadProDashboard } = await import('./dashboard.js');
+    loadProDashboard();
+  } else showToast('Error: ' + error.message, 'error');
+}
+
+export async function cancelJob(jobId) {
+  const sb = getSupabase();
+  const { error } = await sb.from('jobs').update({ status: 'cancelado' }).eq('id', jobId);
+  if (!error) {
+    showToast('Trabajo cancelado.', 'info');
+    const { loadUserDashboard } = await import('./dashboard.js');
+    loadUserDashboard();
+  } else showToast('Error: ' + error.message, 'error');
 }
