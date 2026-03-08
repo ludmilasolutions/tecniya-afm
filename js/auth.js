@@ -48,14 +48,14 @@ export async function handleSession(session) {
   const sb = getSupabase();
   store.setCurrentUser(session.user);
 
-  // Leer role desde profiles (fuente de verdad)
+  // Leer perfil
   const { data: profile } = await sb
     .from('profiles')
     .select('role')
     .eq('id', session.user.id)
     .maybeSingle();
 
-  // Buscar registro profesional
+  // Buscar registro profesional (cualquier usuario puede tenerlo)
   const { data: prof } = await sb
     .from('professionals')
     .select('*')
@@ -64,27 +64,37 @@ export async function handleSession(session) {
 
   store.setCurrentPro(prof);
 
-  // Role: primero profiles, luego user_metadata, luego inferir
+  // Admin sigue siendo rol especial
   const meta = session.user.user_metadata || {};
-  let role = profile?.role || meta.role || (prof ? 'professional' : 'user');
+  const role = profile?.role === 'admin' ? 'admin' : null;
   store.setCurrentRole(role);
 
-  // Si eligió professional pero profiles aún dice 'user', sincronizar
-  if (meta.role === 'professional' && profile?.role !== 'professional') {
-    await sb.from('profiles').update({ role: 'professional' }).eq('id', session.user.id);
-    store.setCurrentRole('professional');
-    // Crear registro en professionals si no existe
-    if (!prof) {
-      const { data: newPro } = await sb.from('professionals').insert({
-        user_id: session.user.id,
-        specialty: 'General',
-        city: '', province: '', description: ''
-      }).select().maybeSingle();
-      store.setCurrentPro(newPro);
-    }
+  // Si venía del registro con rol professional, crear perfil pro si no existe
+  if (meta.role === 'professional' && !prof) {
+    const { data: newPro } = await sb.from('professionals').insert({
+      user_id: session.user.id,
+      specialty: 'General',
+      city: '', province: '', description: ''
+    }).select().maybeSingle();
+    store.setCurrentPro(newPro);
   }
 
   updateAuthUI();
+
+  // Si es usuario de Google nuevo (sin perfil pro y sin rol definido) → preguntar
+  const isGoogle = session.user.app_metadata?.provider === 'google';
+  const isNew = !profile && !prof;
+  if (isGoogle && isNew) {
+    store._pendingRoleSession = session;
+    setTimeout(() => {
+      showModal('modal-choose-role');
+      import('./professionals.js').then(m => {
+        const sel = document.getElementById('choose-specialty');
+        if (sel && sel.options.length <= 1) m.loadSpecialties(sel);
+      });
+    }, 300);
+    return;
+  }
 
   const { setupNotifBadge } = await import('./notifications.js');
   setupNotifBadge();
@@ -226,15 +236,17 @@ export async function logout() {
 }
 
 export async function redirectAfterLogin() {
-  if (store.currentRole === 'admin') {
+  if (store.isAdmin) {
+    store.setActivePanel('admin');
     showPage('admin');
     const { loadAdminData } = await import('./admin.js');
     loadAdminData();
-  } else if (store.currentRole === 'professional') {
+  } else if (store.activePanel === 'pro' && store.isPro) {
     showPage('pro-dashboard');
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else {
+    store.setActivePanel('user');
     showPage('user-dashboard');
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
@@ -275,6 +287,110 @@ function translateAuthError(msg) {
     if (msg.includes(key)) return val;
   }
   return msg;
+}
+
+export async function activateProProfile() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  const specialty = document.getElementById('activate-specialty')?.value;
+  const city      = document.getElementById('activate-city')?.value.trim() || '';
+  const province  = document.getElementById('activate-province')?.value.trim() || '';
+  const whatsapp  = document.getElementById('activate-whatsapp')?.value.trim() || '';
+  const errEl     = document.getElementById('activate-pro-error');
+
+  if (!specialty) {
+    if (errEl) { errEl.textContent = 'Seleccioná tu especialidad principal.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const btn = document.getElementById('btn-activate-pro');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Activando...</span>'; }
+
+  const { data: newPro, error } = await sb.from('professionals').upsert({
+    user_id: store.currentUser.id,
+    specialty,
+    city,
+    province,
+    whatsapp,
+    description: ''
+  }, { onConflict: 'user_id' }).select().maybeSingle();
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-wrench"></i>Activar perfil profesional'; }
+
+  if (error) {
+    if (errEl) { errEl.textContent = 'Error al activar el perfil. Intentá de nuevo.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  store.setCurrentPro(newPro);
+  store.setActivePanel('pro');
+  closeModal('modal-activate-pro');
+  showToast('¡Perfil profesional activado!', 'success');
+
+  const { updateAuthUI } = await import('./ui.js');
+  updateAuthUI();
+
+  const { loadProDashboard } = await import('./dashboard.js');
+  showPage('pro-dashboard');
+  loadProDashboard();
+}
+
+export function chooseRole(role) {
+  store._chosenRole = role;
+  // Estilo visual de las cards
+  const cardUser = document.getElementById('choose-card-user');
+  const cardPro  = document.getElementById('choose-card-professional');
+  if (cardUser) cardUser.style.borderColor = role === 'user' ? 'var(--accent)' : 'var(--border)';
+  if (cardPro)  cardPro.style.borderColor  = role === 'professional' ? 'var(--orange)' : 'var(--border)';
+  // Mostrar campos extra para profesional
+  const proFields = document.getElementById('choose-role-pro-fields');
+  if (proFields) proFields.style.display = role === 'professional' ? 'block' : 'none';
+  // Mostrar botón confirmar
+  const btn = document.getElementById('btn-confirm-role');
+  if (btn) btn.style.display = 'block';
+}
+
+export async function confirmChosenRole() {
+  const sb = getSupabase();
+  const role      = store._chosenRole || 'user';
+  const specialty = document.getElementById('choose-specialty')?.value || 'General';
+  const city      = document.getElementById('choose-city')?.value.trim() || '';
+  const province  = document.getElementById('choose-province')?.value.trim() || '';
+  const errEl     = document.getElementById('choose-role-error');
+
+  if (role === 'professional' && !specialty) {
+    if (errEl) { errEl.textContent = 'Seleccioná tu especialidad.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const btn = document.getElementById('btn-confirm-role');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+  const userId = store.currentUser?.id;
+  if (!userId) return;
+
+  // Guardar role en profiles
+  await sb.from('profiles').upsert({ id: userId, role }, { onConflict: 'id' });
+  store.setCurrentRole(role);
+
+  // Si eligió profesional, crear registro en professionals
+  if (role === 'professional') {
+    const { data: newPro } = await sb.from('professionals').upsert({
+      user_id: userId,
+      specialty,
+      city,
+      province,
+      description: ''
+    }, { onConflict: 'user_id' }).select().maybeSingle();
+    store.setCurrentPro(newPro);
+  }
+
+  closeModal('modal-choose-role');
+
+  const { setupNotifBadge } = await import('./notifications.js');
+  setupNotifBadge();
+
+  await redirectAfterLogin();
 }
 
 export async function forgotPassword() {

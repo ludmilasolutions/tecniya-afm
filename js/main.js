@@ -1,8 +1,8 @@
 import { store } from './store.js';
 import { initSupabase } from './supabase.js';
-import { initAuth, redirectAfterLogin, initAuthEventListeners } from './auth.js';
+import { initAuth, redirectAfterLogin, initAuthEventListeners, chooseRole, confirmChosenRole, activateProProfile } from './auth.js';
 import { showPage, showModal, closeModal, toggleMobileMenu, toggleUserMenu, hideUserMenu,
-         initUIEvents, animateStats, showToast, scrollToSearch, switchTab } from './ui.js';
+         initUIEvents, animateStats, showToast, scrollToSearch, switchTab, updateAuthUI } from './ui.js';
 import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
@@ -70,6 +70,9 @@ window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
 window.sendBudgetWhatsApp=sendBudgetWhatsApp;
 
+window.chooseRole        = chooseRole;
+window.confirmChosenRole = confirmChosenRole;
+window.activateProProfile = activateProProfile;
 window.goBack = () => showPage(store.previousPage || 'home');
 
 // ─── Funciones globales de UI para registro/login ───────────────────────────
@@ -171,10 +174,38 @@ async function initApp() {
 
   // ── MENÚ USUARIO ────────────────────────────────────────────────────────
   on('user-avatar-btn', 'click', e => { e.stopPropagation(); toggleUserMenu(); });
-  on('menu-dashboard',  'click', e => { e.preventDefault(); redirectAfterLogin(); hideUserMenu(); });
-  on('menu-profile',    'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
-  on('menu-chat',       'click', e => { e.preventDefault(); showPage('chat'); loadChatPage(); hideUserMenu(); });
-  on('menu-logout',     'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
+  on('menu-dashboard',     'click', e => { e.preventDefault(); redirectAfterLogin(); hideUserMenu(); });
+  on('menu-profile',       'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
+  on('menu-chat',          'click', e => { e.preventDefault(); showPage('chat'); loadChatPage(); hideUserMenu(); });
+  on('menu-logout',        'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
+
+  // Switch entre panel cliente y profesional
+  on('menu-switch-pro', 'click', async e => {
+    e.preventDefault(); hideUserMenu();
+    if (store.activePanel === 'pro') {
+      store.setActivePanel('user');
+      updateAuthUI();
+      const { loadUserDashboard } = await import('./dashboard.js');
+      showPage('user-dashboard');
+      loadUserDashboard();
+    } else {
+      store.setActivePanel('pro');
+      updateAuthUI();
+      const { loadProDashboard } = await import('./dashboard.js');
+      showPage('pro-dashboard');
+      loadProDashboard();
+    }
+  });
+
+  // Activar perfil profesional por primera vez
+  on('menu-activate-pro', 'click', e => {
+    e.preventDefault(); hideUserMenu();
+    showModal('modal-activate-pro');
+    import('./professionals.js').then(m => {
+      const sel = document.getElementById('activate-specialty');
+      if (sel && sel.options.length <= 1) m.loadSpecialties(sel);
+    });
+  });
   // ── NOTIFICACIONES ──────────────────────────────────────────────────────
   on('notif-btn',        'click', toggleNotifPanel);
   on('mark-all-read-btn','click', markAllRead);

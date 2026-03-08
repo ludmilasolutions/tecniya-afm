@@ -199,11 +199,27 @@ export function updateAuthUI() {
     const menuUserName = document.getElementById('menu-user-name');
     if (menuUserName) menuUserName.textContent = name.split(' ')[0];
 
-    // Label del dashboard en el menú según rol
+    // Label del panel activo
     const menuDashLabel = document.getElementById('menu-dashboard-label');
     if (menuDashLabel) {
-      const labels = { admin: 'Panel Admin', professional: 'Mi Panel Pro', user: 'Mi Panel' };
-      menuDashLabel.textContent = labels[store.currentRole] || 'Mi Panel';
+      menuDashLabel.textContent = store.activePanel === 'pro' ? 'Mi Panel Profesional' : 'Mi Panel Cliente';
+    }
+
+    // Switch de panel si tiene perfil pro
+    const switchProBtn = document.getElementById('menu-switch-pro');
+    const activateProBtn = document.getElementById('menu-activate-pro');
+    if (switchProBtn && activateProBtn) {
+      if (store.isPro) {
+        switchProBtn.style.display = 'block';
+        const switchLabel = document.getElementById('menu-switch-pro-label');
+        if (switchLabel) {
+          switchLabel.textContent = store.activePanel === 'pro' ? 'Panel Cliente' : 'Panel Profesional';
+        }
+        activateProBtn.style.display = 'none';
+      } else if (!store.isAdmin) {
+        activateProBtn.style.display = 'block';
+        switchProBtn.style.display = 'none';
+      }
     }
 
     // Nombre de bienvenida en dashboard
