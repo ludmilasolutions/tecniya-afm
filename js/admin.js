@@ -204,7 +204,8 @@ async function loadAdminAds() {
       <td>${escapeHtml(a.province || a.city || 'Nacional')}</td>
       <td>${a.link ? `<a href="${a.link}" target="_blank" style="color:var(--accent);">Ver</a>` : '-'}</td>
       <td>${a.active ? '<span style="color:var(--green);">Activa</span>' : '<span style="color:var(--gray);">Inactiva</span>'}</td>
-      <td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="window.adminEditAd('${a.id}')" title="Editar"><i class="fa fa-pencil"></i></button>
         <button class="btn btn-${a.active ? 'danger' : 'success'} btn-sm" onclick="window.adminToggleAd('${a.id}', ${!a.active})" title="${a.active ? 'Desactivar' : 'Activar'}">
           <i class="fa fa-toggle-${a.active ? 'on' : 'off'}"></i>
         </button>
@@ -984,3 +985,66 @@ export async function adminClearSuspicious(userId) {
 
 window.adminClearSuspicious = adminClearSuspicious;
 window.loadAdminSecurity    = loadAdminSecurity;
+
+export function adminNewAd() {
+  // Limpiar form
+  document.getElementById('ad-form-id').value        = '';
+  document.getElementById('ad-form-title').value     = '';
+  document.getElementById('ad-form-desc').value      = '';
+  document.getElementById('ad-form-link').value      = '';
+  document.getElementById('ad-form-level').value     = 'local';
+  document.getElementById('ad-form-province').value  = '';
+  document.getElementById('ad-form-city').value      = '';
+  document.getElementById('ad-form-active').checked  = true;
+  document.getElementById('ad-form-modal-title').textContent = 'Nueva publicidad';
+  document.getElementById('modal-ad-form').classList.add('open');
+}
+
+export async function adminEditAd(adId) {
+  const sb = getSupabase();
+  const { data: a } = await sb.from('ads').select('*').eq('id', adId).maybeSingle();
+  if (!a) return;
+  document.getElementById('ad-form-id').value        = a.id;
+  document.getElementById('ad-form-title').value     = a.title     || '';
+  document.getElementById('ad-form-desc').value      = a.description || '';
+  document.getElementById('ad-form-link').value      = a.link      || '';
+  document.getElementById('ad-form-level').value     = a.level     || 'local';
+  document.getElementById('ad-form-province').value  = a.province  || '';
+  document.getElementById('ad-form-city').value      = a.city      || '';
+  document.getElementById('ad-form-active').checked  = a.active    ?? true;
+  document.getElementById('ad-form-modal-title').textContent = 'Editar publicidad';
+  document.getElementById('modal-ad-form').classList.add('open');
+}
+
+export async function adminSaveAd() {
+  const sb = getSupabase();
+  const id       = document.getElementById('ad-form-id').value;
+  const title    = document.getElementById('ad-form-title').value.trim();
+  const desc     = document.getElementById('ad-form-desc').value.trim();
+  const link     = document.getElementById('ad-form-link').value.trim();
+  const level    = document.getElementById('ad-form-level').value;
+  const province = document.getElementById('ad-form-province').value.trim();
+  const city     = document.getElementById('ad-form-city').value.trim();
+  const active   = document.getElementById('ad-form-active').checked;
+
+  if (!title) { showToast('El título es obligatorio', 'warning'); return; }
+
+  const payload = { title, description: desc, link: link||null, level, province: province||null, city: city||null, active };
+
+  let error;
+  if (id) {
+    ({ error } = await sb.from('ads').update(payload).eq('id', id));
+  } else {
+    const { data: { user } } = await sb.auth.getUser();
+    ({ error } = await sb.from('ads').insert({ ...payload, created_by: user.id }));
+  }
+
+  if (error) { showToast('Error: ' + error.message, 'error'); return; }
+  showToast(id ? 'Publicidad actualizada' : 'Publicidad creada', 'success');
+  document.getElementById('modal-ad-form').classList.remove('open');
+  loadAdminAds();
+}
+
+window.adminNewAd  = adminNewAd;
+window.adminEditAd = adminEditAd;
+window.adminSaveAd = adminSaveAd;
