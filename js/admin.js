@@ -996,6 +996,8 @@ export function adminNewAd() {
   document.getElementById('ad-form-province').value  = '';
   document.getElementById('ad-form-city').value      = '';
   document.getElementById('ad-form-active').checked  = true;
+  document.getElementById('ad-form-image').value     = '';
+  document.getElementById('ad-form-image-preview').style.display = 'none';
   document.getElementById('ad-form-modal-title').textContent = 'Nueva publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1012,6 +1014,15 @@ export async function adminEditAd(adId) {
   document.getElementById('ad-form-province').value  = a.province  || '';
   document.getElementById('ad-form-city').value      = a.city      || '';
   document.getElementById('ad-form-active').checked  = a.active    ?? true;
+  document.getElementById('ad-form-image').value     = a.image_url  || '';
+  const prev = document.getElementById('ad-form-image-preview');
+  const thumb = document.getElementById('ad-form-image-thumb');
+  if (a.image_url && prev && thumb) {
+    thumb.src = a.image_url;
+    prev.style.display = 'block';
+  } else if (prev) {
+    prev.style.display = 'none';
+  }
   document.getElementById('ad-form-modal-title').textContent = 'Editar publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1025,7 +1036,8 @@ export async function adminSaveAd() {
   const level    = document.getElementById('ad-form-level')?.value || 'local';
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
-  const active   = document.getElementById('ad-form-active')?.checked ?? true;
+  const active    = document.getElementById('ad-form-active')?.checked ?? true;
+  const image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
 
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
@@ -1039,6 +1051,7 @@ export async function adminSaveAd() {
       province: province || null,
       city: city || null,
       active,
+      image_url: image_url || null,
       created_by: user.id,
     };
 
@@ -1046,13 +1059,15 @@ export async function adminSaveAd() {
     if (id) {
       const res = await sb.rpc('admin_update_ad', {
         p_id: id, p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active
+        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
+        p_image_url: image_url||null
       });
       error = res.error;
     } else {
       const res = await sb.rpc('admin_create_ad', {
         p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active
+        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
+        p_image_url: image_url||null
       });
       error = res.error;
     }
@@ -1075,3 +1090,20 @@ export async function adminSaveAd() {
 window.adminNewAd  = adminNewAd;
 window.adminEditAd = adminEditAd;
 window.adminSaveAd = adminSaveAd;
+
+export function adminPreviewAdImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const thumb = document.getElementById('ad-form-image-thumb');
+    const prev  = document.getElementById('ad-form-image-preview');
+    const urlInput = document.getElementById('ad-form-image');
+    if (thumb) thumb.src = e.target.result;
+    if (prev)  prev.style.display = 'block';
+    // Guardar base64 en el campo URL por ahora (sin storage)
+    if (urlInput) urlInput.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+window.adminPreviewAdImage = adminPreviewAdImage;

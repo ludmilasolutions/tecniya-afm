@@ -53,8 +53,19 @@ export function showAd(level) {
   }
   if (bannerEl) {
     bannerEl.dataset.link = ad.link || '#';
+  }
+
+  // Mostrar imagen real o placeholder
+  const imgReal = document.getElementById('ad-img-real');
+  const imgPlaceholder = document.getElementById('ad-img-placeholder');
+  if (imgReal && imgPlaceholder) {
     if (ad.image_url) {
-      bannerEl.style.backgroundImage = `url(${ad.image_url})`;
+      imgReal.src = ad.image_url;
+      imgReal.style.display = 'block';
+      imgPlaceholder.style.display = 'none';
+    } else {
+      imgReal.style.display = 'none';
+      imgPlaceholder.style.display = 'flex';
     }
   }
 }
