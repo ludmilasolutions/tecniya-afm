@@ -8,16 +8,21 @@ export let allAds = [];
 export async function loadAds() {
   const sb = getSupabase();
   try {
-    const { data } = await sb.from('ads').select('*').eq('active', true);
-    allAds = (data && data.length > 0) ? data : ADS_DEFAULT;
-  } catch {
+    const { data, error } = await sb.from('ads').select('*').eq('active', true);
+    if (error) {
+      console.warn('loadAds error:', error.message);
+      allAds = ADS_DEFAULT;
+    } else {
+      allAds = (data && data.length > 0) ? data : ADS_DEFAULT;
+      console.log('Ads cargados:', allAds.length, allAds.map(a => a.title));
+    }
+  } catch(e) {
+    console.warn('loadAds exception:', e.message);
     allAds = ADS_DEFAULT;
   }
-  
   store.setAllAds(allAds);
-  // Mostrar inmediatamente y también después de que el DOM esté seguro
   showAd('nacional');
-  setTimeout(() => showAd('nacional'), 300);
+  setTimeout(() => showAd('nacional'), 500);
 }
 
 export function showAd(level) {
