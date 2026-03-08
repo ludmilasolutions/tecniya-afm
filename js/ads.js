@@ -50,13 +50,13 @@ function renderAdBanner(ad) {
       width: 100%;
       max-width: 1280px;
       margin: 0 auto;
-      padding: 16px 24px;
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(6, 182, 212, 0.15));
-      border: 1px solid rgba(79, 70, 229, 0.3);
-      border-radius: 12px;
+      padding: 20px 28px;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(6, 182, 212, 0.2));
+      border: 1px solid rgba(79, 70, 229, 0.4);
+      border-radius: 14px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       cursor: pointer;
       transition: all 0.3s ease;
       margin-bottom: 16px;
@@ -81,32 +81,35 @@ function renderAdBanner(ad) {
     }
   }
 
-  const levelLabel = ad.level === 'nacional' ? 'NACIONAL' : ad.level === 'provincial' ? 'PROVINCIAL' : 'LOCAL';
-  const levelColor = ad.level === 'nacional' ? '#8b5cf6' : ad.level === 'provincial' ? '#06b6d4' : '#10b981';
+  // Aplicar transformación de imagen guardada
+  const imgZoom = ad.image_zoom || 1;
+  const imgPosX = ad.image_posX || 0;
+  const imgPosY = ad.image_posY || 0;
+  const imgStyle = `width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.3);transform:scale(${imgZoom}) translate(${imgPosX}px, ${imgPosY}px);`;
   
-  // Mostrar imagen si existe, si no el ícono
+  // Imagen más grande - 80px en vez de 50px
   const imageHtml = ad.image_url 
-    ? `<img src="${ad.image_url}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;flex-shrink:0;" alt="${ad.title}">`
-    : `<div style="width:50px;height:50px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;"><i class="fa fa-bullhorn"></i></div>`;
+    ? `<img src="${ad.image_url}" style="${imgStyle}" alt="${ad.title}">`
+    : `<div style="width:80px;height:80px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,0.3);"><i class="fa fa-bullhorn"></i></div>`;
   
+  // Sin badge de nivel - solo título y descripción
   banner.innerHTML = `
     ${imageHtml}
     <div style="flex: 1; min-width: 0;">
-      <div style="font-weight: 700; font-size: 1rem; color: #f8fafc; margin-bottom: 2px;">${ad.title || 'Publicidad'}</div>
-      <div style="font-size: 0.85rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
-    </div>
-    <div style="flex-shrink: 0; padding: 4px 10px; border-radius: 4px; background: ${levelColor}20; border: 1px solid ${levelColor}40; color: ${levelColor}; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-      ${levelLabel}
+      <div style="font-weight: 700; font-size: 1.15rem; color: #f8fafc; margin-bottom: 4px;">${ad.title || 'Publicidad'}</div>
+      <div style="font-size: 0.9rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
     </div>
   `;
   
   banner.onmouseenter = () => {
-    banner.style.borderColor = 'rgba(79, 70, 229, 0.6)';
+    banner.style.borderColor = 'rgba(79, 70, 229, 0.7)';
     banner.style.transform = 'translateY(-2px)';
+    banner.style.boxShadow = '0 8px 25px rgba(79, 70, 229, 0.3)';
   };
   banner.onmouseleave = () => {
-    banner.style.borderColor = 'rgba(79, 70, 229, 0.3)';
+    banner.style.borderColor = 'rgba(79, 70, 229, 0.4)';
     banner.style.transform = 'translateY(0)';
+    banner.style.boxShadow = 'none';
   };
 }
 

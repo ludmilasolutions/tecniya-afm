@@ -1042,14 +1042,31 @@ export async function adminEditAd(adId) {
   document.getElementById('ad-form-active').checked  = a.active    ?? true;
   document.getElementById('ad-form-image').value     = a.image_url  || '';
   
+  // Cargar transformación de imagen guardada
+  const savedTransform = {
+    zoom: a.image_zoom || 1,
+    posX: a.image_posX || 0,
+    posY: a.image_posY || 0
+  };
+  document.getElementById('ad-form-image-transform').value = JSON.stringify(savedTransform);
+  
   // Resetear estado de imagen
-  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: a.image_url || null, isFromUrl: !!a.image_url };
+  adImageState = { 
+    file: null, 
+    zoom: savedTransform.zoom, 
+    posX: savedTransform.posX, 
+    posY: savedTransform.posY, 
+    uploadedUrl: a.image_url || null, 
+    isFromUrl: !!a.image_url 
+  };
   
   if (a.image_url) {
-    document.getElementById('ad-image-editor').style.display = 'none';
+    // Mostrar editor con la imagen existente
     document.getElementById('ad-image-upload-area').style.display = 'none';
-    document.getElementById('ad-form-image-preview-url').style.display = 'block';
-    document.getElementById('ad-form-image-thumb').src = a.image_url;
+    document.getElementById('ad-image-editor').style.display = 'block';
+    document.getElementById('ad-form-image-preview-url').style.display = 'none';
+    document.getElementById('ad-image-preview-img').src = a.image_url;
+    adImageUpdatePreview();
   } else {
     document.getElementById('ad-image-editor').style.display = 'none';
     document.getElementById('ad-image-upload-area').style.display = 'block';
@@ -1070,6 +1087,13 @@ export async function adminSaveAd() {
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
   const active   = document.getElementById('ad-form-active')?.checked ?? true;
+  
+  // Obtener transformación de imagen
+  const transformStr = document.getElementById('ad-form-image-transform')?.value || '{}';
+  let imageTransform = { zoom: 1, posX: 0, posY: 0 };
+  try {
+    imageTransform = JSON.parse(transformStr);
+  } catch(e) {}
   
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
@@ -1101,6 +1125,9 @@ export async function adminSaveAd() {
       city: city || null,
       active,
       image_url: image_url || null,
+      image_zoom: imageTransform.zoom || 1,
+      image_posX: imageTransform.posX || 0,
+      image_posY: imageTransform.posY || 0,
       created_by: user.id,
     };
 
@@ -1109,14 +1136,16 @@ export async function adminSaveAd() {
       const res = await sb.rpc('admin_update_ad', {
         p_id: id, p_title: title, p_description: desc||null, p_link: link||null,
         p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null
+        p_image_url: image_url||null, p_image_zoom: imageTransform.zoom||1, 
+        p_image_posX: imageTransform.posX||0, p_image_posY: imageTransform.posY||0
       });
       error = res.error;
     } else {
       const res = await sb.rpc('admin_create_ad', {
         p_title: title, p_description: desc||null, p_link: link||null,
         p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null
+        p_image_url: image_url||null, p_image_zoom: imageTransform.zoom||1,
+        p_image_posX: imageTransform.posX||0, p_image_posY: imageTransform.posY||0
       });
       error = res.error;
     }
