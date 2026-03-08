@@ -1191,7 +1191,7 @@ window.adminNewAd  = adminNewAd;
 window.adminEditAd = adminEditAd;
 window.adminSaveAd = adminSaveAd;
 
-export function adminPreviewImageUrl() {
+function adminPreviewImageUrl() {
   const url = document.getElementById('ad-form-image')?.value?.trim();
   const thumb = document.getElementById('ad-form-image-thumb');
   const prev  = document.getElementById('ad-form-image-preview');
@@ -1213,7 +1213,7 @@ let adImageState = {
   isFromUrl: false
 };
 
-export async function adImageFileSelected(input) {
+function adImageFileSelected(input) {
   const file = input.files[0];
   if (!file) return;
   
@@ -1261,22 +1261,22 @@ function adImageUpdatePreview() {
   });
 }
 
-export function adImageZoomIn() {
+function adImageZoomIn() {
   adImageState.zoom = Math.min(adImageState.zoom + 0.2, 3);
   adImageUpdatePreview();
 }
 
-export function adImageZoomOut() {
+function adImageZoomOut() {
   adImageState.zoom = Math.max(adImageState.zoom - 0.2, 0.5);
   adImageUpdatePreview();
 }
 
-export function adImageMoveUp() { adImageState.posY -= 10; adImageUpdatePreview(); }
-export function adImageMoveDown() { adImageState.posY += 10; adImageUpdatePreview(); }
-export function adImageMoveLeft() { adImageState.posX -= 10; adImageUpdatePreview(); }
-export function adImageMoveRight() { adImageState.posX += 10; adImageUpdatePreview(); }
+function adImageMoveUp() { adImageState.posY -= 10; adImageUpdatePreview(); }
+function adImageMoveDown() { adImageState.posY += 10; adImageUpdatePreview(); }
+function adImageMoveLeft() { adImageState.posX -= 10; adImageUpdatePreview(); }
+function adImageMoveRight() { adImageState.posX += 10; adImageUpdatePreview(); }
 
-export function adImageClear() {
+function adImageClear() {
   adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: null, isFromUrl: false };
   document.getElementById('ad-form-image').value = '';
   document.getElementById('ad-form-image-file').value = '';
@@ -1285,7 +1285,7 @@ export function adImageClear() {
   document.getElementById('ad-image-status').innerHTML = '<i class="fa fa-times"></i> Sin imagen';
 }
 
-export function adImageUrlChanged(url) {
+function adImageUrlChanged(url) {
   if (!url) return;
   adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: url, isFromUrl: true };
   document.getElementById('ad-form-image').value = url;
@@ -1295,7 +1295,7 @@ export function adImageUrlChanged(url) {
   document.getElementById('ad-form-image-thumb').src = url;
 }
 
-export async function adImageUploadAndGetUrl() {
+async function adImageUploadAndGetUrl() {
   if (adImageState.isFromUrl && adImageState.uploadedUrl) {
     return adImageState.uploadedUrl;
   }
@@ -1325,7 +1325,7 @@ window.adImageClear = adImageClear;
 window.adImageUrlChanged = adImageUrlChanged;
 window.adImageUploadAndGetUrl = adImageUploadAndGetUrl;
 
-export function adminPreviewAdImage(event) {
+function adminPreviewAdImage(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
