@@ -2015,3 +2015,72 @@
 .rating-category .star-rating {font-size:1.4rem;}
 </style>
 
+
+<!-- Modal de Alerta Urgente (tipo Uber) -->
+<div id="urgent-alert-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;background:rgba(0,0,0,0.95);backdrop-filter:blur(8px);">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;background:linear-gradient(135deg, var(--darker), #1a1a2e);border-radius:20px;padding:0;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:2px solid var(--orange);overflow:hidden;">
+    
+    <!-- Animated header -->
+    <div style="background:linear-gradient(135deg, var(--orange), #ef4444);padding:24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"white\" opacity=\"0.1\"/></svg>');animation:pulse 2s infinite;"></div>
+      <div style="text-align:center;position:relative;z-index:1;">
+        <div style="font-size:3.5rem;margin-bottom:8px;animation:bounce 1s infinite;">🚨</div>
+        <h2 style="margin:0;font-size:1.4rem;font-weight:900;color:white;text-transform:uppercase;letter-spacing:2px;">Solicitud Urgente</h2>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;">
+      <div id="urgent-alert-content"></div>
+      
+      <!-- Timer circular -->
+      <div style="text-align:center;margin:24px 0;">
+        <div style="position:relative;width:120px;height:120px;margin:0 auto;">
+          <svg width="120" height="120" style="transform:rotate(-90deg);">
+            <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none"/>
+            <circle id="timer-circle" cx="60" cy="60" r="54" stroke="var(--orange)" stroke-width="6" fill="none" stroke-dasharray="339.292" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear;"/>
+          </svg>
+          <div id="timer-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;font-weight:900;color:var(--orange);">30</div>
+        </div>
+        <div style="font-size:0.85rem;color:var(--gray);margin-top:8px;">segundos para responder</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <button id="reject-urgent-alert" style="padding:16px;border:2px solid var(--border);background:transparent;color:var(--light);border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+          <i class="fa fa-times"></i> Rechazar
+        </button>
+        <button id="accept-urgent-alert" style="padding:16px;border:none;background:linear-gradient(135deg, var(--green), #059669);color:white;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 15px rgba(16,185,129,0.3);">
+          <i class="fa fa-check"></i> Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sound effect -->
+  <audio id="urgent-alert-sound" preload="auto">
+    <source src="data:audio/wav;base64,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" type="audio/wav">
+  </audio>
+</div>
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+#reject-urgent-alert:hover {
+  background: rgba(255,255,255,0.05);
+  transform: scale(1.02);
+}
+
+#accept-urgent-alert:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+}
+</style>

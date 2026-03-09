@@ -11,6 +11,7 @@ import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
 import { checkAndShowTour } from './tour.js';
 import { initRatingEvents } from './userRatings.js';
+import { initUrgentAlerts, stopUrgentAlerts } from './urgentAlerts.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
@@ -449,6 +450,11 @@ async function initApp() {
   initRatingEvents();
   animateStats();
   setupRealtimeNotifications();
+  
+  // Iniciar sistema de alertas urgentes si es profesional
+  if (store.isPro && store.currentUser) {
+    initUrgentAlerts();
+  }
 
   setTimeout(() => {
     const overlay = document.getElementById('loading-overlay');
