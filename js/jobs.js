@@ -352,6 +352,10 @@ export function jobItem(j, viewAs) {
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
+    } else if (j.status === 'finalizado') {
+      actions = `
+        <button class="btn btn-accent btn-sm" onclick="window.openRateUserModal('${j.id}','${j.user_id}','${escHtml(j.user_name||'Cliente')}')"><i class="fa fa-star"></i>Calificar Cliente</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     }
   } else if (viewAs === 'user') {
     if (j.status === 'fecha_propuesta_pro') {
@@ -672,7 +676,7 @@ export async function submitRating() {
 
   if (!professionalProfileId) {
     // Intentar obtener directamente de la tabla professionals
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
     if (proData?.user_id) {
       professionalProfileId = proData.user_id;
     }
