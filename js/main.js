@@ -10,6 +10,7 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
 import { checkAndShowTour } from './tour.js';
+import { initRatingEvents } from './userRatings.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
@@ -433,6 +434,7 @@ async function initApp() {
 
   initStorage();
   initUploadEvents();
+  initRatingEvents();
   animateStats();
   setupRealtimeNotifications();
 
