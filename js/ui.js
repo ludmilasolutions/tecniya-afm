@@ -184,12 +184,14 @@ export async function updateAuthUI() {
   const navUserMenu = document.getElementById('nav-user-menu');
   const mobileLoginLink = document.getElementById('mobile-login-link');
   const mobilePanelLink = document.getElementById('mobile-panel-link');
+  const notifBtn = document.getElementById('notif-btn');
 
   if (navLoginBtn) navLoginBtn.style.display = isLogged ? 'none' : 'inline-block';
   if (navRegBtn) navRegBtn.style.display = isLogged ? 'none' : 'inline-block';
   if (navUserMenu) navUserMenu.style.display = isLogged ? 'flex' : 'none';
   if (mobileLoginLink) mobileLoginLink.style.display = isLogged ? 'none' : 'block';
   if (mobilePanelLink) mobilePanelLink.style.display = isLogged ? 'block' : 'none';
+  if (notifBtn) notifBtn.style.display = isLogged ? 'block' : 'none';
   
   if (isLogged) {
     const meta = store.currentUser.user_metadata || {};
