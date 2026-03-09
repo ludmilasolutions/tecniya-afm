@@ -363,6 +363,17 @@
       <button class="tab" data-tab="tab-pro-config">Configuración</button>
     </div>
     <div class="tab-panel active" id="tab-pro-solicitudes">
+      <div id="urgent-requests-section" style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="fa fa-bolt" style="color:var(--orange);font-size:1.2rem;"></i>
+            <h3 style="margin:0;font-size:1rem;">Solicitudes Urgentes</h3>
+          </div>
+          <span id="urgent-count-badge" style="background:var(--orange);color:white;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;display:none;">0</span>
+        </div>
+        <div id="urgent-requests-list"></div>
+      </div>
+      <h3 style="margin:0 0 12px 0;font-size:1rem;">Solicitudes Normales</h3>
       <div class="jobs-list" id="pro-jobs-new">
         <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas.</p></div>
       </div>
@@ -1104,14 +1115,26 @@
         <textarea class="form-textarea" id="urgent-desc" placeholder="Describí brevemente qué pasó..." style="min-height:80px;"></textarea>
       </div>
       <div class="form-group">
+        <label class="form-label">Dirección</label>
+        <input type="text" class="form-input" id="urgent-address" placeholder="Calle, número, ciudad">
+      </div>
+      <div class="form-group">
         <label class="form-label">Radio de búsqueda</label>
         <select class="form-select" id="urgent-radius">
           <option value="5">5 km</option>
           <option value="10" selected>10 km</option>
           <option value="20">20 km</option>
+          <option value="50">50 km</option>
         </select>
       </div>
-      <div class="urgency-map"><i class="fa fa-location-dot" style="margin-right:8px;color:var(--orange);"></i>Detectando tu ubicación...</div>
+      <div id="urgency-map-status" style="padding:12px;background:rgba(6,182,212,0.1);border-radius:8px;margin-bottom:16px;font-size:0.85rem;display:flex;align-items:center;gap:8px;">
+        <i class="fa fa-location-dot" style="color:var(--accent);"></i>
+        <span id="location-status-text">Detectando tu ubicación...</span>
+      </div>
+      <div id="nearby-pros-preview" style="display:none;margin-bottom:16px;">
+        <div style="font-size:0.85rem;color:var(--gray);margin-bottom:8px;">Profesionales disponibles cerca:</div>
+        <div id="nearby-pros-count" style="font-size:1.2rem;font-weight:700;color:var(--green);"></div>
+      </div>
       <button class="btn btn-orange btn-block btn-lg" id="btn-send-urgent"><i class="fa fa-bolt"></i>Enviar solicitud urgente</button>
     </div>
   </div>

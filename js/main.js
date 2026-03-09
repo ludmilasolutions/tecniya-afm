@@ -404,6 +404,7 @@ async function initApp() {
 
   // ── MODALES DE JOBS ──────────────────────────────────────────────────────
   on('btn-submit-job',    'click', submitJobRequest);
+  on('urgent-btn',        'click', showUrgentModal);
   on('btn-send-urgent',   'click', sendUrgentRequest);
   on('btn-submit-rating', 'click', submitRating);
 

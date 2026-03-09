@@ -229,6 +229,9 @@ export async function loadProDashboard() {
     renderJobList('pro-jobs-active',  activeJ, 'pro');
     renderJobList('pro-jobs-done',    doneJ,   'pro');
 
+    // Cargar solicitudes urgentes
+    await loadUrgentRequests();
+
     // Rating promedio
     const { data: reviews } = await sb
       .from('reviews')
@@ -666,3 +669,166 @@ export function getSelectedSpecialties() {
   const chips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
   return Array.from(chips).map(c => c.textContent.trim());
 }
+
+// Sistema de solicitudes urgentes para profesionales
+export async function loadUrgentRequests() {
+  const sb = getSupabase();
+  if (!store.currentUser || !store.isPro) return;
+  
+  try {
+    const { data: urgentReqs, error } = await sb
+      .from('urgent_requests')
+      .select('*, profiles(full_name)')
+      .eq('status', 'solicitado')
+      .contains('notified_pros', [store.currentUser.id])
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const container = document.getElementById('urgent-requests-list');
+    const badge = document.getElementById('urgent-count-badge');
+    
+    if (!urgentReqs || urgentReqs.length === 0) {
+      if (container) container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:0.85rem;">No hay solicitudes urgentes en este momento</div>';
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    
+    if (badge) {
+      badge.textContent = urgentReqs.length;
+      badge.style.display = 'inline-block';
+    }
+    
+    if (container) {
+      container.innerHTML = urgentReqs.map(req => renderUrgentRequestCard(req)).join('');
+    }
+    
+  } catch (error) {
+    console.error('Error loading urgent requests:', error);
+  }
+}
+
+function renderUrgentRequestCard(req) {
+  const userName = req.profiles?.full_name || 'Cliente';
+  const timeAgo = getTimeAgo(new Date(req.created_at));
+  
+  return `
+    <div class="card" style="background:linear-gradient(135deg, rgba(249,115,22,0.05), rgba(239,68,68,0.05));border:2px solid var(--orange);margin-bottom:12px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;background:var(--orange);color:white;padding:4px 12px;border-bottom-left-radius:8px;font-size:0.7rem;font-weight:700;">
+        <i class="fa fa-bolt"></i> URGENTE
+      </div>
+      <div style="padding:16px;">
+        <div style="display:flex;align-items:start;gap:12px;margin-bottom:12px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:1.2rem;flex-shrink:0;">
+            ${userName.charAt(0).toUpperCase()}
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:0.95rem;margin-bottom:4px;">${escHtml(userName)}</div>
+            <div style="font-size:0.75rem;color:var(--gray);">
+              <i class="fa fa-clock"></i> ${timeAgo}
+            </div>
+          </div>
+        </div>
+        
+        <div style="background:var(--darker);padding:12px;border-radius:8px;margin-bottom:12px;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--orange);margin-bottom:6px;">
+            <i class="fa fa-wrench"></i> ${escHtml(req.specialty)}
+          </div>
+          <div style="font-size:0.85rem;color:var(--light);margin-bottom:8px;">
+            ${escHtml(req.description)}
+          </div>
+          <div style="font-size:0.8rem;color:var(--gray);">
+            <i class="fa fa-location-dot"></i> ${escHtml(req.address || 'Sin dirección')}
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-success btn-sm" style="flex:1;" onclick="window.acceptUrgentRequest('${req.id}', '${req.user_id}')">
+            <i class="fa fa-check"></i> Aceptar
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="window.openMapLocation(${req.latitude}, ${req.longitude})">
+            <i class="fa fa-map"></i> Ver mapa
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getTimeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return 'Hace unos segundos';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+  return `Hace ${Math.floor(hours / 24)} día${Math.floor(hours / 24) > 1 ? 's' : ''}`;
+}
+
+export async function acceptUrgentRequest(requestId, userId) {
+  const sb = getSupabase();
+  
+  try {
+    // Verificar que aún está disponible
+    const { data: req, error: checkError } = await sb
+      .from('urgent_requests')
+      .select('status')
+      .eq('id', requestId)
+      .single();
+    
+    if (checkError) throw checkError;
+    
+    if (req.status !== 'solicitado') {
+      showToast('Esta solicitud ya fue aceptada por otro profesional', 'warning');
+      await loadUrgentRequests();
+      return;
+    }
+    
+    // Marcar como aceptada
+    const { error: updateError } = await sb
+      .from('urgent_requests')
+      .update({ 
+        status: 'aceptado',
+        accepted_by: store.currentUser.id,
+        accepted_at: new Date().toISOString()
+      })
+      .eq('id', requestId);
+    
+    if (updateError) throw updateError;
+    
+    // Crear el trabajo asociado
+    const { data: urgentReq } = await sb
+      .from('urgent_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single();
+    
+    const { error: jobError } = await sb.from('jobs').insert({
+      user_id: userId,
+      professional_id: store.currentUser.id,
+      specialty: urgentReq.specialty,
+      description: urgentReq.description,
+      address: urgentReq.address,
+      latitude: urgentReq.latitude,
+      longitude: urgentReq.longitude,
+      status: 'aceptado',
+      is_urgent: true,
+      created_at: new Date().toISOString()
+    });
+    
+    if (jobError) throw jobError;
+    
+    showToast('¡Solicitud urgente aceptada! El cliente será notificado', 'success');
+    await loadUrgentRequests();
+    await loadProDashboard();
+    
+  } catch (error) {
+    console.error('Error accepting urgent request:', error);
+    showToast('Error al aceptar solicitud', 'error');
+  }
+}
+
+window.acceptUrgentRequest = acceptUrgentRequest;
+window.openMapLocation = (lat, lng) => {
+  window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+};
