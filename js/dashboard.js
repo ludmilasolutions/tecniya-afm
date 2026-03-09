@@ -533,15 +533,47 @@ export async function saveAvailability() {
   const hasta     = document.getElementById('hora-hasta')?.value;
   const urgencias = document.getElementById('urgencias')?.checked;
 
-  const { error } = await sb.from('professionals').update({
+  let updateData = {
     availability: { dias, desde, hasta, urgencias },
     is_online: urgencias
-  }).eq('user_id', store.currentUser.id);
+  };
 
-  if (error) { console.error('saveAvailability:', error); showToast('Error al guardar: ' + error.message, 'error'); }
-  else {
+  // Si se está conectando, obtener ubicación
+  if (urgencias && navigator.geolocation) {
+    await new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          updateData.latitude = position.coords.latitude;
+          updateData.longitude = position.coords.longitude;
+          console.log('DEBUG: Professional location saved:', updateData.latitude, updateData.longitude);
+          showToast('Ubicación detectada', 'success');
+          resolve();
+        },
+        (error) => {
+          console.warn('Could not get location:', error);
+          showToast('No se pudo detectar ubicación. Acepta permisos de ubicación para urgencias.', 'warning');
+          resolve();
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
+
+  console.log('DEBUG: Saving professional data:', updateData);
+  const { error } = await sb.from('professionals').update(updateData).eq('user_id', store.currentUser.id);
+
+  if (error) { 
+    console.error('saveAvailability:', error); 
+    showToast('Error al guardar: ' + error.message, 'error'); 
+  } else {
     if (store.currentPro) Object.assign(store.currentPro, { availability: { dias, desde, hasta, urgencias } });
-    showToast('Disponibilidad actualizada', 'success');
+    showToast(urgencias ? 'Conectado para urgencias' : 'Disponibilidad actualizada', 'success');
+    
+    // Actualizar UI del toggle
+    const { updateOnlineStatusUI } = await import('./dashboard.js');
+    if (typeof updateOnlineStatusUI === 'function') {
+      updateOnlineStatusUI(urgencias);
+    }
   }
 }
 

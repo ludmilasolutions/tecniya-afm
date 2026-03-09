@@ -582,16 +582,68 @@ export async function sendUrgentRequest() {
   
   try {
     // 1. Buscar profesionales online cercanos
-    const { data: nearbyPros, error: searchError } = await sb.rpc('get_nearby_online_professionals', {
-      user_lat: store.userLocation.lat,
-      user_lng: store.userLocation.lng,
-      search_specialty: specialty,
-      max_radius_km: radius
-    });
+    let nearbyPros = null;
+    let searchError = null;
+    
+    // Intentar con RPC primero
+    try {
+      const result = await sb.rpc('get_nearby_online_professionals', {
+        user_lat: store.userLocation.lat,
+        user_lng: store.userLocation.lng,
+        search_specialty: specialty,
+        max_radius_km: radius
+      });
+      nearbyPros = result.data;
+      searchError = result.error;
+    } catch (rpcError) {
+      console.log('RPC not available, using fallback query');
+      // Fallback: query manual
+      const { data, error } = await sb
+        .from('professionals')
+        .select('id, user_id, specialty, whatsapp, city, province, latitude, longitude, profiles!user_id(full_name)')
+        .eq('is_online', true)
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null);
+      
+      if (!error && data) {
+        // Calcular distancia manualmente
+        nearbyPros = data
+          .map(p => {
+            const lat1 = store.userLocation.lat;
+            const lng1 = store.userLocation.lng;
+            const lat2 = p.latitude;
+            const lng2 = p.longitude;
+            
+            const R = 6371; // Radio tierra en km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c;
+            
+            return {
+              ...p,
+              name: p.profiles?.full_name || 'Profesional',
+              distance_km: Math.round(distance * 100) / 100
+            };
+          })
+          .filter(p => p.distance_km <= radius)
+          .filter(p => !specialty || p.specialty === specialty)
+          .sort((a, b) => a.distance_km - b.distance_km)
+          .slice(0, 20);
+      }
+      searchError = error;
+    }
     
     if (searchError) throw searchError;
     
     if (!nearbyPros || nearbyPros.length === 0) {
+      console.log('DEBUG: No professionals found');
+      console.log('User location:', store.userLocation);
+      console.log('Specialty:', specialty);
+      console.log('Radius:', radius);
       showToast('No hay profesionales disponibles en este momento en tu zona. Intenta con un radio mayor.', 'warning');
       if (btn) {
         btn.disabled = false;
@@ -599,6 +651,9 @@ export async function sendUrgentRequest() {
       }
       return;
     }
+    
+    console.log('DEBUG: Found professionals:', nearbyPros.length);
+    console.log('DEBUG: Professionals data:', nearbyPros);
     
     // 2. Crear la solicitud urgente
     const { data: urgentReq, error: insertError } = await sb.from('urgent_requests').insert({
