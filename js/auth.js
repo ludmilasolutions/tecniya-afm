@@ -297,6 +297,11 @@ export async function redirectAfterLogin() {
     updateAuthUI();
     showPage('home');
   }
+
+  // Mostrar tour para nuevos usuarios
+  setTimeout(() => {
+    import('./tour.js').then(m => m.checkAndShowTour());
+  }, 1500);
 }
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
@@ -346,6 +351,12 @@ export async function activateProProfile() {
 
   if (!specialty) {
     if (errEl) { errEl.textContent = 'Seleccioná tu especialidad principal.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
+  if (!profile?.avatar_url) {
+    if (errEl) { errEl.textContent = 'Tenés que agregar una foto de perfil primero.'; errEl.classList.remove('hidden'); }
     return;
   }
 

@@ -9,6 +9,7 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
+import { checkAndShowTour } from './tour.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
@@ -137,6 +138,8 @@ window.saveProfile      = saveProfile;
 window.saveProProfile   = saveProProfile;
 window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
+window.editAvatarSelected = editAvatarSelected;
+window.proEditAvatarSelected = proEditAvatarSelected;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;

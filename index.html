@@ -694,6 +694,19 @@
     <button class="btn btn-ghost btn-sm" id="btn-back-profile-edit"><i class="fa fa-arrow-left"></i>Volver</button>
     <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar mi perfil</h2>
     <div class="card">
+      <div class="form-group" style="text-align:center;margin-bottom:24px;">
+        <label class="form-label">Foto de perfil <span style="color:#f87171;">*</span></label>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div id="edit-avatar-preview" class="user-avatar" style="width:100px;height:100px;font-size:2.5rem;border-radius:50%;background:var(--darker);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background-size:cover;background-position:center;">
+            <i class="fa fa-camera" style="color:var(--gray);"></i>
+          </div>
+          <input type="file" id="edit-avatar-file" accept="image/*" style="display:none;" onchange="window.editAvatarSelected(this)">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('edit-avatar-file').click()">
+            <i class="fa fa-upload"></i> Subir foto
+          </button>
+          <span style="font-size:0.75rem;color:var(--gray);">La foto es obligatoria</span>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label">Nombre completo</label>
         <input type="text" class="form-input" id="edit-name" placeholder="Tu nombre completo">
@@ -720,6 +733,19 @@
     <button class="btn btn-ghost btn-sm" id="btn-back-pro-profile-edit"><i class="fa fa-arrow-left"></i>Volver</button>
     <h2 style="font-size:1.5rem;margin-bottom:28px;font-family:'Inter',sans-serif;">Editar perfil profesional</h2>
     <div class="card">
+      <div class="form-group" style="text-align:center;margin-bottom:24px;">
+        <label class="form-label">Foto de perfil <span style="color:#f87171;">*</span></label>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div id="pro-edit-avatar-preview" class="user-avatar" style="width:100px;height:100px;font-size:2.5rem;border-radius:50%;background:var(--darker);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background-size:cover;background-position:center;">
+            <i class="fa fa-camera" style="color:var(--gray);"></i>
+          </div>
+          <input type="file" id="pro-edit-avatar-file" accept="image/*" style="display:none;" onchange="window.proEditAvatarSelected(this)">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('pro-edit-avatar-file').click()">
+            <i class="fa fa-upload"></i> Subir foto
+          </button>
+          <span style="font-size:0.75rem;color:var(--gray);">La foto es obligatoria</span>
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Nombre profesional</label>
@@ -1809,6 +1835,24 @@
       <button class="btn btn-primary btn-block" onclick="window.adminSaveAd()" style="margin-top:16px;">
         <i class="fa fa-floppy-disk"></i> Guardar publicidad
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tour guiado inicial -->
+<div class="modal-overlay" id="modal-tour">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-rocket" style="color:var(--accent);margin-right:8px;"></i>¡Bienvenido a TECNIYA!</h3>
+      <button class="modal-close" onclick="window.closeTour()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="tour-content" style="text-align:center;">
+      <!-- Se填充 dinámicamente -->
+    </div>
+    <div style="padding:16px 24px 24px;display:flex;justify-content:space-between;align-items:center;">
+      <button class="btn btn-ghost btn-sm" id="btn-skip-tour" onclick="window.closeTour()">Saltar</button>
+      <div style="display:flex;gap:8px;" id="tour-dots"></div>
+      <button class="btn btn-primary" id="btn-next-tour" onclick="window.nextTourStep()">Siguiente</button>
     </div>
   </div>
 </div>
