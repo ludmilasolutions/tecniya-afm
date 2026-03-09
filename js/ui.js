@@ -176,32 +176,29 @@ export function animateStats() {
   });
 }
 
-export function updateAuthUI() {
+export async function updateAuthUI() {
   const isLogged = !!store.currentUser;
   
-  const navAuthBtns = document.getElementById('nav-auth-btns');
-  if (navAuthBtns) navAuthBtns.style.display = isLogged ? 'none' : 'flex';
-  
-  const userMenu = document.getElementById('nav-user-menu');
-  if (userMenu) userMenu.style.display = isLogged ? 'flex' : 'none';
-  
-  const notifBtn = document.getElementById('notif-btn');
-  if (notifBtn) notifBtn.style.display = isLogged ? 'flex' : 'none';
-  
+  const navLoginBtn = document.getElementById('btn-login-nav');
+  const navRegBtn = document.getElementById('btn-register-nav');
+  const navUserMenu = document.getElementById('nav-user-menu');
   const mobileLoginLink = document.getElementById('mobile-login-link');
-  if (mobileLoginLink) mobileLoginLink.style.display = isLogged ? 'none' : 'block';
-  
   const mobilePanelLink = document.getElementById('mobile-panel-link');
+
+  if (navLoginBtn) navLoginBtn.style.display = isLogged ? 'none' : 'inline-block';
+  if (navRegBtn) navRegBtn.style.display = isLogged ? 'none' : 'inline-block';
+  if (navUserMenu) navUserMenu.style.display = isLogged ? 'flex' : 'none';
+  if (mobileLoginLink) mobileLoginLink.style.display = isLogged ? 'none' : 'block';
   if (mobilePanelLink) mobilePanelLink.style.display = isLogged ? 'block' : 'none';
   
   if (isLogged) {
     const meta = store.currentUser.user_metadata || {};
     const name = meta.full_name || meta.name || store.currentUser.email || 'U';
     
-    // Buscar avatar: primero en user_metadata, luego en profiles
+    // Buscar avatar: primero en user_metadata
     let avatarUrl = meta.avatar_url || meta.picture || null;
     
-    // Si no hay avatar en metadata, intentar obtener de la tabla profiles
+    // Si no hay avatar, intentar obtener de profiles de forma async
     if (!avatarUrl && store.currentUser.id) {
       try {
         const { getSupabase } = await import('./supabase.js');
@@ -209,11 +206,17 @@ export function updateAuthUI() {
         const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
         if (profile?.avatar_url) {
           avatarUrl = profile.avatar_url;
+          // También guardar en metadata para futuras veces
+          if (store.currentUser.user_metadata) {
+            store.currentUser.user_metadata.avatar_url = avatarUrl;
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Could not load avatar from profiles:', e);
+      }
     }
     
-    // Avatar: foto de Google o inicial
+    // Avatar: foto o inicial
     const userAvatarBtn = document.getElementById('user-avatar-btn');
     if (userAvatarBtn) {
       if (avatarUrl) {
@@ -221,6 +224,11 @@ export function updateAuthUI() {
       } else {
         userAvatarBtn.textContent = name.charAt(0).toUpperCase();
       }
+    }
+    
+    // Nombre en el menú desplegable
+    const menuUserName = document.getElementById('menu-user-name');
+    if (menuUserName) menuUserName.textContent = name.split(' ')[0];
     }
     
     // Nombre en el menú desplegable
