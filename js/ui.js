@@ -194,22 +194,60 @@ export async function updateAuthUI() {
   if (isLogged) {
     const meta = store.currentUser.user_metadata || {};
     const name = meta.full_name || meta.name || store.currentUser.email || 'U';
-    
-    // Buscar avatar: primero en user_metadata
     let avatarUrl = meta.avatar_url || meta.picture || null;
     
-    // Si no hay avatar, intentar obtener de profiles de forma async
+    // Cargar avatar desde profiles si no está en metadata
     if (!avatarUrl && store.currentUser.id) {
+      const { getSupabase } = await import('./supabase.js');
+      const sb = getSupabase();
       try {
-        const { getSupabase } = await import('./supabase.js');
-        const sb = getSupabase();
         const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-        if (profile?.avatar_url) {
+        if (profile && profile.avatar_url) {
           avatarUrl = profile.avatar_url;
-          // También guardar en metadata para futuras veces
           if (store.currentUser.user_metadata) {
             store.currentUser.user_metadata.avatar_url = avatarUrl;
           }
+        }
+      } catch (err) {
+        console.warn('Could not load avatar:', err);
+      }
+    }
+    
+    const userAvatarBtn = document.getElementById('user-avatar-btn');
+    if (userAvatarBtn) {
+      if (avatarUrl) {
+        userAvatarBtn.innerHTML = '<img src="' + avatarUrl + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="' + name + '">';
+      } else {
+        userAvatarBtn.textContent = name.charAt(0).toUpperCase();
+      }
+    }
+    
+    const menuUserName = document.getElementById('menu-user-name');
+    if (menuUserName) menuUserName.textContent = name.split(' ')[0];
+
+    const menuDashLabel = document.getElementById('menu-dashboard-label');
+    if (menuDashLabel) menuDashLabel.textContent = 'Mi Panel';
+
+    const switchProBtn  = document.getElementById('menu-switch-pro');
+    const activateProBtn = document.getElementById('menu-activate-pro');
+    if (switchProBtn && activateProBtn) {
+      if (store.isPro) {
+        switchProBtn.style.display = 'flex';
+        const switchLabel = document.getElementById('menu-switch-pro-label');
+        if (switchLabel) {
+          switchLabel.textContent = store.activePanel === 'pro' ? 'Ir al Panel Cliente' : 'Ir al Panel Profesional';
+        }
+        activateProBtn.style.display = 'none';
+      } else if (!store.isAdmin) {
+        activateProBtn.style.display = 'flex';
+        switchProBtn.style.display = 'none';
+      }
+    }
+
+    const dashUserName = document.getElementById('dash-user-name');
+    if (dashUserName) dashUserName.textContent = name.split(' ')[0];
+  }
+}
         }
       } catch (e) {
         console.warn('Could not load avatar from profiles:', e);
