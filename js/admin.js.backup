@@ -1125,8 +1125,6 @@ export async function adminSaveAd() {
   // Rechazar base64 - no guardar en la base de datos
   if (image_url && image_url.startsWith('data:')) {
     image_url = null;
-  }
-  
   try {
     const { data: { user } } = await sb.auth.getUser();
     
