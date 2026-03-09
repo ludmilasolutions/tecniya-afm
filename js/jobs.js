@@ -552,19 +552,6 @@ export async function updateJobStatus(jobId, status) {
   }
 }
 
-export async function showUrgentModal() {
-  if (!store.currentUser) {
-    showModal('modal-login');
-    showToast('Iniciá sesión para solicitar urgencias', 'info');
-    return;
-  }
-  
-  showModal('modal-urgent');
-  
-  const { detectLocation } = await import('./geolocation.js');
-  detectLocation();
-}
-
 export async function sendUrgentRequest() {
   const sb = getSupabase();
   const specialty = document.getElementById('urgent-specialty')?.value;
