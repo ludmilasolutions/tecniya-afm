@@ -18,8 +18,12 @@ export function detectLocation() {
       showToast('Ubicación detectada correctamente', 'success');
     },
     error => {
+      if (error.code === 1) {
+        // Usuario denegó el permiso - no mostrar error
+        return;
+      }
       showToast('No se pudo detectar la ubicación', 'error');
-      console.error('Geolocation error:', error);
+      console.warn('Geolocation error:', error.message);
     },
     {
       enableHighAccuracy: true,

@@ -281,6 +281,25 @@ function loadProAvailability() {
   if (desde && avail.desde) desde.value = avail.desde;
   if (hasta && avail.hasta) hasta.value = avail.hasta;
   if (urg)   urg.checked = !!avail.urgencias;
+  
+  // Sincronizar toggle de estado online
+  const toggle = document.getElementById('toggle-online-status');
+  if (toggle) {
+    toggle.checked = !!avail.urgencias;
+    updateOnlineStatusUI(!!avail.urgencias);
+  }
+}
+
+function updateOnlineStatusUI(isOnline) {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  if (dot) {
+    dot.style.color = isOnline ? 'var(--green)' : 'var(--gray)';
+  }
+  if (text) {
+    text.textContent = isOnline ? 'Conectado' : 'Desconectado';
+    text.style.color = isOnline ? 'var(--green)' : 'var(--gray)';
+  }
 }
 
 async function loadProBudgets() {

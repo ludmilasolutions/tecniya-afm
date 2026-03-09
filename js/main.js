@@ -352,6 +352,17 @@ async function initApp() {
   });
   on('btn-featured-pro',      'click', showSuscripcion);
   on('btn-save-availability', 'click', saveAvailability);
+  
+  // Toggle conectado/desconectado para urgencias
+  const toggleOnline = document.getElementById('toggle-online-status');
+  if (toggleOnline) {
+    toggleOnline.addEventListener('change', async () => {
+      const isOnline = toggleOnline.checked;
+      const urg = document.getElementById('urgencias');
+      if (urg) urg.checked = isOnline;
+      await saveAvailability();
+    });
+  }
   on('btn-save-pro-profile',  'click', saveProProfile);
   on('btn-new-budget',        'click', () => showModal('modal-new-budget'));
   on('btn-save-budget',       'click', saveBudget);

@@ -2949,3 +2949,11 @@ p {
 .toggle-switch input:not(:checked) + .toggle-slider {
   background-color: var(--gray2);
 }
+
+/* Toggle Online Status */
+#toggle-online-status:checked + .toggle-slider {
+  background-color: var(--green);
+}
+#toggle-online-status:checked ~ .toggle-knob {
+  transform: translateX(20px);
+}
