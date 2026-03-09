@@ -88,7 +88,6 @@ window.rejectProDate         = rejectProDate;
 window.openWarrantyReport    = openWarrantyReport;
 window.submitWarrantyReport  = submitWarrantyReport;
 window.toggleSpecialtyChip   = toggleSpecialtyChip;
-window.toggleSpecialtyChip   = toggleSpecialtyChip;
 window.previewJobPhoto  = previewJobPhoto;
 window.openChatWith     = (userId, jobId, isPre) => openChatWith(userId, jobId, isPre);
 window.deleteWorkPhoto  = deleteWorkPhoto;
@@ -341,7 +340,15 @@ async function initApp() {
   });
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
-  on('btn-edit-pro-profile',  'click', () => showPage('pro-profile-edit'));
+  on('btn-edit-pro-profile',  'click', async () => {
+    showPage('pro-profile-edit');
+    const { renderSpecialtyEditor, loadProDashboard } = await import('./dashboard.js');
+    await loadProDashboard();
+    const container = document.getElementById('specialty-chips-editor');
+    if (container && store.currentPro) {
+      renderSpecialtyEditor(store.currentPro.specialties || [store.currentPro.specialty]);
+    }
+  });
   on('btn-featured-pro',      'click', showSuscripcion);
   on('btn-save-availability', 'click', saveAvailability);
   on('btn-save-pro-profile',  'click', saveProProfile);
