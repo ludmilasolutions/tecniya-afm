@@ -24,7 +24,8 @@ import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBad
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
-         saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
+         saveProProfile, saveBudget, generateBudgetPDF,
+         editAvatarSelected, proEditAvatarSelected } from './dashboard.js';
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
