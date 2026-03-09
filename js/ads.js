@@ -53,17 +53,15 @@ function renderAdBanner(ad) {
     banner.id = 'custom-ad-banner';
     banner.style.cssText = `
       position: relative;
-      width: 100vw;
-      max-width: 100vw;
-      margin-left: calc(-50vw + 50%);
-      margin-right: calc(-50vw + 50%);
-      padding: 24px;
+      width: 100%;
+      margin: 0 -20px;
+      padding: 16px 20px;
       background: linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(6, 182, 212, 0.25));
       border-top: 1px solid rgba(79, 70, 229, 0.3);
       border-bottom: 1px solid rgba(79, 70, 229, 0.3);
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 16px;
       cursor: pointer;
       transition: all 0.3s ease;
       box-sizing: border-box;
@@ -77,12 +75,12 @@ function renderAdBanner(ad) {
         #custom-ad-banner {
           flex-direction: column !important;
           text-align: center !important;
-          gap: 16px !important;
-          padding: 20px 16px !important;
+          gap: 12px !important;
+          padding: 16px 16px !important;
         }
         #custom-ad-banner .ad-banner-img {
           width: 100% !important;
-          height: 180px !important;
+          height: 120px !important;
           max-width: 100% !important;
         }
         #custom-ad-banner .ad-banner-text {
@@ -130,20 +128,20 @@ function renderAdBanner(ad) {
     console.warn('Error parsing image_transform:', e);
   }
   
-  const imgStyle = `width:200px;height:120px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.4);transform:scale(${imgTransform.zoom}) translate(${imgTransform.posX}px, ${imgTransform.posY}px);`;
+  const imgStyle = `width:140px;height:80px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,0.3);transform:scale(${imgTransform.zoom}) translate(${imgTransform.posX}px, ${imgTransform.posY}px);`;
   
   const imageHtml = ad.image_url 
     ? `<img src="${ad.image_url}" class="ad-banner-img" style="${imgStyle}" alt="${ad.title}">`
-    : `<div class="ad-banner-img" style="width:200px;height:120px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:36px;box-shadow:0 4px 20px rgba(0,0,0,0.4);flex-shrink:0;"><i class="fa fa-bullhorn"></i></div>`;
+    : `<div class="ad-banner-img" style="width:140px;height:80px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;box-shadow:0 2px 10px rgba(0,0,0,0.3);flex-shrink:0;"><i class="fa fa-bullhorn"></i></div>`;
   
   banner.innerHTML = `
     ${imageHtml}
     <div class="ad-banner-text" style="flex: 1; min-width: 0;">
-      <div style="font-weight: 700; font-size: 1.4rem; color: #fff; margin-bottom: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${ad.title || 'Publicidad'}</div>
-      <div style="font-size: 1rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
+      <div style="font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${ad.title || 'Publicidad'}</div>
+      <div style="font-size: 0.85rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ad.description || ''}</div>
     </div>
-    <div style="flex-shrink: 0; padding: 12px 24px; background: rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 0.95rem; font-weight: 600; white-space: nowrap;">
-      <i class="fa fa-external-link" style="margin-right:8px;"></i> Ver más
+    <div style="flex-shrink: 0; padding: 8px 16px; background: rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
+      <i class="fa fa-external-link" style="margin-right:6px;"></i> Ver más
     </div>
   `;
   
