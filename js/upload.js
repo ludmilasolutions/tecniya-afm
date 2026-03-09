@@ -118,7 +118,7 @@ export async function uploadWorkPhoto(file, professionalId, title = '', descript
       created_at: new Date().toISOString()
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (dbError) {
     showToast('Error al guardar registro: ' + dbError.message, 'error');
@@ -193,7 +193,7 @@ export async function uploadCertification(file, professionalId, name, issuer = '
       created_at: new Date().toISOString()
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (dbError) {
     showToast('Error al guardar: ' + dbError.message, 'error');

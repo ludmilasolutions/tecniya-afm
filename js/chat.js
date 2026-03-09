@@ -122,7 +122,7 @@ export async function sendMessage(conversationId, content, type = 'text', metada
 
     const { data: msg, error } = await sb
       .from('messages').insert(payload)
-      .select('*, sender:profiles(id, full_name, avatar_url)').single();
+      .select('*, sender:profiles(id, full_name, avatar_url)').maybeSingle();
 
     if (error) throw error;
 
@@ -209,7 +209,7 @@ export async function createConversation(participantId, jobId = null, isPreAccep
     const { data: conv, error } = await sb
       .from('conversations')
       .insert({ participant_one: store.currentUser.id, participant_two: participantId, job_id: jobId, pre_acceptance: isPreAcceptance })
-      .select().single();
+      .select().maybeSingle();
 
     if (error) throw error;
     return { conversation: conv, exists: false };

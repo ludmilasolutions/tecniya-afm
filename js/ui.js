@@ -213,6 +213,47 @@ export async function updateAuthUI() {
       }
     }
     
+    const userAvatarBtn = document.getElementById('user-avatar-btn');
+    if (userAvatarBtn) {
+      if (avatarUrl) {
+        userAvatarBtn.innerHTML = '<img src="' + avatarUrl + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="' + name + '">';
+      } else {
+        userAvatarBtn.textContent = name.charAt(0).toUpperCase();
+      }
+    }
+    
+    const menuUserName = document.getElementById('menu-user-name');
+    if (menuUserName) menuUserName.textContent = name.split(' ')[0];
+
+    const menuDashLabel = document.getElementById('menu-dashboard-label');
+    if (menuDashLabel) menuDashLabel.textContent = 'Mi Panel';
+
+    const switchProBtn  = document.getElementById('menu-switch-pro');
+    const activateProBtn = document.getElementById('menu-activate-pro');
+    if (switchProBtn && activateProBtn) {
+      if (store.isPro) {
+        switchProBtn.style.display = 'flex';
+        const switchLabel = document.getElementById('menu-switch-pro-label');
+        if (switchLabel) {
+          switchLabel.textContent = store.activePanel === 'pro' ? 'Ir al Panel Cliente' : 'Ir al Panel Profesional';
+        }
+        activateProBtn.style.display = 'none';
+      } else if (!store.isAdmin) {
+        activateProBtn.style.display = 'flex';
+        switchProBtn.style.display = 'none';
+      }
+    }
+
+    const dashUserName = document.getElementById('dash-user-name');
+    if (dashUserName) dashUserName.textContent = name.split(' ')[0];
+  }
+}
+        }
+      } catch (e) {
+        console.warn('Could not load avatar from profiles:', e);
+      }
+    }
+    
     // Avatar: foto o inicial
     const userAvatarBtn = document.getElementById('user-avatar-btn');
     if (userAvatarBtn) {
@@ -221,6 +262,11 @@ export async function updateAuthUI() {
       } else {
         userAvatarBtn.textContent = name.charAt(0).toUpperCase();
       }
+    }
+    
+    // Nombre en el menú desplegable
+    const menuUserName = document.getElementById('menu-user-name');
+    if (menuUserName) menuUserName.textContent = name.split(' ')[0];
     }
     
     // Nombre en el menú desplegable

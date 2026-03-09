@@ -153,7 +153,7 @@ export async function submitUserRating() {
       .eq('job_id', jobId)
       .eq('reviewer_type', 'professional')
       .eq('professional_id', store.currentUser.id)
-      .single();
+      .maybeSingle();
 
     if (existingReview) {
       showToast('Ya has calificado a este usuario', 'warning');
@@ -214,7 +214,7 @@ export async function getUserStats(userId) {
       .from('v_user_ratings')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
