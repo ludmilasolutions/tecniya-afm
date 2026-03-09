@@ -32,13 +32,6 @@ export async function loadUserDashboard() {
     if (profile) {
       if (editPhone) editPhone.value = profile.phone || '';
       if (editCity)  editCity.value  = profile.city  || '';
-      
-      // Mostrar avatar en el formulario de edición
-      const avatarPreview = document.getElementById('edit-avatar-preview');
-      if (avatarPreview && profile.avatar_url) {
-        avatarPreview.style.backgroundImage = `url('${profile.avatar_url}')`;
-        avatarPreview.innerHTML = '';
-      }
     }
 
     // Trabajos
@@ -199,16 +192,6 @@ export async function loadProDashboard() {
   setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
   setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
 
-  // Cargar avatar en el formulario de edición profesional
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (profile?.avatar_url) {
-    const avatarPreview = document.getElementById('pro-edit-avatar-preview');
-    if (avatarPreview) {
-      avatarPreview.style.backgroundImage = `url('${profile.avatar_url}')`;
-      avatarPreview.innerHTML = '';
-    }
-  }
-
   try {
     // Jobs donde professional_id = profiles.id del usuario actual
     const { data: jobs } = await sb
@@ -348,57 +331,12 @@ async function loadProWorkPhotos() {
 
 // ─── ACCIONES ────────────────────────────────────────────────────────────────
 
-let editAvatarFile = null;
-
-export async function editAvatarSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  
-  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('La imagen no puede superar 5MB', 'error');
-    return;
-  }
-  
-  editAvatarFile = file;
-  
-  const preview = document.getElementById('edit-avatar-preview');
-  if (preview) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.style.backgroundImage = `url('${e.target.result}')`;
-      preview.innerHTML = '';
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
 export async function saveProfile() {
   if (!store.currentUser) return;
   const sb = getSupabase();
   const name  = document.getElementById('edit-name')?.value.trim();
   const phone = document.getElementById('edit-phone')?.value.trim();
   const city  = document.getElementById('edit-city')?.value.trim();
-
-  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
-
-  let avatarUrl = null;
-  
-  if (editAvatarFile) {
-    showToast('Subiendo foto...', 'info');
-    const { uploadAvatar } = await import('./upload.js');
-    avatarUrl = await uploadAvatar(editAvatarFile, store.currentUser.id);
-    if (!avatarUrl) return;
-    editAvatarFile = null;
-  }
-
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
 
   const { error } = await sb.from('profiles').update({
     full_name: name, phone, city, updated_at: new Date().toISOString()
@@ -408,44 +346,6 @@ export async function saveProfile() {
   else {
     showToast('Perfil actualizado', 'success');
     if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
-    
-    // Recargar datos del usuario para actualizar avatar en UI
-    const { data: { user } } = await sb.auth.getUser();
-    if (user) {
-      store.setCurrentUser(user);
-      const { updateAuthUI } = await import('./ui.js');
-      updateAuthUI();
-    }
-  }
-}
-
-let proEditAvatarFile = null;
-
-export async function proEditAvatarSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  
-  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('La imagen no puede superar 5MB', 'error');
-    return;
-  }
-  
-  proEditAvatarFile = file;
-  
-  const preview = document.getElementById('pro-edit-avatar-preview');
-  if (preview) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.style.backgroundImage = `url('${e.target.result}')`;
-      preview.innerHTML = '';
-    };
-    reader.readAsDataURL(file);
   }
 }
 
@@ -460,23 +360,6 @@ export async function saveProProfile() {
   const city      = document.getElementById('pro-edit-city')?.value.trim();
   const province  = document.getElementById('pro-edit-province')?.value.trim();
   const zones     = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
-
-  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
-  if (!specialties.length) { showToast('Seleccioná al menos una especialidad', 'error'); return; }
-
-  let avatarUrl = null;
-  
-  if (proEditAvatarFile) {
-    showToast('Subiendo foto...', 'info');
-    const { uploadAvatar } = await import('./upload.js');
-    avatarUrl = await uploadAvatar(proEditAvatarFile, store.currentUser.id);
-    if (!avatarUrl) return;
-    proEditAvatarFile = null;
-  }
-
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
-
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     sb.from('professionals').update({
       specialty: specialties[0] || specialty, specialties, description: desc, city, province, zones,
@@ -490,15 +373,6 @@ export async function saveProProfile() {
     // Actualizar store local
     Object.assign(store.currentPro, { specialty: specialties[0]||specialty, specialties, description: desc, city, province, zones });
     showToast('Perfil actualizado', 'success');
-    
-    // Recargar datos del usuario para actualizar avatar en UI
-    const { data: { user } } = await sb.auth.getUser();
-    if (user) {
-      store.setCurrentUser(user);
-      const { updateAuthUI } = await import('./ui.js');
-      updateAuthUI();
-    }
-    
     showPage('pro-dashboard');
   }
 }
@@ -624,15 +498,7 @@ function statusLabel(status) {
 export function renderSpecialtyEditor(selected = []) {
   const container = document.getElementById('specialty-chips-editor');
   if (!container) return;
-  
-  // Cargar especialidades del store o de window
-  let allSpecs = store.allSpecialties?.length ? store.allSpecialties : (window._allSpecialties || []);
-  
-  // Si está vacío, usar las default
-  if (!allSpecs.length) {
-    allSpecs = ['Electricista', 'Plomero', 'Carpintero', 'Pintor', 'Gasista', 'Albañil', 'Técnico HVAC', 'Cerrajero', 'Jardinero', 'Limpieza', 'Fumigador', 'Técnico PC', 'Técnico CEL', 'Otro'];
-  }
-  
+  const allSpecs = window._allSpecialties || [];
   container.innerHTML = allSpecs.map(s => {
     const active = selected.includes(s) ? 'active' : '';
     return `<span class="specialty-chip specialty-chip--toggle ${active}" onclick="window.toggleSpecialtyChip(this,'${s}')">${s}</span>`;

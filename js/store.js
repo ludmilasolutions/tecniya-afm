@@ -16,8 +16,6 @@ export const store = {
   MAX_MULTI_REQUEST: 2,
   ratings: { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 },
   deferrePrompt: null,
-  tourStep: 0,
-  tourCompleted: false,
 
   // Getters computados
   get isPro()   { return !!this.currentPro; },

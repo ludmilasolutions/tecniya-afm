@@ -9,7 +9,6 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
-import { checkAndShowTour } from './tour.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
@@ -24,8 +23,7 @@ import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBad
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
-         saveProProfile, saveBudget, generateBudgetPDF,
-         editAvatarSelected, proEditAvatarSelected } from './dashboard.js';
+         saveProProfile, saveBudget, generateBudgetPDF } from './dashboard.js';
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
@@ -88,6 +86,7 @@ window.rejectProDate         = rejectProDate;
 window.openWarrantyReport    = openWarrantyReport;
 window.submitWarrantyReport  = submitWarrantyReport;
 window.toggleSpecialtyChip   = toggleSpecialtyChip;
+window.toggleSpecialtyChip   = toggleSpecialtyChip;
 window.previewJobPhoto  = previewJobPhoto;
 window.openChatWith     = (userId, jobId, isPre) => openChatWith(userId, jobId, isPre);
 window.deleteWorkPhoto  = deleteWorkPhoto;
@@ -138,8 +137,6 @@ window.saveProfile      = saveProfile;
 window.saveProProfile   = saveProProfile;
 window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
-window.editAvatarSelected = editAvatarSelected;
-window.proEditAvatarSelected = proEditAvatarSelected;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;
@@ -340,15 +337,7 @@ async function initApp() {
   });
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
-  on('btn-edit-pro-profile',  'click', async () => {
-    showPage('pro-profile-edit');
-    const { renderSpecialtyEditor, loadProDashboard } = await import('./dashboard.js');
-    await loadProDashboard();
-    const container = document.getElementById('specialty-chips-editor');
-    if (container && store.currentPro) {
-      renderSpecialtyEditor(store.currentPro.specialties || [store.currentPro.specialty]);
-    }
-  });
+  on('btn-edit-pro-profile',  'click', () => showPage('pro-profile-edit'));
   on('btn-featured-pro',      'click', showSuscripcion);
   on('btn-save-availability', 'click', saveAvailability);
   on('btn-save-pro-profile',  'click', saveProProfile);
