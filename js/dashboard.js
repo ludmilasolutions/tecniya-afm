@@ -348,29 +348,6 @@ async function loadProWorkPhotos() {
 
 // ─── ACCIONES ────────────────────────────────────────────────────────────────
 
-export async function saveProfile() {
-  if (!store.currentUser) return;
-  const sb = getSupabase();
-  const name  = document.getElementById('edit-name')?.value.trim();
-  const phone = document.getElementById('edit-phone')?.value.trim();
-  const city  = document.getElementById('edit-city')?.value.trim();
-
-  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
-
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (!profile?.avatar_url) { showToast('La foto de perfil es obligatoria', 'error'); return; }
-
-  const { error } = await sb.from('profiles').update({
-    full_name: name, phone, city, updated_at: new Date().toISOString()
-  }).eq('id', store.currentUser.id);
-
-  if (error) { showToast('Error al guardar', 'error'); }
-  else {
-    showToast('Perfil actualizado', 'success');
-    if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
-  }
-}
-
 let editAvatarFile = null;
 
 export async function editAvatarSelected(input) {
