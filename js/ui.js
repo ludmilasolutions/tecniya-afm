@@ -197,7 +197,21 @@ export function updateAuthUI() {
   if (isLogged) {
     const meta = store.currentUser.user_metadata || {};
     const name = meta.full_name || meta.name || store.currentUser.email || 'U';
-    const avatarUrl = meta.avatar_url || meta.picture || null;
+    
+    // Buscar avatar: primero en user_metadata, luego en profiles
+    let avatarUrl = meta.avatar_url || meta.picture || null;
+    
+    // Si no hay avatar en metadata, intentar obtener de la tabla profiles
+    if (!avatarUrl && store.currentUser.id) {
+      try {
+        const { getSupabase } = await import('./supabase.js');
+        const sb = getSupabase();
+        const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
+        if (profile?.avatar_url) {
+          avatarUrl = profile.avatar_url;
+        }
+      } catch (e) {}
+    }
     
     // Avatar: foto de Google o inicial
     const userAvatarBtn = document.getElementById('user-avatar-btn');
