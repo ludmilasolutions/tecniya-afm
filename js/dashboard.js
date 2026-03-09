@@ -678,7 +678,7 @@ export async function loadUrgentRequests() {
   try {
     const { data: urgentReqs, error } = await sb
       .from('urgent_requests')
-      .select('*, profiles(full_name)')
+      .select('*, user:profiles!user_id(full_name)')
       .eq('status', 'solicitado')
       .contains('notified_pros', [store.currentUser.id])
       .order('created_at', { ascending: false });
@@ -709,7 +709,7 @@ export async function loadUrgentRequests() {
 }
 
 function renderUrgentRequestCard(req) {
-  const userName = req.profiles?.full_name || 'Cliente';
+  const userName = req.user?.full_name || 'Cliente';
   const timeAgo = getTimeAgo(new Date(req.created_at));
   
   return `
