@@ -408,6 +408,14 @@ export async function saveProfile() {
   else {
     showToast('Perfil actualizado', 'success');
     if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
+    
+    // Recargar datos del usuario para actualizar avatar en UI
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      store.setCurrentUser(user);
+      const { updateAuthUI } = await import('./ui.js');
+      updateAuthUI();
+    }
   }
 }
 
@@ -482,6 +490,15 @@ export async function saveProProfile() {
     // Actualizar store local
     Object.assign(store.currentPro, { specialty: specialties[0]||specialty, specialties, description: desc, city, province, zones });
     showToast('Perfil actualizado', 'success');
+    
+    // Recargar datos del usuario para actualizar avatar en UI
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      store.setCurrentUser(user);
+      const { updateAuthUI } = await import('./ui.js');
+      updateAuthUI();
+    }
+    
     showPage('pro-dashboard');
   }
 }
@@ -607,7 +624,15 @@ function statusLabel(status) {
 export function renderSpecialtyEditor(selected = []) {
   const container = document.getElementById('specialty-chips-editor');
   if (!container) return;
-  const allSpecs = window._allSpecialties || [];
+  
+  // Cargar especialidades del store o de window
+  let allSpecs = store.allSpecialties?.length ? store.allSpecialties : (window._allSpecialties || []);
+  
+  // Si está vacío, usar las default
+  if (!allSpecs.length) {
+    allSpecs = ['Electricista', 'Plomero', 'Carpintero', 'Pintor', 'Gasista', 'Albañil', 'Técnico HVAC', 'Cerrajero', 'Jardinero', 'Limpieza', 'Fumigador', 'Técnico PC', 'Técnico CEL', 'Otro'];
+  }
+  
   container.innerHTML = allSpecs.map(s => {
     const active = selected.includes(s) ? 'active' : '';
     return `<span class="specialty-chip specialty-chip--toggle ${active}" onclick="window.toggleSpecialtyChip(this,'${s}')">${s}</span>`;

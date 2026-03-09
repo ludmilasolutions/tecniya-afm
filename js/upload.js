@@ -21,32 +21,63 @@ export async function uploadAvatar(file, userId) {
     return null;
   }
 
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/avatar.${fileExt}`;
-  const filePath = `${BUCKETS.AVATARS}/${fileName}`;
-
-  const { data, error } = await sb.storage
-    .from(BUCKETS.AVATARS)
-    .upload(filePath, file, {
-      upsert: true,
-      contentType: file.type
-    });
-
-  if (error) {
-    showToast('Error al subir avatar: ' + error.message, 'error');
+  const fileExt = file.name.split('.').pop().toLowerCase();
+  const validExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+  if (!validExts.includes(fileExt)) {
+    showToast('Tipo de imagen no válido', 'error');
     return null;
   }
+  
+  const fileName = `${userId}/avatar.${fileExt}`;
+  const filePath = `${BUCKETS.AVATARS}/${fileName}`;
+  
+  const contentTypes = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    gif: 'image/gif'
+  };
 
-  const { data: { publicUrl } } = sb.storage
-    .from(BUCKETS.AVATARS)
-    .getPublicUrl(filePath);
+  try {
+    const { data, error } = await sb.storage
+      .from(BUCKETS.AVATARS)
+      .upload(filePath, file, {
+        upsert: true,
+        contentType: contentTypes[fileExt] || 'image/jpeg'
+      });
 
-  await sb.from('profiles')
-    .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
-    .eq('id', userId);
+    if (error) {
+      console.error('Upload error:', error);
+      showToast('Error al subir avatar: ' + error.message, 'error');
+      return null;
+    }
 
-  showToast('Avatar actualizado', 'success');
-  return publicUrl;
+    const { data: { publicUrl } } = sb.storage
+      .from(BUCKETS.AVATARS)
+      .getPublicUrl(filePath);
+
+    // Actualizar en tabla profiles
+    await sb.from('profiles')
+      .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    // También actualizar user_metadata para que se refleje inmediatamente en la UI
+    const { error: metaError } = await sb.auth.updateUser({
+      data: { avatar_url: publicUrl }
+    });
+    
+    if (metaError) {
+      console.warn('No se pudo actualizar user_metadata:', metaError);
+    }
+
+    showToast('Avatar actualizado', 'success');
+    return publicUrl;
+  } catch (e) {
+    console.error('Upload exception:', e);
+    showToast('Error al subir avatar', 'error');
+    return null;
+  }
 }
 
 export async function uploadWorkPhoto(file, professionalId, title = '', description = '') {
