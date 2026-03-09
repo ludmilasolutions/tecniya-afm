@@ -624,7 +624,14 @@ export async function addFavorite(proId) {
 }
 
 export function openRatingModal(proId, jobId) {
-  store.setCurrentProIdForAction({ proId, jobId });
+  // Buscar el profesional en la lista o usar el ID directamente
+  let userProfileId = null;
+  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId);
+  if (pro?.user_id) {
+    userProfileId = pro.user_id;
+  }
+  
+  store.setCurrentProIdForAction({ proId, jobId, userProfileId });
   showModal('modal-rating');
 }
 
@@ -652,12 +659,33 @@ export async function submitRating() {
   
   const proId = store.currentProIdForAction.proId;
   const jobId = store.currentProIdForAction.jobId;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const pro = store.allProfessionals?.find(x => x.id == proId);
-  const professionalProfileId = (pro?.user_id && uuidRegex.test(pro.user_id)) ? pro.user_id : null;
+  let professionalProfileId = store.currentProIdForAction.userProfileId;
+  
+  // Si no hay userProfileId, intentar buscar en allProfessionals
+  if (!professionalProfileId) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const pro = store.allProfessionals?.find(x => String(x.id) === String(proId) || x.id == proId);
+    if (pro?.user_id && uuidRegex.test(pro.user_id)) {
+      professionalProfileId = pro.user_id;
+    }
+  }
 
   if (!professionalProfileId) {
-    showToast('No se puede calificar un profesional de demo', 'info');
+    // Intentar obtener directamente de la tabla professionals
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
+    if (proData?.user_id) {
+      professionalProfileId = proData.user_id;
+    }
+  }
+
+  if (!professionalProfileId) {
+    showToast('No se puede calificar este profesional', 'info');
+    closeModal('modal-rating');
+    return;
+  }
+
+  if (!professionalProfileId) {
+    showToast('No se puede calificar este profesional', 'info');
     closeModal('modal-rating');
     return;
   }

@@ -2,6 +2,8 @@ import { getSupabase } from './supabase.js';
 import { showToast, showPage } from './ui.js';
 import { formatDate } from './utils.js';
 
+console.log('[admin.js] Loading...');
+
 export async function loadAdminData() {
   const sb = getSupabase();
   
@@ -193,17 +195,33 @@ async function loadAdminAds() {
   if (!tbody) return;
 
   if (!ads || ads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">No hay publicidades</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray);">No hay publicidades</td></tr>';
     return;
   }
 
   tbody.innerHTML = ads.map(a => `
     <tr>
-      <td>${escapeHtml(a.title || '-')}</td>
-      <td><span class="ad-level-badge ad-level-${a.level}">${a.level}</span></td>
-      <td>${escapeHtml(a.province || a.city || 'Nacional')}</td>
-      <td>${a.link ? `<a href="${a.link}" target="_blank" style="color:var(--accent);">Ver</a>` : '-'}</td>
-      <td>${a.active ? '<span style="color:var(--green);">Activa</span>' : '<span style="color:var(--gray);">Inactiva</span>'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,rgba(79,70,229,0.2),rgba(6,182,212,0.2));display:flex;align-items:center;justify-content:center;color:var(--accent);">
+            <i class="fa fa-bullhorn"></i>
+          </div>
+          <div>
+            <div style="font-weight:600;">${escapeHtml(a.title || '-')}</div>
+            <div style="font-size:0.72rem;color:var(--gray);">${escapeHtml(a.description || '').substring(0, 30)}${a.description?.length > 30 ? '...' : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="ad-level-badge ad-level-${a.level || 'nacional'}">${a.level || 'nacional'}</span></td>
+      <td>${escapeHtml(a.province || a.city || '—')}</td>
+      <td>${a.link ? `<a href="${a.link}" target="_blank" style="color:var(--accent);text-decoration:none;"><i class="fa fa-external-link"></i> Ver</a>` : '—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="status-dot ${a.active ? 'active' : ''}"></span>
+          <span style="color:${a.active ? 'var(--green)' : 'var(--gray)'};">${a.active ? 'Activa' : 'Inactiva'}</span>
+        </div>
+      </td>
+      <td style="white-space:nowrap;">${new Date(a.created_at).toLocaleDateString('es-AR')}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-sm" onclick="window.adminEditAd('${a.id}')" title="Editar"><i class="fa fa-pencil"></i></button>
         <button class="btn btn-${a.active ? 'danger' : 'success'} btn-sm" onclick="window.adminToggleAd('${a.id}', ${!a.active})" title="${a.active ? 'Desactivar' : 'Activar'}">
@@ -997,7 +1015,17 @@ export function adminNewAd() {
   document.getElementById('ad-form-city').value      = '';
   document.getElementById('ad-form-active').checked  = true;
   document.getElementById('ad-form-image').value     = '';
-  document.getElementById('ad-form-image-preview').style.display = 'none';
+  document.getElementById('ad-form-image-file').value = '';
+  document.getElementById('ad-form-image-preview-url').style.display = 'none';
+  document.getElementById('ad-image-url-input').style.display = 'none';
+  document.getElementById('ad-image-url-input').value = '';
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'block';
+  document.getElementById('ad-image-status').innerHTML = '<i class="fa fa-times"></i> Sin imagen';
+  
+  // Resetear estado de imagen
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: null, isFromUrl: false };
+  
   document.getElementById('ad-form-modal-title').textContent = 'Nueva publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1015,14 +1043,49 @@ export async function adminEditAd(adId) {
   document.getElementById('ad-form-city').value      = a.city      || '';
   document.getElementById('ad-form-active').checked  = a.active    ?? true;
   document.getElementById('ad-form-image').value     = a.image_url  || '';
-  const prev = document.getElementById('ad-form-image-preview');
-  const thumb = document.getElementById('ad-form-image-thumb');
-  if (a.image_url && prev && thumb) {
-    thumb.src = a.image_url;
-    prev.style.display = 'block';
-  } else if (prev) {
-    prev.style.display = 'none';
+  
+  // Cargar transformación de imagen guardada
+  let savedTransform = { zoom: 1, posX: 0, posY: 0 };
+  try {
+    if (a.image_transform) {
+      if (typeof a.image_transform === 'string') {
+        savedTransform = JSON.parse(a.image_transform);
+      } else {
+        savedTransform = { 
+          zoom: a.image_transform.zoom || 1, 
+          posX: a.image_transform.posX || 0, 
+          posY: a.image_transform.posY || 0 
+        };
+      }
+    } else if (a.image_zoom) {
+      savedTransform = { zoom: a.image_zoom || 1, posX: a.image_posX || 0, posY: a.image_posY || 0 };
+    }
+  } catch(e) {}
+  document.getElementById('ad-form-image-transform').value = JSON.stringify(savedTransform);
+  
+  // Resetear estado de imagen
+  adImageState = { 
+    file: null, 
+    zoom: savedTransform.zoom, 
+    posX: savedTransform.posX, 
+    posY: savedTransform.posY, 
+    uploadedUrl: a.image_url || null, 
+    isFromUrl: !!a.image_url 
+  };
+  
+  if (a.image_url) {
+    // Mostrar editor con la imagen existente
+    document.getElementById('ad-image-upload-area').style.display = 'none';
+    document.getElementById('ad-image-editor').style.display = 'block';
+    document.getElementById('ad-form-image-preview-url').style.display = 'none';
+    document.getElementById('ad-image-preview-img').src = a.image_url;
+    adImageUpdatePreview();
+  } else {
+    document.getElementById('ad-image-editor').style.display = 'none';
+    document.getElementById('ad-image-upload-area').style.display = 'block';
+    document.getElementById('ad-form-image-preview-url').style.display = 'none';
   }
+  
   document.getElementById('ad-form-modal-title').textContent = 'Editar publicidad';
   document.getElementById('modal-ad-form').classList.add('open');
 }
@@ -1036,45 +1099,81 @@ export async function adminSaveAd() {
   const level    = document.getElementById('ad-form-level')?.value || 'local';
   const province = document.getElementById('ad-form-province')?.value?.trim();
   const city     = document.getElementById('ad-form-city')?.value?.trim();
-  const active    = document.getElementById('ad-form-active')?.checked ?? true;
-  let image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
-  // Rechazar base64 — solo URLs externas
-  if (image_url && image_url.startsWith('data:')) {
-    showToast('Usá una URL de imagen externa, no un archivo subido', 'warning');
-    image_url = null;
-  }
-
+  const active   = document.getElementById('ad-form-active')?.checked ?? true;
+  
+  // Obtener transformación de imagen
+  const transformStr = document.getElementById('ad-form-image-transform')?.value || '{}';
+  let imageTransform = { zoom: 1, posX: 0, posY: 0 };
+  try {
+    imageTransform = JSON.parse(transformStr);
+  } catch(e) {}
+  
   if (!title) { showToast('El título es obligatorio', 'warning'); return; }
 
+  // Subir imagen a Supabase si es un archivo
+  let image_url = document.getElementById('ad-form-image')?.value?.trim() || null;
+  if (!image_url && adImageState.file) {
+    showToast('Subiendo imagen...', 'info');
+    const { uploadAdImage } = await import('./upload.js');
+    image_url = await uploadAdImage(adImageState.file);
+    if (!image_url) {
+      showToast('Error al subir imagen. Podés usar una URL externa.', 'error');
+      return;
+    }
+  }
+  
+  // Rechazar base64 - no guardar en la base de datos
+  if (image_url && image_url.startsWith('data:')) {
+    image_url = null;
+  }
+  
   try {
     const { data: { user } } = await sb.auth.getUser();
-    const payload = {
-      title,
-      description: desc || null,
-      link: link || null,
-      level,
-      province: province || null,
-      city: city || null,
-      active,
-      image_url: image_url || null,
-      created_by: user.id,
-    };
-
+    
+    // Guardar transformación como JSON solo si hay valores custom
+    const hasCustomTransform = imageTransform.zoom !== 1 || imageTransform.posX !== 0 || imageTransform.posY !== 0;
+    const imageTransformData = hasCustomTransform ? JSON.stringify({
+      zoom: imageTransform.zoom || 1,
+      posX: imageTransform.posX || 0,
+      posY: imageTransform.posY || 0
+    }) : null;
+    
     let error;
     if (id) {
-      const res = await sb.rpc('admin_update_ad', {
-        p_id: id, p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null
-      });
-      error = res.error;
+      // Actualizar directamente
+      const updateData = {
+        title: title,
+        description: desc || null,
+        link: link || null,
+        level: level,
+        province: province || null,
+        city: city || null,
+        active: active,
+        image_url: image_url || null
+      };
+      if (imageTransformData) {
+        updateData.image_transform = imageTransformData;
+      }
+      const { error: updateError } = await sb.from('ads').update(updateData).eq('id', id);
+      error = updateError;
     } else {
-      const res = await sb.rpc('admin_create_ad', {
-        p_title: title, p_description: desc||null, p_link: link||null,
-        p_level: level, p_province: province||null, p_city: city||null, p_active: active,
-        p_image_url: image_url||null
-      });
-      error = res.error;
+      // Insertar directamente
+      const insertData = {
+        title: title,
+        description: desc || null,
+        link: link || null,
+        level: level,
+        province: province || null,
+        city: city || null,
+        active: active,
+        image_url: image_url || null,
+        created_by: user.id
+      };
+      if (imageTransformData) {
+        insertData.image_transform = imageTransformData;
+      }
+      const { error: insertError } = await sb.from('ads').insert(insertData);
+      error = insertError;
     }
 
     if (error) {
@@ -1096,7 +1195,7 @@ window.adminNewAd  = adminNewAd;
 window.adminEditAd = adminEditAd;
 window.adminSaveAd = adminSaveAd;
 
-export function adminPreviewImageUrl() {
+function adminPreviewImageUrl() {
   const url = document.getElementById('ad-form-image')?.value?.trim();
   const thumb = document.getElementById('ad-form-image-thumb');
   const prev  = document.getElementById('ad-form-image-preview');
@@ -1109,7 +1208,130 @@ export function adminPreviewImageUrl() {
 }
 window.adminPreviewImageUrl = adminPreviewImageUrl;
 
-export function adminPreviewAdImage(event) {
+let adImageState = {
+  file: null,
+  zoom: 1,
+  posX: 0,
+  posY: 0,
+  uploadedUrl: null,
+  isFromUrl: false
+};
+
+function adImageFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('La imagen debe ser menor a 5MB', 'warning');
+    return;
+  }
+  
+  adImageState = {
+    file: file,
+    zoom: 1,
+    posX: 0,
+    posY: 0,
+    uploadedUrl: null,
+    isFromUrl: false
+  };
+  
+  document.getElementById('ad-image-upload-area').style.display = 'none';
+  document.getElementById('ad-image-editor').style.display = 'block';
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('ad-image-preview-img').src = e.target.result;
+    adImageUpdatePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function adImageUpdatePreview() {
+  const img = document.getElementById('ad-image-preview-img');
+  const container = document.getElementById('ad-image-preview-container');
+  if (!img || !container) return;
+  
+  const containerW = container.offsetWidth;
+  const containerH = container.offsetHeight;
+  
+  img.style.width = (containerW * adImageState.zoom) + 'px';
+  img.style.left = (containerW / 2 - (containerW * adImageState.zoom) / 2 + adImageState.posX) + 'px';
+  img.style.top = (containerH / 2 - (containerH * adImageState.zoom) / 2 + adImageState.posY) + 'px';
+  
+  document.getElementById('ad-form-image-transform').value = JSON.stringify({
+    zoom: adImageState.zoom,
+    posX: adImageState.posX,
+    posY: adImageState.posY
+  });
+}
+
+function adImageZoomIn() {
+  adImageState.zoom = Math.min(adImageState.zoom + 0.2, 3);
+  adImageUpdatePreview();
+}
+
+function adImageZoomOut() {
+  adImageState.zoom = Math.max(adImageState.zoom - 0.2, 0.5);
+  adImageUpdatePreview();
+}
+
+function adImageMoveUp() { adImageState.posY -= 10; adImageUpdatePreview(); }
+function adImageMoveDown() { adImageState.posY += 10; adImageUpdatePreview(); }
+function adImageMoveLeft() { adImageState.posX -= 10; adImageUpdatePreview(); }
+function adImageMoveRight() { adImageState.posX += 10; adImageUpdatePreview(); }
+
+function adImageClear() {
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: null, isFromUrl: false };
+  document.getElementById('ad-form-image').value = '';
+  document.getElementById('ad-form-image-file').value = '';
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'block';
+  document.getElementById('ad-image-status').innerHTML = '<i class="fa fa-times"></i> Sin imagen';
+}
+
+function adImageUrlChanged(url) {
+  if (!url) return;
+  adImageState = { file: null, zoom: 1, posX: 0, posY: 0, uploadedUrl: url, isFromUrl: true };
+  document.getElementById('ad-form-image').value = url;
+  document.getElementById('ad-image-editor').style.display = 'none';
+  document.getElementById('ad-image-upload-area').style.display = 'none';
+  document.getElementById('ad-form-image-preview-url').style.display = 'block';
+  document.getElementById('ad-form-image-thumb').src = url;
+}
+
+async function adImageUploadAndGetUrl() {
+  if (adImageState.isFromUrl && adImageState.uploadedUrl) {
+    return adImageState.uploadedUrl;
+  }
+  
+  if (adImageState.file) {
+    showToast('Subiendo imagen...', 'info');
+    const { uploadAdImage } = await import('./upload.js');
+    const url = await uploadAdImage(adImageState.file);
+    if (url) {
+      adImageState.uploadedUrl = url;
+      showToast('Imagen subida', 'success');
+      return url;
+    }
+  }
+  
+  return null;
+}
+
+console.log('[admin.js] Asignando funciones de imagen...');
+window.adImageFileSelected = adImageFileSelected;
+window.adImageZoomIn = adImageZoomIn;
+window.adImageZoomOut = adImageZoomOut;
+window.adImageMoveUp = adImageMoveUp;
+window.adImageMoveDown = adImageMoveDown;
+window.adImageMoveLeft = adImageMoveLeft;
+window.adImageMoveRight = adImageMoveRight;
+window.adImageClear = adImageClear;
+window.adImageUrlChanged = adImageUrlChanged;
+window.adImageUploadAndGetUrl = adImageUploadAndGetUrl;
+console.log('[admin.js] Funciones asignadas:', typeof window.adImageFileSelected);
+
+function adminPreviewAdImage(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -1119,9 +1341,10 @@ export function adminPreviewAdImage(event) {
     const urlInput = document.getElementById('ad-form-image');
     if (thumb) thumb.src = e.target.result;
     if (prev)  prev.style.display = 'block';
-    // Guardar base64 en el campo URL por ahora (sin storage)
     if (urlInput) urlInput.value = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 window.adminPreviewAdImage = adminPreviewAdImage;
+
+// End of admin.js
