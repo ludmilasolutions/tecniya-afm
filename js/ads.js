@@ -40,6 +40,12 @@ export function showAd(level) {
 }
 
 function renderAdBanner(ad) {
+  // Ocultar el banner estático del HTML
+  const staticBanner = document.getElementById('ad-banner-main');
+  if (staticBanner) {
+    staticBanner.style.display = 'none';
+  }
+  
   let banner = document.getElementById('custom-ad-banner');
   
   if (!banner) {
@@ -76,8 +82,8 @@ function renderAdBanner(ad) {
         }
         #custom-ad-banner .ad-banner-img {
           width: 100% !important;
-          height: auto !important;
-          max-width: 200px !important;
+          height: 180px !important;
+          max-width: 100% !important;
         }
         #custom-ad-banner .ad-banner-text {
           width: 100% !important;
@@ -124,11 +130,11 @@ function renderAdBanner(ad) {
     console.warn('Error parsing image_transform:', e);
   }
   
-  const imgStyle = `width:120px;height:120px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.4);transform:scale(${imgTransform.zoom}) translate(${imgTransform.posX}px, ${imgTransform.posY}px);`;
+  const imgStyle = `width:200px;height:120px;border-radius:12px;object-fit:cover;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.4);transform:scale(${imgTransform.zoom}) translate(${imgTransform.posX}px, ${imgTransform.posY}px);`;
   
   const imageHtml = ad.image_url 
     ? `<img src="${ad.image_url}" class="ad-banner-img" style="${imgStyle}" alt="${ad.title}">`
-    : `<div class="ad-banner-img" style="width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:36px;box-shadow:0 4px 20px rgba(0,0,0,0.4);flex-shrink:0;"><i class="fa fa-bullhorn"></i></div>`;
+    : `<div class="ad-banner-img" style="width:200px;height:120px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-size:36px;box-shadow:0 4px 20px rgba(0,0,0,0.4);flex-shrink:0;"><i class="fa fa-bullhorn"></i></div>`;
   
   banner.innerHTML = `
     ${imageHtml}
