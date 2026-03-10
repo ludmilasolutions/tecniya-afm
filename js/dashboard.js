@@ -538,23 +538,46 @@ export async function saveAvailability() {
     is_online: urgencias
   };
 
-  // Si se está conectando, obtener ubicación
+  // Si se está conectando, intentar obtener ubicación
   if (urgencias && navigator.geolocation) {
+    // Verificar si ya tiene ubicación guardada
+    const { data: currentPro } = await sb
+      .from('professionals')
+      .select('latitude, longitude')
+      .eq('user_id', store.currentUser.id)
+      .single();
+    
+    const hasLocation = currentPro?.latitude && currentPro?.longitude;
+    const timeout = hasLocation ? 15000 : 30000; // 30 seg primera vez, 15 seg después
+    
+    if (!hasLocation) {
+      showToast('Primera conexión: detectando ubicación...', 'info');
+    }
+    
     await new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           updateData.latitude = position.coords.latitude;
           updateData.longitude = position.coords.longitude;
-          console.log('DEBUG: Professional location saved:', updateData.latitude, updateData.longitude);
-          showToast('Ubicación detectada', 'success');
+          console.log('DEBUG: Nueva ubicación detectada:', updateData.latitude, updateData.longitude);
+          showToast('Ubicación actualizada', 'success');
           resolve();
         },
-        (error) => {
-          console.warn('Could not get location:', error);
-          showToast('No se pudo detectar ubicación. Acepta permisos de ubicación para urgencias.', 'warning');
+        async (error) => {
+          console.warn('No se pudo detectar ubicación:', error.message);
+          
+          if (hasLocation) {
+            // Mantener ubicación anterior
+            updateData.latitude = currentPro.latitude;
+            updateData.longitude = currentPro.longitude;
+            console.log('DEBUG: Usando última ubicación conocida:', updateData.latitude, updateData.longitude);
+            showToast('Conectado (usando última ubicación)', 'info');
+          } else {
+            showToast('No se pudo detectar ubicación. Verifica que hayas dado permisos al navegador.', 'warning');
+          }
           resolve();
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: false, timeout: timeout, maximumAge: 300000 } // Acepta ubicaciones de hasta 5 min
       );
     });
   }
@@ -566,14 +589,25 @@ export async function saveAvailability() {
     console.error('saveAvailability:', error); 
     showToast('Error al guardar: ' + error.message, 'error'); 
   } else {
-    if (store.currentPro) Object.assign(store.currentPro, { availability: { dias, desde, hasta, urgencias } });
-    showToast(urgencias ? 'Conectado para urgencias' : 'Disponibilidad actualizada', 'success');
+    if (store.currentPro) {
+      Object.assign(store.currentPro, { 
+        availability: { dias, desde, hasta, urgencias },
+        latitude: updateData.latitude,
+        longitude: updateData.longitude
+      });
+    }
+    
+    const hasLocation = updateData.latitude && updateData.longitude;
+    if (urgencias && hasLocation) {
+      showToast('✅ Conectado para urgencias', 'success');
+    } else if (urgencias && !hasLocation) {
+      showToast('⚠️ Conectado pero sin ubicación. No recibirás urgencias hasta que permitas acceso a ubicación.', 'warning');
+    } else {
+      showToast('Disponibilidad actualizada', 'success');
+    }
     
     // Actualizar UI del toggle
-    const { updateOnlineStatusUI } = await import('./dashboard.js');
-    if (typeof updateOnlineStatusUI === 'function') {
-      updateOnlineStatusUI(urgencias);
-    }
+    updateOnlineStatusUI(urgencias);
   }
 }
 
@@ -864,3 +898,43 @@ window.acceptUrgentRequest = acceptUrgentRequest;
 window.openMapLocation = (lat, lng) => {
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 };
+
+// Función para guardar ubicación manualmente (primera vez)
+export async function setInitialLocation() {
+  if (!store.currentUser || !store.isPro) return;
+  
+  const sb = getSupabase();
+  
+  showToast('Detectando ubicación inicial...', 'info');
+  
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { error } = await sb.from('professionals').update({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }).eq('user_id', store.currentUser.id);
+        
+        if (error) {
+          showToast('Error al guardar ubicación', 'error');
+          reject(error);
+        } else {
+          console.log('✅ Ubicación inicial guardada:', position.coords.latitude, position.coords.longitude);
+          showToast('Ubicación guardada correctamente', 'success');
+          if (store.currentPro) {
+            store.currentPro.latitude = position.coords.latitude;
+            store.currentPro.longitude = position.coords.longitude;
+          }
+          resolve({ lat: position.coords.latitude, lng: position.coords.longitude });
+        }
+      },
+      (error) => {
+        showToast('No se pudo detectar ubicación. Verifica los permisos del navegador.', 'error');
+        reject(error);
+      },
+      { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 }
+    );
+  });
+}
+
+window.setInitialLocation = setInitialLocation;
