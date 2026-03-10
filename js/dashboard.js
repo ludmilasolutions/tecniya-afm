@@ -224,6 +224,10 @@ export async function loadProDashboard() {
     setEl('pro-stat-new',    newJ.length);
     setEl('pro-stat-active', activeJ.length);
     setEl('pro-stat-done',   doneJ.length);
+    
+    // Actualizar badge de solicitudes nuevas
+    const newBadge = document.getElementById('pro-stat-new-badge');
+    if (newBadge) newBadge.textContent = newJ.length;
 
     renderJobList('pro-jobs-new',     newJ,    'pro');
     renderJobList('pro-jobs-active',  activeJ, 'pro');
@@ -231,6 +235,11 @@ export async function loadProDashboard() {
 
     // Cargar solicitudes urgentes
     await loadUrgentRequests();
+    
+    // Actualizar contadores de accesos rápidos
+    if (typeof window.updateQuickAccessCounters === 'function') {
+      window.updateQuickAccessCounters();
+    }
 
     // Rating promedio
     const { data: reviews } = await sb
@@ -765,14 +774,27 @@ export async function loadUrgentRequests() {
     const badge = document.getElementById('urgent-count-badge');
     
     if (!urgentReqs || urgentReqs.length === 0) {
-      if (container) container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);font-size:0.85rem;">No hay solicitudes urgentes en este momento</div>';
+      if (container) container.innerHTML = '<div style="padding:40px 20px;text-align:center;"><i class="fa fa-bolt" style="font-size:3rem;color:var(--gray);opacity:0.3;margin-bottom:12px;display:block;"></i><p style="color:var(--gray);font-size:0.9rem;">No hay solicitudes urgentes en este momento</p></div>';
       if (badge) badge.style.display = 'none';
+      
+      // Limpiar badge del tab
+      const urgentTab = document.querySelector('[data-inbox="urgentes"]');
+      if (urgentTab) {
+        urgentTab.innerHTML = `<i class="fa fa-bolt"></i> Urgentes`;
+      }
+      
       return;
     }
     
     if (badge) {
       badge.textContent = urgentReqs.length;
       badge.style.display = 'inline-block';
+    }
+    
+    // Actualizar también el tab de urgentes con el contador
+    const urgentTab = document.querySelector('[data-inbox="urgentes"]');
+    if (urgentTab && urgentReqs.length > 0) {
+      urgentTab.innerHTML = `<i class="fa fa-bolt"></i> Urgentes <span style="background:var(--orange);color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;margin-left:4px;">${urgentReqs.length}</span>`;
     }
     
     if (container) {

@@ -579,3 +579,82 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
   const installBtn = document.getElementById('install-btn');
   if (installBtn) installBtn.style.display = 'none';
 }
+
+// ============================================
+// BANDEJA INTELIGENTE - TABS
+// ============================================
+
+function initInboxTabs() {
+  const tabs = document.querySelectorAll('.inbox-tab');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active from all
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.background = 'transparent';
+        t.style.color = 'var(--gray)';
+      });
+      
+      // Add active to clicked
+      tab.classList.add('active');
+      tab.style.background = 'var(--darker)';
+      tab.style.color = 'var(--orange)';
+      
+      // Show corresponding content
+      const inboxType = tab.dataset.inbox;
+      document.querySelectorAll('.inbox-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      
+      const targetContent = document.getElementById(`inbox-${inboxType}`);
+      if (targetContent) {
+        targetContent.style.display = 'block';
+      }
+    });
+  });
+}
+
+// Inicializar cuando cargue el DOM
+document.addEventListener('DOMContentLoaded', () => {
+  initInboxTabs();
+  
+  // Botones de acceso rápido
+  const btnActivos = document.getElementById('btn-view-activos');
+  const btnFinalizados = document.getElementById('btn-view-finalizados');
+  
+  if (btnActivos) {
+    btnActivos.addEventListener('click', () => {
+      // Simular click en tab "En proceso"
+      const tabActivos = document.querySelector('[data-tab="tab-pro-activos"]');
+      if (tabActivos) tabActivos.click();
+    });
+  }
+  
+  if (btnFinalizados) {
+    btnFinalizados.addEventListener('click', () => {
+      // Simular click en tab "Finalizados"
+      const tabFinalizados = document.querySelector('[data-tab="tab-pro-finalizados"]');
+      if (tabFinalizados) tabFinalizados.click();
+    });
+  }
+});
+
+// Actualizar contadores en botones de acceso rápido
+function updateQuickAccessCounters() {
+  const activeCount = document.getElementById('pro-stat-active')?.textContent || '0';
+  const doneCount = document.getElementById('pro-stat-done')?.textContent || '0';
+  const newCount = document.getElementById('pro-stat-new')?.textContent || '0';
+  
+  const activeText = document.getElementById('pro-stat-active-text');
+  const doneText = document.getElementById('pro-stat-done-text');
+  const newBadge = document.getElementById('pro-stat-new-badge');
+  
+  if (activeText) activeText.textContent = `${activeCount} trabajo${activeCount !== '1' ? 's' : ''}`;
+  if (doneText) doneText.textContent = `${doneCount} trabajo${doneCount !== '1' ? 's' : ''}`;
+  if (newBadge) newBadge.textContent = newCount;
+}
+
+// Exportar para usar desde dashboard.js
+window.updateQuickAccessCounters = updateQuickAccessCounters;
+window.initInboxTabs = initInboxTabs;
