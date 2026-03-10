@@ -3,9 +3,7 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/css/styles.css',
-  '/js/main.js',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png'
+  '/js/main.js'
 ];
 
 // Install event
@@ -58,8 +56,6 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body || 'Nueva notificación',
-    icon: '/assets/icon-192.png',
-    badge: '/assets/icon-192.png',
     vibrate: [200, 100, 200],
     data: data.data || {},
     tag: data.tag || 'notification'
