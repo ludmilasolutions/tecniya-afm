@@ -52,17 +52,92 @@ export function stopUrgentAlerts() {
 async function showUrgentAlert(data) {
   currentAlertData = data;
   
-  // Reproducir sonido
-  const sound = document.getElementById('urgent-alert-sound');
-  if (sound) {
-    sound.volume = 0.5;
-    sound.play().catch(e => console.log('Could not play sound:', e));
+  // Generar sonido de alerta más fuerte usando Web Audio API
+  const playAlertSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Crear oscilador para tono de alerta
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Configurar frecuencias para sonido de alerta (sirena)
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.3);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.4);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+      // Fallback al audio HTML si Web Audio API falla
+      const sound = document.getElementById('urgent-alert-sound');
+      if (sound) {
+        sound.volume = 0.8;
+        sound.play().catch(err => console.log('Could not play sound:', err));
+      }
+    }
+  };
+  
+  // Reproducir sonido inicial
+  playAlertSound();
+  
+  // Repetir sonido cada 3 segundos
+  let soundInterval = setInterval(() => {
+    if (document.getElementById('urgent-alert-modal')?.style.display === 'block') {
+      playAlertSound();
+    } else {
+      clearInterval(soundInterval);
+    }
+  }, 3000);
+  
+  // Vibrar si está disponible (patrón más largo)
+  if (navigator.vibrate) {
+    navigator.vibrate([300, 100, 300, 100, 300, 100, 300]);
+    // Repetir vibración cada 5 segundos
+    let vibrateInterval = setInterval(() => {
+      if (document.getElementById('urgent-alert-modal')?.style.display === 'block') {
+        navigator.vibrate([300, 100, 300]);
+      } else {
+        clearInterval(vibrateInterval);
+      }
+    }, 5000);
   }
   
-  // Vibrar si está disponible
-  if (navigator.vibrate) {
-    navigator.vibrate([200, 100, 200, 100, 200]);
+  // Notificación del navegador
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('🚨 Solicitud Urgente', {
+      body: `${data.specialty} - ${data.distance.toFixed(1)} km de distancia`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'urgent-request',
+      requireInteraction: true,
+      vibrate: [300, 100, 300]
+    });
+  } else if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
+  
+  // Parpadeo de título
+  let titleInterval;
+  const originalTitle = document.title;
+  let titleToggle = false;
+  titleInterval = setInterval(() => {
+    if (document.getElementById('urgent-alert-modal')?.style.display === 'block') {
+      document.title = titleToggle ? '🚨 SOLICITUD URGENTE 🚨' : originalTitle;
+      titleToggle = !titleToggle;
+    } else {
+      clearInterval(titleInterval);
+      document.title = originalTitle;
+    }
+  }, 1000);
   
   // Cargar detalles de la solicitud
   const sb = getSupabase();
@@ -121,6 +196,7 @@ async function showUrgentAlert(data) {
   `;
   
   modal.style.display = 'block';
+  modal.classList.add('active');
   
   // Iniciar timer
   startTimer();
@@ -132,7 +208,10 @@ async function showUrgentAlert(data) {
 
 function hideUrgentAlert() {
   const modal = document.getElementById('urgent-alert-modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
   
   if (timerInterval) {
     clearInterval(timerInterval);

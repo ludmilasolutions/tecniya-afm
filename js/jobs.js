@@ -1199,20 +1199,42 @@ export async function showUrgentModal() {
     return;
   }
   
+  const sb = getSupabase();
+  
+  // Obtener última ubicación conocida
+  const { data: profile } = await sb
+    .from('profiles')
+    .select('last_latitude, last_longitude')
+    .eq('id', store.currentUser.id)
+    .single();
+  
+  const hasLastLocation = profile?.last_latitude && profile?.last_longitude;
+  
   // Detectar ubicación al abrir el modal
   const statusEl = document.getElementById('location-status-text');
   if (statusEl) statusEl.textContent = 'Detectando tu ubicación...';
   
   if (navigator.geolocation) {
+    const timeout = hasLastLocation ? 15000 : 30000; // 30 seg primera vez, 15 después
+    
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        store.setUserLocation({
+        const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
-        });
+        };
+        
+        store.setUserLocation(newLocation);
+        
+        // Guardar nueva ubicación en BD
+        await sb.from('profiles').update({
+          last_latitude: newLocation.lat,
+          last_longitude: newLocation.lng,
+          last_location_updated_at: new Date().toISOString()
+        }).eq('id', store.currentUser.id);
         
         if (statusEl) {
-          statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--green);"></i> Ubicación detectada';
+          statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--green);"></i> Ubicación actualizada';
           statusEl.parentElement.style.background = 'rgba(16,185,129,0.1)';
         }
         
@@ -1221,17 +1243,53 @@ export async function showUrgentModal() {
         const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
         
         if (specialty) {
-          await updateNearbyProsPreview(position.coords.latitude, position.coords.longitude, specialty, radius);
+          await updateNearbyProsPreview(newLocation.lat, newLocation.lng, specialty, radius);
         }
       },
-      (error) => {
-        if (statusEl) {
-          statusEl.innerHTML = '<i class="fa fa-exclamation-triangle" style="color:var(--orange);"></i> No se pudo detectar ubicación';
-          statusEl.parentElement.style.background = 'rgba(249,115,22,0.1)';
+      async (error) => {
+        console.warn('No se pudo detectar ubicación:', error.message);
+        
+        if (hasLastLocation) {
+          // Usar última ubicación conocida
+          const lastLocation = {
+            lat: profile.last_latitude,
+            lng: profile.last_longitude
+          };
+          
+          store.setUserLocation(lastLocation);
+          
+          if (statusEl) {
+            statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--accent);"></i> Usando última ubicación';
+            statusEl.parentElement.style.background = 'rgba(6,182,212,0.1)';
+          }
+          
+          // Buscar profesionales con última ubicación
+          const specialty = document.getElementById('urgent-specialty')?.value;
+          const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
+          
+          if (specialty) {
+            await updateNearbyProsPreview(lastLocation.lat, lastLocation.lng, specialty, radius);
+          }
+        } else {
+          if (statusEl) {
+            statusEl.innerHTML = '<i class="fa fa-exclamation-triangle" style="color:var(--orange);"></i> No se pudo detectar ubicación';
+            statusEl.parentElement.style.background = 'rgba(249,115,22,0.1)';
+          }
         }
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: timeout, maximumAge: 300000 }
     );
+  } else if (hasLastLocation) {
+    // No hay geolocalización pero hay última ubicación
+    store.setUserLocation({
+      lat: profile.last_latitude,
+      lng: profile.last_longitude
+    });
+    
+    if (statusEl) {
+      statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--accent);"></i> Usando última ubicación';
+      statusEl.parentElement.style.background = 'rgba(6,182,212,0.1)';
+    }
   }
   
   showModal('modal-urgent');

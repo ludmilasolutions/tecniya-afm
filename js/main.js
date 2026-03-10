@@ -486,3 +486,82 @@ window.switchSecurityTab = function(tabId) {
     t.classList.toggle('active', ids[i] === tabId);
   });
 };
+
+// ============================================
+// PWA - INSTALACIÓN
+// ============================================
+
+let deferredPrompt;
+
+// Detectar evento de instalación
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevenir que Chrome muestre el prompt automáticamente
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Mostrar botón de instalación
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) {
+    installBtn.style.display = 'flex';
+  }
+});
+
+// Click en botón de instalación
+window.addEventListener('DOMContentLoaded', () => {
+  const installBtn = document.getElementById('install-btn');
+  
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        // Ya está instalado o no disponible
+        showToast('La aplicación ya está instalada o no se puede instalar desde este navegador', 'info');
+        return;
+      }
+      
+      // Mostrar prompt de instalación
+      deferredPrompt.prompt();
+      
+      // Esperar respuesta del usuario
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        showToast('¡App instalada! Ahora podés acceder desde tu pantalla de inicio', 'success');
+      }
+      
+      // Limpiar el prompt
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+  }
+});
+
+// Detectar cuando se instaló
+window.addEventListener('appinstalled', () => {
+  console.log('PWA instalada exitosamente');
+  showToast('¡Aplicación instalada correctamente!', 'success');
+  deferredPrompt = null;
+  
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) installBtn.style.display = 'none';
+});
+
+// Registrar Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registrado:', registration);
+      })
+      .catch((error) => {
+        console.log('Error registrando Service Worker:', error);
+      });
+  });
+}
+
+// Detectar si ya está instalado (modo standalone)
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  console.log('App ejecutándose en modo instalado');
+  // Ocultar botón de instalación si ya está instalado
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) installBtn.style.display = 'none';
+}

@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#4f46e5">
   <meta name="description" content="TECNIYA - Encontrá profesionales técnicos cerca tuyo">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tecniya">
   <title>TECNIYA | Profesionales Técnicos a tu Alcance</title>
-  <link rel="manifest" id="manifest-link">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.cdnfonts.com/css/inter" rel="stylesheet">
@@ -52,6 +57,9 @@
       <a href="#" id="nav-sub">Suscripción</a>
     </nav>
     <div class="nav-actions">
+      <button class="notif-btn" id="install-btn" style="display:none;" title="Instalar aplicación">
+        <i class="fa fa-download"></i>
+      </button>
       <button class="notif-btn" id="notif-btn" style="display:none;">
         <i class="fa fa-bell"></i>
         <span class="notif-count hidden" id="notif-badge">0</span>
@@ -2073,6 +2081,21 @@
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) rotate(-2deg); }
+  20%, 40%, 60%, 80% { transform: translate(-50%, -50%) rotate(2deg); }
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; background: rgba(239, 68, 68, 0.1); }
+}
+
+#urgent-alert-modal.active > div {
+  animation: shake 0.5s ease-in-out, flash 1s ease-in-out infinite;
 }
 
 #reject-urgent-alert:hover {
