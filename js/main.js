@@ -510,11 +510,26 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   const installBtn = document.getElementById('install-btn');
   
+  // Mostrar botón siempre en móviles
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (installBtn && isMobile) {
+    installBtn.style.display = 'flex';
+  }
+  
   if (installBtn) {
     installBtn.addEventListener('click', async () => {
       if (!deferredPrompt) {
-        // Ya está instalado o no disponible
-        showToast('La aplicación ya está instalada o no se puede instalar desde este navegador', 'info');
+        // Mostrar instrucciones según el navegador
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        if (isIOS) {
+          showModal('modal-install-ios');
+        } else if (isAndroid) {
+          showToast('Usa el menú del navegador (⋮) y selecciona "Agregar a pantalla de inicio"', 'info');
+        } else {
+          showToast('La aplicación ya está instalada o no se puede instalar desde este navegador', 'info');
+        }
         return;
       }
       
@@ -530,7 +545,6 @@ window.addEventListener('DOMContentLoaded', () => {
       
       // Limpiar el prompt
       deferredPrompt = null;
-      installBtn.style.display = 'none';
     });
   }
 });

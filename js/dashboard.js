@@ -600,10 +600,20 @@ export async function saveAvailability() {
     const hasLocation = updateData.latitude && updateData.longitude;
     if (urgencias && hasLocation) {
       showToast('✅ Conectado para urgencias', 'success');
+      
+      // Inicializar sistema de alertas urgentes
+      const { initUrgentAlerts } = await import('./urgentAlerts.js');
+      initUrgentAlerts();
+      console.log('Sistema de alertas urgentes activado');
     } else if (urgencias && !hasLocation) {
       showToast('⚠️ Conectado pero sin ubicación. No recibirás urgencias hasta que permitas acceso a ubicación.', 'warning');
     } else {
       showToast('Disponibilidad actualizada', 'success');
+      
+      // Detener sistema de alertas si se desconecta
+      const { stopUrgentAlerts } = await import('./urgentAlerts.js');
+      stopUrgentAlerts();
+      console.log('Sistema de alertas urgentes desactivado');
     }
     
     // Actualizar UI del toggle

@@ -2108,3 +2108,55 @@
   box-shadow: 0 6px 20px rgba(16,185,129,0.4);
 }
 </style>
+
+<!-- Modal Instrucciones Instalación iOS -->
+<div class="modal-overlay" id="modal-install-ios">
+  <div class="modal-content" style="max-width:400px;">
+    <div class="modal-header">
+      <h3 style="margin:0;">Instalar en iPhone/iPad</h3>
+      <button class="modal-close" onclick="closeModal('modal-install-ios')">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:3rem;margin-bottom:12px;">📱</div>
+        <p style="color:var(--gray);font-size:0.9rem;">Para instalar la app en tu iPhone o iPad:</p>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">1</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px;">Abrí el menú de Safari</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Tocá el botón <i class="fa fa-share" style="color:var(--primary);"></i> de compartir (abajo en el medio)</div>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">2</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px;">Seleccioná "Agregar a Inicio"</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Deslizá hacia abajo y tocá "Agregar a pantalla de inicio"</div>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">3</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:4px;">Confirmá</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Tocá "Agregar" en la esquina superior derecha</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="background:rgba(79,70,229,0.1);padding:12px;border-radius:8px;margin-top:20px;font-size:0.85rem;color:var(--light);">
+        <i class="fa fa-info-circle" style="color:var(--primary);margin-right:6px;"></i>
+        Luego podrás abrir Tecniya como una app desde tu pantalla de inicio
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-block" onclick="closeModal('modal-install-ios')">Entendido</button>
+    </div>
+  </div>
+</div>
