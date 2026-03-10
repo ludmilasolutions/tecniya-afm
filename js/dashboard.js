@@ -811,43 +811,48 @@ function renderUrgentRequestCard(req) {
   const timeAgo = getTimeAgo(new Date(req.created_at));
   
   return `
-    <div class="card" style="background:linear-gradient(135deg, rgba(249,115,22,0.05), rgba(239,68,68,0.05));border:2px solid var(--orange);margin-bottom:12px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;right:0;background:var(--orange);color:white;padding:4px 12px;border-bottom-left-radius:8px;font-size:0.7rem;font-weight:700;">
-        <i class="fa fa-bolt"></i> URGENTE
+    <div class="job-card-urgent" style="background:linear-gradient(135deg, rgba(249,115,22,0.08), rgba(239,68,68,0.08));border:2px solid var(--orange);margin-bottom:14px;position:relative;overflow:hidden;border-radius:18px;box-shadow:0 4px 16px rgba(249,115,22,0.2);">
+      <div style="position:absolute;top:0;right:0;background:linear-gradient(135deg, var(--orange), #dc2626);color:white;padding:6px 14px;border-bottom-left-radius:12px;font-size:0.7rem;font-weight:800;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(249,115,22,0.4);">
+        <i class="fa fa-bolt" style="margin-right:4px;"></i>URGENTE
       </div>
-      <div style="padding:16px;">
-        <div style="display:flex;align-items:start;gap:12px;margin-bottom:12px;">
-          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:1.2rem;flex-shrink:0;">
+      <div style="padding:18px;padding-top:14px;">
+        <div style="display:flex;align-items:start;gap:14px;margin-bottom:14px;">
+          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:1.3rem;flex-shrink:0;box-shadow:0 4px 12px rgba(79,70,229,0.3);">
             ${userName.charAt(0).toUpperCase()}
           </div>
           <div style="flex:1;">
-            <div style="font-weight:600;font-size:0.95rem;margin-bottom:4px;">${escHtml(userName)}</div>
-            <div style="font-size:0.75rem;color:var(--gray);">
-              <i class="fa fa-clock"></i> ${timeAgo}
+            <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">${escHtml(userName)}</div>
+            <div style="font-size:0.75rem;color:var(--gray);font-weight:500;">
+              <i class="fa fa-clock" style="margin-right:4px;"></i>${timeAgo}
             </div>
           </div>
         </div>
         
-        <div style="background:var(--darker);padding:12px;border-radius:8px;margin-bottom:12px;">
-          <div style="font-size:0.85rem;font-weight:600;color:var(--orange);margin-bottom:6px;">
-            <i class="fa fa-wrench"></i> ${escHtml(req.specialty)}
+        <div style="background:rgba(0,0,0,0.2);backdrop-filter:blur(8px);padding:14px;border-radius:14px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:0.9rem;font-weight:700;color:var(--orange);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            <i class="fa fa-wrench"></i>
+            <span>${escHtml(req.specialty)}</span>
           </div>
-          <div style="font-size:0.85rem;color:var(--light);margin-bottom:8px;">
+          <div style="font-size:0.85rem;color:var(--light);margin-bottom:10px;line-height:1.5;">
             ${escHtml(req.description)}
           </div>
-          <div style="font-size:0.8rem;color:var(--gray);">
-            <i class="fa fa-location-dot"></i> ${escHtml(req.address || 'Sin dirección')}
+          <div style="font-size:0.8rem;color:var(--gray);display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;">
+            <i class="fa fa-location-dot" style="color:var(--accent);"></i>
+            <span>${escHtml(req.address || 'Sin dirección')}</span>
           </div>
         </div>
         
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-success btn-sm" style="flex:1;" onclick="window.acceptUrgentRequest('${req.id}', '${req.user_id}')">
-            <i class="fa fa-check"></i> Aceptar
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+          <button class="btn btn-success btn-sm" style="font-weight:700;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(16,185,129,0.3);" onclick="window.acceptUrgentRequest('${req.id}', '${req.user_id}')">
+            <i class="fa fa-check" style="margin-right:6px;"></i>Aceptar
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="window.openMapLocation(${req.latitude}, ${req.longitude})">
-            <i class="fa fa-map"></i> Ver mapa
+          <button class="btn btn-ghost btn-sm" style="padding:12px;border-radius:12px;" onclick="window.openMapLocation(${req.latitude}, ${req.longitude})">
+            <i class="fa fa-map"></i>
           </button>
         </div>
+      </div>
+    </div>
+  `;
       </div>
     </div>
   `;

@@ -589,6 +589,11 @@ function initInboxTabs() {
   
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
+      // Haptic feedback en móviles
+      if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
+      
       // Remove active from all
       tabs.forEach(t => {
         t.classList.remove('active');
@@ -596,12 +601,12 @@ function initInboxTabs() {
         t.style.color = 'var(--gray)';
       });
       
-      // Add active to clicked
+      // Add active to clicked with animation
       tab.classList.add('active');
       tab.style.background = 'var(--darker)';
       tab.style.color = 'var(--orange)';
       
-      // Show corresponding content
+      // Show corresponding content with fade
       const inboxType = tab.dataset.inbox;
       document.querySelectorAll('.inbox-content').forEach(content => {
         content.style.display = 'none';
@@ -619,13 +624,21 @@ function initInboxTabs() {
 document.addEventListener('DOMContentLoaded', () => {
   initInboxTabs();
   
-  // Botones de acceso rápido
+  // Botones de acceso rápido con feedback
+  const quickAccessButtons = document.querySelectorAll('.btn-quick-access');
+  quickAccessButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (navigator.vibrate) {
+        navigator.vibrate(15);
+      }
+    });
+  });
+  
   const btnActivos = document.getElementById('btn-view-activos');
   const btnFinalizados = document.getElementById('btn-view-finalizados');
   
   if (btnActivos) {
     btnActivos.addEventListener('click', () => {
-      // Simular click en tab "En proceso"
       const tabActivos = document.querySelector('[data-tab="tab-pro-activos"]');
       if (tabActivos) tabActivos.click();
     });
@@ -633,14 +646,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (btnFinalizados) {
     btnFinalizados.addEventListener('click', () => {
-      // Simular click en tab "Finalizados"
       const tabFinalizados = document.querySelector('[data-tab="tab-pro-finalizados"]');
       if (tabFinalizados) tabFinalizados.click();
     });
   }
 });
 
-// Actualizar contadores en botones de acceso rápido
+// Actualizar contadores en botones de acceso rápido con animación
 function updateQuickAccessCounters() {
   const activeCount = document.getElementById('pro-stat-active')?.textContent || '0';
   const doneCount = document.getElementById('pro-stat-done')?.textContent || '0';
@@ -650,9 +662,33 @@ function updateQuickAccessCounters() {
   const doneText = document.getElementById('pro-stat-done-text');
   const newBadge = document.getElementById('pro-stat-new-badge');
   
-  if (activeText) activeText.textContent = `${activeCount} trabajo${activeCount !== '1' ? 's' : ''}`;
-  if (doneText) doneText.textContent = `${doneCount} trabajo${doneCount !== '1' ? 's' : ''}`;
-  if (newBadge) newBadge.textContent = newCount;
+  // Animar números
+  if (activeText) {
+    activeText.style.transition = 'all 0.3s ease';
+    activeText.style.transform = 'scale(1.1)';
+    activeText.textContent = `${activeCount} trabajo${activeCount !== '1' ? 's' : ''}`;
+    setTimeout(() => {
+      activeText.style.transform = 'scale(1)';
+    }, 300);
+  }
+  
+  if (doneText) {
+    doneText.style.transition = 'all 0.3s ease';
+    doneText.style.transform = 'scale(1.1)';
+    doneText.textContent = `${doneCount} trabajo${doneCount !== '1' ? 's' : ''}`;
+    setTimeout(() => {
+      doneText.style.transform = 'scale(1)';
+    }, 300);
+  }
+  
+  if (newBadge) {
+    newBadge.style.transition = 'all 0.3s ease';
+    newBadge.style.transform = 'scale(1.2)';
+    newBadge.textContent = newCount;
+    setTimeout(() => {
+      newBadge.style.transform = 'scale(1)';
+    }, 300);
+  }
 }
 
 // Exportar para usar desde dashboard.js

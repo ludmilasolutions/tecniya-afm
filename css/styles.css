@@ -2997,7 +2997,20 @@ p {
 
 /* Bandeja Inteligente - Tabs */
 .inbox-tab {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.inbox-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--orange);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
 }
 
 .inbox-tab:hover {
@@ -3007,43 +3020,123 @@ p {
 .inbox-tab.active {
   background: var(--darker) !important;
   color: var(--orange) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.inbox-tab.active::after {
+  width: 40px;
 }
 
 .inbox-content {
-  animation: fadeIn 0.3s ease;
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
 }
 
 /* Botones de acceso rápido */
 .btn-quick-access {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-quick-access::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(79,70,229,0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-quick-access:hover::before {
+  width: 200px;
+  height: 200px;
 }
 
 .btn-quick-access:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
   border-color: var(--primary);
+}
+
+.btn-quick-access:active {
+  transform: translateY(-2px);
 }
 
 /* Header profesional mejorado */
 .pro-header-modern {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 0 0 24px 24px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.pro-header-modern::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 70%);
+  animation: headerGlow 8s ease-in-out infinite;
+}
+
+@keyframes headerGlow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-20px, -20px); }
 }
 
 /* Stats cards modernos */
 .stat-card-modern {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  transition: left 0.5s;
+}
+
+.stat-card-modern:hover::before {
+  left: 100%;
 }
 
 .stat-card-modern:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(79,70,229,0.2);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(79,70,229,0.3);
+  border-color: var(--primary);
 }
 
 /* Zona de influencia */
@@ -3053,12 +3146,18 @@ p {
 }
 
 .zone-pulse {
-  animation: zonePulse 2s ease-in-out infinite;
+  animation: zonePulse 3s ease-in-out infinite;
 }
 
 @keyframes zonePulse {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.5; }
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 0.3; 
+  }
+  50% { 
+    transform: scale(1.2); 
+    opacity: 0.6; 
+  }
 }
 
 /* Mobile optimizations */
@@ -3070,6 +3169,10 @@ p {
   .pro-header-modern {
     border-radius: 0 !important;
   }
+  
+  .btn-quick-access:hover {
+    transform: translateY(-3px);
+  }
 }
 
 /* Job cards mejorados para bandeja */
@@ -3079,25 +3182,87 @@ p {
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.job-card-modern::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--primary);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.job-card-modern:hover::before {
+  transform: scaleY(1);
 }
 
 .job-card-modern:hover {
-  transform: translateX(4px);
+  transform: translateX(8px);
   border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(79,70,229,0.2);
+  box-shadow: 0 8px 20px rgba(79,70,229,0.25);
+  background: linear-gradient(135deg, var(--glass), rgba(79,70,229,0.05));
 }
 
 .job-card-urgent {
-  background: linear-gradient(135deg, rgba(249,115,22,0.05), rgba(239,68,68,0.05));
+  background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(239,68,68,0.08));
   border: 2px solid var(--orange);
+  animation: urgentGlow 2s ease-in-out infinite;
 }
 
-.job-card-urgent::before {
-  content: '🚨';
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 1.2rem;
-  animation: pulse 1s infinite;
+@keyframes urgentGlow {
+  0%, 100% { 
+    box-shadow: 0 0 0 rgba(249,115,22,0.4);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(249,115,22,0.4);
+  }
 }
+
+/* Smooth scrolling */
+.jobs-list {
+  scroll-behavior: smooth;
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.loading-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    var(--darker) 0%,
+    var(--glass) 20%,
+    var(--darker) 40%,
+    var(--darker) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Toggle switch mejorado */
+.toggle-switch {
+  position: relative;
+}
+
+.toggle-slider {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-knob {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+input:checked + .toggle-slider .toggle-knob {
+  box-shadow: 0 2px 12px rgba(16,185,129,0.5);
+}
+
