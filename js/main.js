@@ -581,29 +581,68 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
 }
 
 // ============================================
-// BANDEJA INTELIGENTE - TABS UBER
+// MODERN DASHBOARD - TABS & STATUS
 // ============================================
 
 function initInboxTabs() {
-  const tabs = document.querySelectorAll('.uber-tab');
+  const tabs = document.querySelectorAll('.tab-btn');
   
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      // Vibración
       if (navigator.vibrate) navigator.vibrate(10);
       
       // Remove active
       tabs.forEach(t => t.classList.remove('active'));
-      
-      // Add active
       tab.classList.add('active');
       
       // Show content
       const inboxType = tab.dataset.inbox;
-      document.querySelectorAll('.uber-inbox-content').forEach(c => c.classList.remove('active'));
-      document.getElementById(`inbox-${inboxType}`)?.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active', 'block'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      const content = document.getElementById(`inbox-${inboxType}`);
+      if (content) {
+        content.classList.add('active', 'block');
+        content.classList.remove('hidden');
+      }
     });
   });
+  
+  // Update status indicator
+  const toggle = document.getElementById('toggle-online-status');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const statusContainer = document.getElementById('status-container');
+  
+  if (toggle && statusDot && statusText) {
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        statusDot.classList.remove('bg-slate-500');
+        statusDot.classList.add('bg-emerald-500', 'animate-pulse');
+        statusText.classList.remove('text-slate-500');
+        statusText.classList.add('text-emerald-500');
+        statusText.textContent = 'Conectado';
+      } else {
+        statusDot.classList.remove('bg-emerald-500', 'animate-pulse');
+        statusDot.classList.add('bg-slate-500');
+        statusText.classList.remove('text-emerald-500');
+        statusText.classList.add('text-slate-500');
+        statusText.textContent = 'Desconectado';
+      }
+    });
+  }
+  
+  // Navigation back to dashboard
+  const navDashboard = document.getElementById('nav-dashboard');
+  if (navDashboard) {
+    navDashboard.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Hide all tab-panels
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      // Show main dashboard
+      document.querySelector('.min-h-screen')?.scrollTo(0, 0);
+      window.scrollTo(0, 0);
+    });
+  }
 }
 
 // Inicializar
@@ -665,12 +704,11 @@ function updateQuickAccessCounters() {
   const doneCount = document.getElementById('pro-stat-done')?.textContent || '0';
   const newCount = document.getElementById('pro-stat-new')?.textContent || '0';
   
-  const activeText = document.getElementById('pro-stat-active-text');
-  const doneText = document.getElementById('pro-stat-done-text');
+  // Update display stats
+  const newDisplay = document.getElementById('pro-stat-new-display');
   const newBadge = document.getElementById('pro-stat-new-badge');
   
-  if (activeText) activeText.textContent = activeCount;
-  if (doneText) doneText.textContent = doneCount;
+  if (newDisplay) newDisplay.textContent = newCount;
   if (newBadge) newBadge.textContent = newCount;
 }
 
