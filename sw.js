@@ -32,11 +32,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - Network first, fallback to cache
+// Fetch event - Network first, fallback to cache (solo GET)
 self.addEventListener('fetch', (event) => {
+  // Solo cachear GET requests
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        // Solo cachear respuestas exitosas
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+
         // Clone the response
         const responseToCache = response.clone();
         
