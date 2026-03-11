@@ -610,13 +610,36 @@ function initInboxTabs() {
 document.addEventListener('DOMContentLoaded', () => {
   initInboxTabs();
   
-  // Quick actions - usar switchTab existente
+  // Función helper para mostrar tab-panels
+  const showTabPanel = (tabId) => {
+    // Ocultar dashboard uber
+    const uberDash = document.querySelector('.pro-dashboard-uber');
+    if (uberDash) uberDash.style.display = 'none';
+    
+    // Ocultar todos los tab-panels
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    
+    // Mostrar el panel seleccionado
+    const panel = document.getElementById(tabId);
+    if (panel) {
+      panel.classList.add('active');
+      panel.style.display = 'block';
+      panel.style.maxWidth = '1200px';
+      panel.style.margin = '0 auto';
+      panel.style.padding = '24px';
+    }
+  };
+  
+  // Quick actions
   document.getElementById('btn-view-activos')?.addEventListener('click', () => {
-    switchTab(null, 'tab-pro-activos');
+    showTabPanel('tab-pro-activos');
   });
   
   document.getElementById('btn-view-finalizados')?.addEventListener('click', () => {
-    switchTab(null, 'tab-pro-finalizados');
+    showTabPanel('tab-pro-finalizados');
   });
 });
 
