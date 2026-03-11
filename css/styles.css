@@ -3175,6 +3175,160 @@ p {
   }
 }
 
+/* Desktop Layout - Horizontal y más espacioso */
+@media (min-width: 769px) {
+  .dash-wrap {
+    max-width: 1200px !important;
+    padding: 24px !important;
+  }
+  
+  .pro-header-modern {
+    border-radius: 24px !important;
+    margin-bottom: 32px !important;
+  }
+  
+  /* Mostrar stats adicionales en desktop */
+  .desktop-only {
+    display: block !important;
+  }
+  
+  /* Grid de 2 columnas para desktop */
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  
+  .desktop-sidebar {
+    position: sticky;
+    top: 24px;
+  }
+  
+  .desktop-main {
+    min-height: 600px;
+  }
+  
+  /* Stats en fila horizontal */
+  .stats-desktop {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+  }
+  
+  /* Bandeja horizontal */
+  .inbox-desktop {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+  }
+  
+  .inbox-tabs-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(239,68,68,0.15)) !important;
+    border-radius: 22px !important;
+    padding: 8px !important;
+  }
+  
+  .inbox-tab-desktop {
+    justify-content: flex-start;
+    padding: 14px 18px !important;
+    border-radius: 14px !important;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .inbox-tab-desktop:hover {
+    background: rgba(255,255,255,0.05) !important;
+  }
+  
+  .inbox-tab-desktop.active {
+    background: var(--darker) !important;
+    color: var(--orange) !important;
+  }
+  
+  /* Accesos rápidos en grid 2x2 más grande */
+  .quick-access-desktop {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  
+  /* Zona de influencia más grande */
+  .zone-desktop {
+    height: 200px !important;
+  }
+  
+  /* Job cards en 2 columnas */
+  .jobs-grid-desktop {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .jobs-grid-desktop .job-card-urgent,
+  .jobs-grid-desktop .job-card-modern {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Ocultar tabs horizontales en desktop, mostrar verticales */
+  .inbox-desktop .inbox-tab:not(.inbox-tab-desktop) {
+    display: none;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .desktop-grid {
+    grid-template-columns: 280px 1fr;
+  }
+  
+  .stats-desktop {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .jobs-grid-desktop {
+    grid-template-columns: 1fr;
+  }
+  
+  .inbox-desktop {
+    grid-template-columns: 1fr;
+  }
+  
+  .inbox-tabs-vertical {
+    flex-direction: row !important;
+    justify-content: center;
+  }
+}
+
+/* Mobile - mantener diseño vertical */
+@media (max-width: 768px) {
+  .desktop-grid {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .inbox-desktop {
+    display: block;
+  }
+  
+  .inbox-tabs-vertical {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+}
+
 /* Job cards mejorados para bandeja */
 .job-card-modern {
   background: var(--glass);
