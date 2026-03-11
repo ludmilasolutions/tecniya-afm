@@ -2995,6 +2995,17 @@ p {
    NUEVO DISEÑO TIPO UBER - DASHBOARD PROFESIONAL
    ============================================ */
 
+/* Base styles for dashboard */
+.dash-wrap {
+  max-width: 500px;
+  padding: 0;
+  margin: 0 auto;
+}
+
+.dashboard-content {
+  padding: 0 20px;
+}
+
 /* Bandeja Inteligente - Tabs */
 .inbox-tab {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
