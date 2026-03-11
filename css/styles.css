@@ -3252,3 +3252,14 @@ p {
     padding: 0;
   }
 }
+
+/* Tab panels cuando se muestran desde dashboard Uber */
+#page-pro-dashboard .tab-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+#page-pro-dashboard .tab-panel.active {
+  display: block;
+}

@@ -610,36 +610,52 @@ function initInboxTabs() {
 document.addEventListener('DOMContentLoaded', () => {
   initInboxTabs();
   
-  // Función helper para mostrar tab-panels
-  const showTabPanel = (tabId) => {
-    // Ocultar dashboard uber
-    const uberDash = document.querySelector('.pro-dashboard-uber');
-    if (uberDash) uberDash.style.display = 'none';
-    
-    // Ocultar todos los tab-panels
-    document.querySelectorAll('.tab-panel').forEach(p => {
-      p.classList.remove('active');
-      p.style.display = 'none';
-    });
-    
-    // Mostrar el panel seleccionado
-    const panel = document.getElementById(tabId);
-    if (panel) {
-      panel.classList.add('active');
-      panel.style.display = 'block';
-      panel.style.maxWidth = '1200px';
-      panel.style.margin = '0 auto';
-      panel.style.padding = '24px';
-    }
-  };
-  
-  // Quick actions
+  // Quick actions - abrir en modal
   document.getElementById('btn-view-activos')?.addEventListener('click', () => {
-    showTabPanel('tab-pro-activos');
+    // Activar el tab correcto
+    const tab = document.querySelector('[data-tab="tab-pro-activos"]');
+    if (tab) {
+      // Quitar active de todos los tabs
+      document.querySelectorAll('#pro-tabs .tab').forEach(t => t.classList.remove('active'));
+      // Activar el tab clickeado
+      tab.classList.add('active');
+      
+      // Mostrar el panel
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
+      
+      const panel = document.getElementById('tab-pro-activos');
+      if (panel) {
+        panel.classList.add('active');
+        panel.style.display = 'block';
+      }
+      
+      // Hacer scroll al panel
+      panel?.scrollIntoView({ behavior: 'smooth' });
+    }
   });
   
   document.getElementById('btn-view-finalizados')?.addEventListener('click', () => {
-    showTabPanel('tab-pro-finalizados');
+    const tab = document.querySelector('[data-tab="tab-pro-finalizados"]');
+    if (tab) {
+      document.querySelectorAll('#pro-tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
+      
+      const panel = document.getElementById('tab-pro-finalizados');
+      if (panel) {
+        panel.classList.add('active');
+        panel.style.display = 'block';
+      }
+      
+      panel?.scrollIntoView({ behavior: 'smooth' });
+    }
   });
 });
 
