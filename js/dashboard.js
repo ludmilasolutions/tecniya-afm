@@ -774,27 +774,14 @@ export async function loadUrgentRequests() {
     const badge = document.getElementById('urgent-count-badge');
     
     if (!urgentReqs || urgentReqs.length === 0) {
-      if (container) container.innerHTML = '<div style="padding:40px 20px;text-align:center;"><i class="fa fa-bolt" style="font-size:3rem;color:var(--gray);opacity:0.3;margin-bottom:12px;display:block;"></i><p style="color:var(--gray);font-size:0.9rem;">No hay solicitudes urgentes en este momento</p></div>';
+      if (container) container.innerHTML = '<div class="empty-state"><i class="fa fa-bolt"></i><p>No hay urgencias</p></div>';
       if (badge) badge.style.display = 'none';
-      
-      // Limpiar badge del tab
-      const urgentTab = document.querySelector('[data-inbox="urgentes"]');
-      if (urgentTab) {
-        urgentTab.innerHTML = `<i class="fa fa-bolt"></i> Urgentes`;
-      }
-      
       return;
     }
     
     if (badge) {
       badge.textContent = urgentReqs.length;
       badge.style.display = 'inline-block';
-    }
-    
-    // Actualizar también el tab de urgentes con el contador
-    const urgentTab = document.querySelector('[data-inbox="urgentes"]');
-    if (urgentTab && urgentReqs.length > 0) {
-      urgentTab.innerHTML = `<i class="fa fa-bolt"></i> Urgentes <span style="background:var(--orange);color:white;padding:2px 6px;border-radius:10px;font-size:0.7rem;margin-left:4px;">${urgentReqs.length}</span>`;
     }
     
     if (container) {
