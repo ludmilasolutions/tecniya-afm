@@ -2990,3 +2990,265 @@ p {
 #toggle-online-status:checked + .toggle-slider .toggle-knob {
   transform: translateX(20px);
 }
+
+/* ============================================
+   DISEÑO UBER - PROFESIONAL
+   ============================================ */
+
+.pro-dashboard-uber {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Header */
+.uber-header {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  padding: 24px 20px;
+  margin-bottom: 20px;
+}
+
+.uber-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.uber-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.uber-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+}
+
+.uber-toggle-card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.uber-toggle-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+#status-dot {
+  font-size: 0.7rem;
+  color: var(--gray);
+}
+
+/* Stats */
+.uber-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 20px;
+  margin-bottom: 24px;
+}
+
+.uber-stat-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.uber-stat-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.uber-stat-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fbbf24;
+}
+
+.uber-stat-rating i {
+  font-size: 1.5rem;
+}
+
+.uber-stat-label {
+  font-size: 0.75rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* Bandeja */
+.uber-inbox {
+  padding: 0 20px;
+  margin-bottom: 24px;
+}
+
+.uber-tabs {
+  background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(239,68,68,0.1));
+  border-radius: 16px;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.uber-tab {
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+}
+
+.uber-tab.active {
+  background: var(--darker);
+  color: var(--orange);
+}
+
+.uber-badge {
+  background: var(--glass);
+  color: var(--gray);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.uber-badge.urgent {
+  background: var(--orange);
+  color: white;
+}
+
+.uber-inbox-content {
+  display: none;
+}
+
+.uber-inbox-content.active {
+  display: block;
+}
+
+/* Actions */
+.uber-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 20px 24px 20px;
+}
+
+.uber-action-btn {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--light);
+}
+
+.uber-action-btn i {
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.uber-action-btn span {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.uber-action-btn small {
+  font-size: 0.7rem;
+  color: var(--gray);
+}
+
+.uber-action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  border-color: var(--primary);
+}
+
+.uber-action-btn.destacado {
+  background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(251,191,36,0.1));
+  border-color: var(--orange);
+}
+
+.uber-action-btn.destacado i {
+  color: var(--orange);
+}
+
+.uber-action-btn.destacado span {
+  color: var(--orange);
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .pro-dashboard-uber {
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .uber-header {
+    grid-column: 1 / -1;
+    border-radius: 20px;
+  }
+
+  .uber-stats {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  .uber-inbox {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    padding: 0;
+  }
+
+  .uber-tabs {
+    grid-template-columns: 150px 150px;
+    width: fit-content;
+  }
+
+  .uber-actions {
+    grid-column: 1;
+    padding: 0;
+  }
+}

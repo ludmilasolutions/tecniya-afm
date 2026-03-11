@@ -334,419 +334,166 @@
 </div>
 
 <div class="page" id="page-pro-dashboard">
-  <div class="container" style="max-width:1200px;margin:0 auto;padding:24px;">
+  <div class="pro-dashboard-uber">
     
-    <!-- Header -->
-    <div class="dash-header" style="margin-bottom:32px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+    <!-- Header Uber-style -->
+    <div class="uber-header">
+      <div class="uber-header-top">
         <div>
-          <div class="dash-greeting">Panel Profesional</div>
-          <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;" id="pro-dash-specialty">Tu especialidad</p>
+          <div class="uber-label">Panel Profesional</div>
+          <h1 class="uber-title" id="pro-dash-specialty">Tu especialidad</h1>
         </div>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--glass);border-radius:12px;border:1px solid var(--border);">
-            <i class="fa fa-circle" id="status-dot" style="font-size:0.6rem;color:var(--gray);"></i>
-            <span id="status-text" style="font-size:0.9rem;font-weight:600;color:var(--gray);">Desconectado</span>
-            <label class="toggle-switch" style="margin-left:8px;">
-              <input type="checkbox" id="toggle-online-status" style="display:none;">
-              <span class="toggle-slider">
-                <span class="toggle-knob"></span>
-              </span>
-            </label>
-          </div>
-          <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar</button>
-          <button class="btn btn-orange btn-sm" id="btn-featured-pro"><i class="fa fa-crown"></i>Destacado</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row" style="margin-bottom:32px;">
-      <div class="stat-card">
-        <div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div>
-        <div class="stat-label">Solicitudes nuevas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div>
-        <div class="stat-label">Trabajos activos</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div>
-        <div class="stat-label">Finalizados</div>
-      </div>
-      <div class="stat-card">
-        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-          <i class="fa fa-star" style="color:#fbbf24;font-size:1.5rem;"></i>
-          <div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div>
-        </div>
-        <div class="stat-label">Puntuación</div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs" id="pro-tabs" style="margin-bottom:24px;">
-      <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
-      <button class="tab" data-tab="tab-pro-activos">En proceso</button>
-      <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
-      <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
-      <button class="tab" data-tab="tab-pro-fotos">Fotos</button>
-      <button class="tab" data-tab="tab-pro-config">Configuración</button>
-    </div>
-
-    <!-- Solicitudes Tab -->
-    <div class="tab-panel active" id="tab-pro-solicitudes">
-      <div id="urgent-requests-section" style="margin-bottom:24px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <h3 style="margin:0;font-size:1.1rem;display:flex;align-items:center;gap:8px;">
-            <i class="fa fa-bolt" style="color:var(--orange);"></i>
-            Solicitudes Urgentes
-          </h3>
-          <span id="urgent-count-badge" style="background:var(--orange);color:white;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;display:none;">0</span>
-        </div>
-        <div id="urgent-requests-list"></div>
+        <div class="user-avatar" id="pro-header-avatar">U</div>
       </div>
       
-      <h3 style="margin:0 0 16px 0;font-size:1.1rem;display:flex;align-items:center;gap:8px;">
-        <i class="fa fa-inbox"></i>
-        Solicitudes Nuevas
-        <span style="background:var(--glass);padding:4px 10px;border-radius:12px;font-size:0.8rem;color:var(--gray);" id="pro-stat-new-badge">0</span>
-      </h3>
-      <div class="jobs-list" id="pro-jobs-new">
-        <div class="empty-state">
+      <div class="uber-toggle-card">
+        <div class="uber-toggle-content">
+          <i class="fa fa-circle" id="status-dot"></i>
+          <span id="status-text">Desconectado</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-online-status">
+          <span class="toggle-slider"><span class="toggle-knob"></span></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="uber-stats">
+      <div class="uber-stat-card">
+        <div class="uber-stat-number" id="pro-stat-active">0</div>
+        <div class="uber-stat-label">Activos</div>
+      </div>
+      <div class="uber-stat-card">
+        <div class="uber-stat-number uber-stat-rating">
+          <i class="fa fa-star"></i>
+          <span id="pro-stat-rating">0</span>
+        </div>
+        <div class="uber-stat-label">Rating</div>
+      </div>
+    </div>
+
+    <!-- Bandeja Inteligente -->
+    <div class="uber-inbox">
+      <div class="uber-tabs">
+        <button class="uber-tab active" data-inbox="nuevas">
           <i class="fa fa-inbox"></i>
-          <p>No tenés solicitudes nuevas</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- En Proceso Tab -->
-    <div class="tab-panel" id="tab-pro-activos">
-      <div class="jobs-list" id="pro-jobs-active">
-        <div class="empty-state">
-          <i class="fa fa-gears"></i>
-          <p>No tenés trabajos en proceso</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Finalizados Tab -->
-    <div class="tab-panel" id="tab-pro-finalizados">
-      <div class="jobs-list" id="pro-jobs-done">
-        <div class="empty-state">
-          <i class="fa fa-check-circle"></i>
-          <p>No tenés trabajos finalizados aún</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Presupuestos Tab -->
-    <div class="tab-panel" id="tab-pro-presupuestos">
-      <div style="margin-bottom:16px;">
-        <button class="btn btn-primary btn-sm" id="btn-new-budget">
-          <i class="fa fa-plus"></i>Nuevo Presupuesto
+          <span>Nuevas</span>
+          <span class="uber-badge" id="pro-stat-new-badge">0</span>
+        </button>
+        <button class="uber-tab" data-inbox="urgentes">
+          <i class="fa fa-bolt"></i>
+          <span>Urgentes</span>
+          <span class="uber-badge urgent" id="urgent-count-badge" style="display:none;">0</span>
         </button>
       </div>
-      <div id="pro-budgets-list">
-        <div class="empty-state">
-          <i class="fa fa-file-invoice-dollar"></i>
-          <p>No enviaste presupuestos aún</p>
+
+      <!-- Contenido Nuevas -->
+      <div id="inbox-nuevas" class="uber-inbox-content active">
+        <div class="jobs-list" id="pro-jobs-new">
+          <div class="empty-state">
+            <i class="fa fa-inbox"></i>
+            <p>No tenés solicitudes nuevas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido Urgentes -->
+      <div id="inbox-urgentes" class="uber-inbox-content">
+        <div id="urgent-requests-list">
+          <div class="empty-state">
+            <i class="fa fa-bolt"></i>
+            <p>No hay urgencias</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Fotos Tab -->
-    <div class="tab-panel" id="tab-pro-fotos">
-      <div style="margin-bottom:16px;">
-        <button class="btn btn-primary btn-sm" id="btn-upload-photo">
-          <i class="fa fa-upload"></i>Subir foto
-        </button>
+    <!-- Quick Actions -->
+    <div class="uber-actions">
+      <button class="uber-action-btn" id="btn-view-activos">
+        <i class="fa fa-gears"></i>
+        <span>En Proceso</span>
+        <small id="pro-stat-active-text">0</small>
+      </button>
+      <button class="uber-action-btn" id="btn-view-finalizados">
+        <i class="fa fa-check-circle"></i>
+        <span>Finalizados</span>
+        <small id="pro-stat-done-text">0</small>
+      </button>
+      <button class="uber-action-btn" id="btn-edit-pro-profile">
+        <i class="fa fa-pencil"></i>
+        <span>Perfil</span>
+      </button>
+      <button class="uber-action-btn destacado" id="btn-featured-pro">
+        <i class="fa fa-crown"></i>
+        <span>Destacado</span>
+      </button>
+    </div>
+
+    <!-- Tabs ocultos para funcionalidad -->
+    <div style="display:none;">
+      <div class="tabs" id="pro-tabs">
+        <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
+        <button class="tab" data-tab="tab-pro-activos">En proceso</button>
+        <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
+        <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
+        <button class="tab" data-tab="tab-pro-fotos">Fotos</button>
+        <button class="tab" data-tab="tab-pro-config">Configuración</button>
+      </div>
+      
+      <div class="tab-panel" id="tab-pro-activos">
+        <div class="jobs-list" id="pro-jobs-active"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-finalizados">
+        <div class="jobs-list" id="pro-jobs-done"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-presupuestos">
+        <div id="pro-budgets-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-fotos">
+        <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir</button>
         <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+        <div class="photos-grid" id="pro-work-photos"></div>
       </div>
-      <div class="photos-grid" id="pro-work-photos">
-        <div class="photo-thumb"><i class="fa fa-image"></i></div>
-        <div class="photo-thumb"><i class="fa fa-image"></i></div>
-        <div class="photo-thumb"><i class="fa fa-image"></i></div>
-      </div>
-    </div>
-
-    <!-- Configuración Tab -->
-    <div class="tab-panel" id="tab-pro-config">
-      <div class="card" style="max-width:600px;">
-        <h3 style="font-size:1.1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
-        
-        <div class="form-group">
-          <label class="form-label">Días laborales</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-lun">
-              <input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-mar">
-              <input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-mie">
-              <input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-jue">
-              <input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-vie">
-              <input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-sab">
-              <input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;" for="dia-dom">
-              <input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row">
+      <div class="tab-panel" id="tab-pro-config">
+        <div class="card" style="max-width:500px;">
+          <h3>Configuración</h3>
           <div class="form-group">
-            <label class="form-label">Horario desde</label>
-            <input type="time" class="form-input" id="hora-desde" value="08:00">
+            <label class="form-label">Días laborales</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
+              <label><input type="checkbox" id="dia-lun" value="Lunes">Lunes</label>
+              <label><input type="checkbox" id="dia-mar" value="Martes">Martes</label>
+              <label><input type="checkbox" id="dia-mie" value="Miércoles">Miércoles</label>
+              <label><input type="checkbox" id="dia-jue" value="Jueves">Jueves</label>
+              <label><input type="checkbox" id="dia-vie" value="Viernes">Viernes</label>
+              <label><input type="checkbox" id="dia-sab" value="Sábado">Sábado</label>
+              <label><input type="checkbox" id="dia-dom" value="Domingo">Domingo</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Desde</label>
+              <input type="time" class="form-input" id="hora-desde" value="08:00">
+            </div>
+            <div class="form-group">
+              <label>Hasta</label>
+              <input type="time" class="form-input" id="hora-hasta" value="18:00">
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Horario hasta</label>
-            <input type="time" class="form-input" id="hora-hasta" value="18:00">
+            <label>
+              <input type="checkbox" id="urgencias">
+              Recibir urgencias
+            </label>
           </div>
+          <button class="btn btn-primary" id="btn-save-availability">Guardar</button>
         </div>
-
-        <div class="form-group">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" id="urgencias" style="accent-color:var(--green);width:18px;height:18px;">
-            <i class="fa fa-circle" style="font-size:0.6rem;color:var(--green);"></i>
-            <span style="font-weight:600;">Conectado para urgencias</span>
-          </label>
-          <p style="font-size:0.85rem;color:var(--gray);margin:8px 0 0 26px;">
-            Recibirás notificaciones de trabajos urgentes cerca tuyo. Tu ubicación se guarda automáticamente.
-          </p>
-        </div>
-
-        <button class="btn btn-primary" id="btn-save-availability">Guardar configuración</button>
       </div>
     </div>
 
   </div>
 </div>
-<div class="page" id="page-admin">
-  <div class="admin-sidebar" id="admin-sidebar">
-    <div class="admin-sidebar-item active" data-tab="admin-overview"><i class="fa fa-gauge"></i>Dashboard</div>
-    <div class="admin-sidebar-item" data-tab="admin-users"><i class="fa fa-users"></i>Usuarios</div>
-    <div class="admin-sidebar-item" data-tab="admin-pros"><i class="fa fa-user-tie"></i>Profesionales</div>
-    <div class="admin-sidebar-item" data-tab="admin-jobs"><i class="fa fa-briefcase"></i>Trabajos</div>
-    <div class="admin-sidebar-item" data-tab="admin-subs"><i class="fa fa-crown"></i>Suscripciones</div>
-    <div class="admin-sidebar-item" data-tab="admin-ads"><i class="fa fa-bullhorn"></i>Publicidad</div>
-    <div class="admin-sidebar-item" data-tab="admin-reviews"><i class="fa fa-star"></i>Reseñas</div>
-    <div class="admin-sidebar-item" data-tab="admin-penalties"><i class="fa fa-gavel"></i>Penalizaciones</div>
-    <div class="admin-sidebar-item" data-tab="admin-security"><i class="fa fa-shield-halved"></i>Seguridad</div>
-    <div class="admin-sidebar-item" onclick="window.adminViewAuditLog()"><i class="fa fa-scroll"></i>Auditoría</div>
-    <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
-  </div>
-  <div class="admin-content">
-    <div id="admin-overview" class="admin-tab" style="display:block;">
-      <h2 style="font-size:1.5rem;margin-bottom:24px;font-family:'Inter',sans-serif;">Dashboard Administración</h2>
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="adm-stat-users">0</div><div class="stat-label">Usuarios</div></div>
-        <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="adm-stat-pros">0</div><div class="stat-label">Profesionales</div></div>
-        <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="adm-stat-featured">0</div><div class="stat-label">Destacados activos</div></div>
-        <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="adm-stat-jobs">0</div><div class="stat-label">Trabajos realizados</div></div>
-      </div>
-      <div style="margin-top:28px;padding:24px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius);">
-        <p style="color:var(--gray);font-size:0.9rem;line-height:1.8;">
-          <i class="fa fa-circle-info" style="color:var(--accent);margin-right:8px;"></i>
-          Panel de administración de TECNIYA. Usá el menú lateral para gestionar usuarios, profesionales, suscripciones y publicidades.
-        </p>
-      </div>
-    </div>
-    <div id="admin-users" class="admin-tab" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Usuarios</h2>
-        <input type="text" class="search-input" style="max-width:260px;" placeholder="Buscar usuario..." id="search-users">
-      </div>
-      <div class="admin-table-wrap"><table class="admin-table" id="users-table">
-        <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Registro</th><th>Acciones</th></tr></thead>
-        <tbody id="users-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-    <div id="admin-pros" class="admin-tab" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Profesionales</h2>
-      </div>
-      <div class="admin-table-wrap"><table class="admin-table" id="pros-table">
-        <thead><tr><th>Nombre</th><th>Especialidad</th><th>Ciudad</th><th>Puntuación</th><th>Destacado</th><th>Acciones</th></tr></thead>
-        <tbody id="pros-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-    <div id="admin-jobs" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Trabajos</h2>
-      <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>ID</th><th>Cliente</th><th>Profesional</th><th>Especialidad</th><th>Estado</th><th>Fecha</th></tr></thead>
-        <tbody id="jobs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-    <div id="admin-subs" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Suscripciones</h2>
-      <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>Profesional</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acciones</th></tr></thead>
-        <tbody id="subs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-    <div id="admin-ads" class="admin-tab" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Publicidades</h2>
-        <button class="btn btn-primary btn-sm" onclick="window.adminNewAd()"><i class="fa fa-plus"></i> Nueva publicidad</button>
-      </div>
-      <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>Título</th><th>Nivel</th><th>Ubicación</th><th>Link</th><th>Activa</th><th>Acciones</th></tr></thead>
-        <tbody id="ads-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-
-
-    <div id="admin-security" class="admin-tab" style="display:none;">
-      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-        <i class="fa fa-shield-halved" style="color:var(--accent);"></i> Panel de Seguridad
-      </h3>
-
-      <div class="tabs" style="margin-bottom:20px;">
-        <button class="tab active" onclick="window.switchSecurityTab('sec-suspicious')">Cuentas sospechosas</button>
-        <button class="tab" onclick="window.switchSecurityTab('sec-cancels')">Usuarios con cancelaciones</button>
-        <button class="tab" onclick="window.switchSecurityTab('sec-reports')">Pros con reportes</button>
-      </div>
-
-      <div id="sec-suspicious" class="sec-tab-panel">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Nombre</th><th>Email</th><th>Motivo</th><th>Registro</th><th>Acciones</th></tr></thead>
-            <tbody id="suspicious-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="sec-cancels" class="sec-tab-panel" style="display:none;">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Nombre</th><th>Email</th><th>Cancelaciones</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="cancel-users-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="sec-reports" class="sec-tab-panel" style="display:none;">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr><th>Profesional</th><th>Especialidad</th><th>Reportes</th><th>Score</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="report-pros-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="admin-penalties" class="admin-tab" style="display:none;">
-      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-        <i class="fa fa-gavel" style="color:var(--orange);"></i> Sistema de Penalizaciones
-      </h3>
-
-      <!-- Stats rápidas -->
-      <div class="stats-row" style="margin-bottom:24px;">
-        <div class="stat-card">
-          <div class="stat-num" id="pen-stat-active" style="color:var(--orange);">—</div>
-          <div class="stat-label">Penalizaciones activas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="pen-stat-reports" style="color:#f87171;">—</div>
-          <div class="stat-label">Reportes pendientes</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="pen-stat-suspended" style="color:var(--gray);">—</div>
-          <div class="stat-label">Suspendidos</div>
-        </div>
-      </div>
-
-      <!-- Tabs internas -->
-      <div class="tabs" style="margin-bottom:20px;">
-        <button class="tab active" onclick="window.switchPenaltyTab('pen-tab-pros')">Profesionales en riesgo</button>
-        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-reports')">Reportes</button>
-        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-history')">Historial</button>
-      </div>
-
-      <!-- Sub-tab: Pros penalizados -->
-      <div id="pen-tab-pros" class="pen-tab-panel">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr>
-              <th>Profesional</th><th>Especialidad</th>
-              <th>Score</th><th>Incidentes</th>
-              <th>Estado</th><th>Urgentes</th><th>Acciones</th>
-            </tr></thead>
-            <tbody id="penalized-pros-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Sub-tab: Reportes -->
-      <div id="pen-tab-reports" class="pen-tab-panel" style="display:none;">
-        <div style="display:flex;gap:8px;margin-bottom:16px;">
-          <button class="btn btn-ghost btn-sm report-filter-btn active" data-status="pending" onclick="window.adminFilterReports('pending')">Pendientes</button>
-          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="confirmed" onclick="window.adminFilterReports('confirmed')">Confirmados</button>
-          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="dismissed" onclick="window.adminFilterReports('dismissed')">Desestimados</button>
-          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="all" onclick="window.adminFilterReports('all')">Todos</button>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr>
-              <th>ID</th><th>Motivo</th><th>Descripción</th>
-              <th>Fecha</th><th>Estado</th><th>Acciones</th>
-            </tr></thead>
-            <tbody id="reports-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Sub-tab: Historial -->
-      <div id="pen-tab-history" class="pen-tab-panel" style="display:none;">
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead><tr>
-              <th>ID</th><th>Tipo</th><th>Descripción</th>
-              <th>Delta</th><th>Estado</th><th>Acciones</th>
-            </tr></thead>
-            <tbody id="penalties-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="admin-reviews" class="admin-tab" style="display:none;">
-      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Reseñas</h2>
-      <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>Autor</th><th>Profesional</th><th>Puntuación</th><th>Comentario</th><th>Acciones</th></tr></thead>
-        <tbody id="reviews-admin-tbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
-      </table></div>
-    </div>
-  </div>
-</div>
-
-<div class="page" id="page-chat">
-  <div class="chat-wrap">
-
-    <!-- SIDEBAR -->
-    <div class="chat-sidebar" id="chat-sidebar">
-      <div class="chat-sidebar-header">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin:0;">Mensajes</h3>
-          <button class="btn btn-ghost btn-sm" id="btn-close-chat" title="Cerrar mensajes" style="padding:6px 10px;">
-            <i class="fa fa-xmark"></i>
-          </button>
-        </div>
-        <input type="text" class="chat-search" placeholder="Buscar conversación..." id="chat-search-input">
-      </div>
-      <div class="chat-conversations" id="chat-conversations">
-        <div class="empty-state" style="padding:40px 20px;text-align:center;">
-          <i class="fa fa-comments" style="font-size:2rem;margin-bottom:10px;display:block;color:var(--gray);"></i>
-          <p style="color:var(--gray);font-size:0.88rem;">No tenés conversaciones aún.</p>
-        </div>
       </div>
     </div>
 
