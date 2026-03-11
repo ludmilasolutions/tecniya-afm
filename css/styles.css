@@ -2999,6 +2999,13 @@ p {
 .inbox-tab {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  background: transparent;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--gray);
 }
 
 .inbox-tab::after {
@@ -3223,9 +3230,9 @@ p {
   }
   
   .inbox-tabs-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
     background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(239,68,68,0.15)) !important;
     border-radius: 22px !important;
     padding: 8px !important;
@@ -3322,10 +3329,16 @@ p {
     display: block;
   }
   
+  /* Tabs horizontales en móvil */
   .inbox-tabs-vertical {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    flex-direction: row !important;
+  }
+  
+  .inbox-tab-desktop {
+    padding: 12px 16px !important;
   }
 }
 
