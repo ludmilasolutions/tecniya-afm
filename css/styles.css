@@ -6,7 +6,7 @@
 }
 
 :root {
-  --primary: #4f46e5;
+  --primary: #4850e5; /* Exact Stitch Indigo */
   --secondary: #7c3aed;
   --accent: #06b6d4;
   --orange: #f97316;
@@ -16,17 +16,17 @@
   --light: #f8fafc;
   --gray: #94a3b8;
   --gray2: #64748b;
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass2: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.08);
-  --glow-primary: rgba(79, 70, 229, 0.4);
-  --glow-accent: rgba(6, 182, 212, 0.35);
-  --glow-orange: rgba(249, 115, 22, 0.35);
-  --glow-green: rgba(16, 185, 129, 0.35);
+  --glass: rgba(255, 255, 255, 0.03); /* More subtle */
+  --glass2: rgba(255, 255, 255, 0.05); /* More subtle */
+  --border: rgba(255, 255, 255, 0.06); /* Hairline edge */
+  --glow-primary: rgba(72, 80, 229, 0.3);
+  --glow-accent: rgba(6, 182, 212, 0.25);
+  --glow-orange: rgba(249, 115, 22, 0.25);
+  --glow-green: rgba(16, 185, 129, 0.25);
   --header-h: 72px;
-  --radius: 14px;
+  --radius: 12px; /* Stitch Round Twelve */
   --radius-sm: 8px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html {
@@ -243,19 +243,21 @@ p {
 
 /* ===== CARDS ===== */
 .card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius);
   padding: 24px;
   transition: var(--transition);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
 }
 .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(79, 70, 229, 0.3);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border-color: rgba(72, 80, 229, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 .card-glass {
   background: rgba(255, 255, 255, 0.05);
@@ -898,6 +900,7 @@ p {
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-bottom: 12px;
