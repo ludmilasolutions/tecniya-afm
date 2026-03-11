@@ -444,22 +444,24 @@
         <button class="tab" data-tab="tab-pro-fotos">Fotos</button>
         <button class="tab" data-tab="tab-pro-config">Configuración</button>
       </div>
-      
-      <div class="tab-panel" id="tab-pro-activos">
-        <div class="jobs-list" id="pro-jobs-active"></div>
-      </div>
-      <div class="tab-panel" id="tab-pro-finalizados">
-        <div class="jobs-list" id="pro-jobs-done"></div>
-      </div>
-      <div class="tab-panel" id="tab-pro-presupuestos">
-        <div id="pro-budgets-list"></div>
-      </div>
-      <div class="tab-panel" id="tab-pro-fotos">
-        <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir</button>
-        <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
-        <div class="photos-grid" id="pro-work-photos"></div>
-      </div>
-      <div class="tab-panel" id="tab-pro-config">
+    </div>
+    
+    <!-- Tab panels (fuera del div oculto para que puedan mostrarse) -->
+    <div class="tab-panel" id="tab-pro-activos" style="display:none;">
+      <div class="jobs-list" id="pro-jobs-active"></div>
+    </div>
+    <div class="tab-panel" id="tab-pro-finalizados" style="display:none;">
+      <div class="jobs-list" id="pro-jobs-done"></div>
+    </div>
+    <div class="tab-panel" id="tab-pro-presupuestos" style="display:none;">
+      <div id="pro-budgets-list"></div>
+    </div>
+    <div class="tab-panel" id="tab-pro-fotos" style="display:none;">
+      <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir</button>
+      <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+      <div class="photos-grid" id="pro-work-photos"></div>
+    </div>
+    <div class="tab-panel" id="tab-pro-config" style="display:none;">
         <div class="card" style="max-width:500px;">
           <h3>Configuración</h3>
           <div class="form-group">
@@ -497,11 +499,10 @@
 
   </div>
 </div>
-      </div>
-    </div>
 
-    <!-- MAIN -->
-    <div class="chat-main" id="chat-main-panel">
+<div class="page" id="page-chat">
+  <div class="container chat-container">
+    <div class="chat-sidebar" id="chat-sidebar">
       <div class="chat-header" id="chat-header">
         <!-- Botón volver (mobile) -->
         <button class="btn btn-ghost btn-sm" id="btn-chat-back" title="Volver" style="display:none;padding:6px 10px;margin-right:4px;">
@@ -544,7 +545,6 @@
         <button class="btn btn-primary btn-sm" id="btn-send-chat"><i class="fa fa-paper-plane"></i></button>
       </div>
     </div>
-
   </div>
 </div>
 

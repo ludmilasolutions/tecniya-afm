@@ -610,13 +610,13 @@ function initInboxTabs() {
 document.addEventListener('DOMContentLoaded', () => {
   initInboxTabs();
   
-  // Quick actions
+  // Quick actions - usar switchTab existente
   document.getElementById('btn-view-activos')?.addEventListener('click', () => {
-    document.querySelector('[data-tab="tab-pro-activos"]')?.click();
+    switchTab(null, 'tab-pro-activos');
   });
   
   document.getElementById('btn-view-finalizados')?.addEventListener('click', () => {
-    document.querySelector('[data-tab="tab-pro-finalizados"]')?.click();
+    switchTab(null, 'tab-pro-finalizados');
   });
 });
 
