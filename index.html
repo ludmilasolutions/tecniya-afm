@@ -1892,9 +1892,46 @@
   </audio>
 </div>
 
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) rotate(-2deg); }
+  20%, 40%, 60%, 80% { transform: translate(-50%, -50%) rotate(2deg); }
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; background: rgba(239, 68, 68, 0.1); }
+}
+
+#urgent-alert-modal.active > div {
+  animation: shake 0.5s ease-in-out, flash 1s ease-in-out infinite;
+}
+
+#reject-urgent-alert:hover {
+  background: rgba(255,255,255,0.05);
+  transform: scale(1.02);
+}
+
+#accept-urgent-alert:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+}
+</style>
+
 <!-- Modal Instrucciones Instalación iOS -->
 <div class="modal-overlay" id="modal-install-ios">
-  <div class="modal-content">
+  <div class="modal-content" style="max-width:400px;">
     <div class="modal-header">
       <h3 style="margin:0;">Instalar en iPhone/iPad</h3>
       <button class="modal-close" onclick="closeModal('modal-install-ios')">
@@ -1907,28 +1944,28 @@
         <p style="color:var(--gray);font-size:0.9rem;">Para instalar la app en tu iPhone o iPad:</p>
       </div>
       
-      <div class="flex flex-col gap-4">
-        <div class="install-step">
-          <div class="install-step-num">1</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">1</div>
           <div>
-            <div class="install-step-title">Abrí el menú de Safari</div>
-            <div class="install-step-desc">Tocá el botón <i class="fa fa-share" style="color:var(--primary);"></i> de compartir (abajo en el medio)</div>
+            <div style="font-weight:600;margin-bottom:4px;">Abrí el menú de Safari</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Tocá el botón <i class="fa fa-share" style="color:var(--primary);"></i> de compartir (abajo en el medio)</div>
           </div>
         </div>
         
-        <div class="install-step">
-          <div class="install-step-num">2</div>
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">2</div>
           <div>
-            <div class="install-step-title">Seleccioná "Agregar a Inicio"</div>
-            <div class="install-step-desc">Deslizá hacia abajo y tocá "Agregar a pantalla de inicio"</div>
+            <div style="font-weight:600;margin-bottom:4px;">Seleccioná "Agregar a Inicio"</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Deslizá hacia abajo y tocá "Agregar a pantalla de inicio"</div>
           </div>
         </div>
         
-        <div class="install-step">
-          <div class="install-step-num">3</div>
+        <div style="display:flex;gap:12px;align-items:start;">
+          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">3</div>
           <div>
-            <div class="install-step-title">Confirmá</div>
-            <div class="install-step-desc">Tocá "Agregar" en la esquina superior derecha</div>
+            <div style="font-weight:600;margin-bottom:4px;">Confirmá</div>
+            <div style="font-size:0.85rem;color:var(--gray);">Tocá "Agregar" en la esquina superior derecha</div>
           </div>
         </div>
       </div>
