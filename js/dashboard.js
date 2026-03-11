@@ -853,9 +853,6 @@ function renderUrgentRequestCard(req) {
       </div>
     </div>
   `;
-      </div>
-    </div>
-  `;
 }
 
 function getTimeAgo(date) {
