@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,9 +17,9 @@
   <link href="https://fonts.cdnfonts.com/css/inter" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=9">
 </head>
-<body class="bg-darker text-slate-100 selection:bg-primary/30">
+<body>
 
 <div class="loading-overlay" id="loading-overlay">
   <div class="loader"></div>
@@ -105,7 +105,7 @@
         <div class="hero-cta-wrap">
           <button class="urgent-btn" id="urgent-btn">
             <i class="fa fa-bolt"></i>
-            ¡MODO TÉCNICO URGENTE!
+            ¡Necesito un técnico URGENTE!
           </button>
           <button class="btn btn-ghost btn-lg" id="search-btn">
             <i class="fa fa-search"></i>Buscar profesionales
@@ -334,175 +334,642 @@
 </div>
 
 <div class="page" id="page-pro-dashboard">
-  <div class="pro-dashboard-uber">
+  <div class="container dash-wrap">
     
-    <!-- Header Uber-style -->
-    <div class="uber-header">
-      <div class="uber-header-top">
+    <!-- Header compacto estilo móvil con efecto glassmorphism -->
+    <div class="pro-header-modern" style="padding:24px 20px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:relative;z-index:1;">
         <div>
-          <div class="uber-label">Panel Profesional</div>
-          <h1 class="uber-title" id="pro-dash-specialty">Tu especialidad</h1>
+          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:600;">Panel Profesional</div>
+          <div style="font-size:1.4rem;font-weight:900;color:var(--light);line-height:1.2;" id="pro-dash-specialty">Tu especialidad</div>
         </div>
-        <div class="user-avatar" id="pro-header-avatar">U</div>
+        <div class="user-avatar" id="pro-header-avatar" style="width:52px;height:52px;font-size:1.3rem;border:3px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.3);">U</div>
       </div>
       
-      <div class="uber-toggle-card">
-        <div class="uber-toggle-content">
-          <i class="fa fa-circle" id="status-dot"></i>
-          <span id="status-text">Desconectado</span>
+      <!-- Toggle conectado/desconectado prominente con glassmorphism -->
+      <div style="background:rgba(255,255,255,0.08);backdrop-filter:blur(16px);border-radius:18px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.15);box-shadow:0 4px 16px rgba(0,0,0,0.2);position:relative;z-index:1;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="position:relative;">
+            <i class="fa fa-circle" id="status-dot" style="font-size:0.8rem;color:var(--gray);filter:drop-shadow(0 0 4px currentColor);"></i>
+          </div>
+          <span id="status-text" style="font-size:0.95rem;font-weight:700;color:var(--gray);">Desconectado</span>
         </div>
         <label class="toggle-switch">
-          <input type="checkbox" id="toggle-online-status">
-          <span class="toggle-slider"><span class="toggle-knob"></span></span>
+          <input type="checkbox" id="toggle-online-status" style="display:none;">
+          <span class="toggle-slider">
+            <span class="toggle-knob"></span>
+          </span>
         </label>
       </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="uber-stats">
-      <div class="uber-stat-card">
-        <div class="uber-stat-number" id="pro-stat-active">0</div>
-        <div class="uber-stat-label">Activos</div>
-      </div>
-      <div class="uber-stat-card">
-        <div class="uber-stat-number uber-stat-rating">
-          <i class="fa fa-star"></i>
-          <span id="pro-stat-rating">0</span>
-        </div>
-        <div class="uber-stat-label">Rating</div>
-      </div>
-      <!-- Hidden stats for JS compatibility -->
-      <span id="pro-stat-new" style="display:none;">0</span>
-      <span id="pro-stat-done" style="display:none;">0</span>
-    </div>
-
-    <!-- Bandeja Inteligente -->
-    <div class="uber-inbox">
-      <div class="uber-tabs">
-        <button class="uber-tab active" data-inbox="nuevas">
-          <i class="fa fa-inbox"></i>
-          <span>Nuevas</span>
-          <span class="uber-badge" id="pro-stat-new-badge">0</span>
-        </button>
-        <button class="uber-tab" data-inbox="urgentes">
-          <i class="fa fa-bolt"></i>
-          <span>Urgentes</span>
-          <span class="uber-badge urgent" id="urgent-count-badge" style="display:none;">0</span>
-        </button>
-      </div>
-
-      <!-- Contenido Nuevas -->
-      <div id="inbox-nuevas" class="uber-inbox-content active">
-        <div class="jobs-list" id="pro-jobs-new">
-          <div class="empty-state">
-            <i class="fa fa-inbox"></i>
-            <p>No tenés solicitudes nuevas</p>
+    <!-- Layout adaptativo: móvil vertical, desktop horizontal -->
+    <div class="desktop-grid">
+      
+      <!-- Sidebar izquierdo (solo desktop) -->
+      <div class="desktop-sidebar" class="dashboard-content">
+        
+        <!-- Stats compactos - 2x2 móvil, 4x1 desktop -->
+        <div class="stats-desktop" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;">
+          <div class="stat-card-modern" style="background:linear-gradient(135deg, var(--glass), rgba(79,70,229,0.05));border-radius:18px;padding:20px;border:1px solid var(--border);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <div style="background:linear-gradient(135deg, var(--accent), var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2.2rem;font-weight:900;margin-bottom:6px;filter:drop-shadow(0 2px 4px rgba(79,70,229,0.3));" id="pro-stat-active">0</div>
+            <div style="font-size:0.75rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Activos</div>
+          </div>
+          <div class="stat-card-modern" style="background:linear-gradient(135deg, var(--glass), rgba(251,191,36,0.05));border-radius:18px;padding:20px;border:1px solid var(--border);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <div style="font-size:2.2rem;font-weight:900;color:#fbbf24;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+              <i class="fa fa-star" style="font-size:1.3rem;filter:drop-shadow(0 2px 4px rgba(251,191,36,0.4));"></i>
+              <span id="pro-stat-rating">0</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Rating</div>
+          </div>
+          
+          <!-- Stats adicionales para desktop -->
+          <div class="stat-card-modern desktop-only" style="background:linear-gradient(135deg, var(--glass), rgba(249,115,22,0.05));border-radius:18px;padding:20px;border:1px solid var(--border);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:none;">
+            <div style="font-size:2.2rem;font-weight:900;color:var(--orange);margin-bottom:6px;" id="pro-stat-new">0</div>
+            <div style="font-size:0.75rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Nuevas</div>
+          </div>
+          <div class="stat-card-modern desktop-only" style="background:linear-gradient(135deg, var(--glass), rgba(16,185,129,0.05));border-radius:18px;padding:20px;border:1px solid var(--border);text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:none;">
+            <div style="font-size:2.2rem;font-weight:900;color:var(--green);margin-bottom:6px;" id="pro-stat-done">0</div>
+            <div style="font-size:0.75rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Finalizados</div>
           </div>
         </div>
-      </div>
 
-      <!-- Contenido Urgentes -->
-      <div id="inbox-urgentes" class="uber-inbox-content">
-        <div id="urgent-requests-list">
-          <div class="empty-state">
-            <i class="fa fa-bolt"></i>
-            <p>No hay urgencias</p>
+        <!-- Zona de influencia -->
+        <div style="margin-bottom:24px;">
+          <div style="background:var(--glass);border-radius:22px;padding:22px;border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+              <div style="background:linear-gradient(135deg, var(--primary), var(--accent));width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                <i class="fa fa-location-dot" style="color:white;font-size:1.1rem;"></i>
+              </div>
+              <span style="font-weight:800;font-size:1rem;">Zona de Influencia</span>
+            </div>
+            <div class="zone-map-container zone-desktop" style="background:linear-gradient(135deg, rgba(79,70,229,0.12), rgba(6,182,212,0.12));border-radius:16px;height:140px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:2px solid rgba(79,70,229,0.2);">
+              <div class="zone-pulse" style="position:absolute;width:70px;height:70px;border-radius:50%;background:rgba(6,182,212,0.25);"></div>
+              <div class="zone-pulse" style="position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(6,182,212,0.15);animation-delay:1s;"></div>
+              <div class="zone-pulse" style="position:absolute;width:150px;height:150px;border-radius:50%;background:rgba(6,182,212,0.08);animation-delay:2s;"></div>
+              <i class="fa fa-map-location-dot" style="font-size:2.5rem;background:linear-gradient(135deg, var(--accent), var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;z-index:1;filter:drop-shadow(0 2px 8px rgba(79,70,229,0.3));"></i>
+            </div>
+            <div style="margin-top:14px;font-size:0.85rem;color:var(--gray);text-align:center;font-weight:600;">
+              <i class="fa fa-circle-dot" style="color:var(--accent);margin-right:6px;"></i>
+              Radio de 10 km
+            </div>
           </div>
         </div>
+
+        <!-- Accesos rápidos -->
+        <div class="quick-access-desktop" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <button class="btn-quick-access" id="btn-view-activos">
+            <div style="background:linear-gradient(135deg, rgba(79,70,229,0.15), rgba(6,182,212,0.15));width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+              <i class="fa fa-gears" style="font-size:1.6rem;color:var(--accent);"></i>
+            </div>
+            <span style="font-size:0.85rem;font-weight:700;">En Proceso</span>
+            <span style="font-size:0.7rem;color:var(--gray);font-weight:500;" id="pro-stat-active-text">0 trabajos</span>
+          </button>
+          <button class="btn-quick-access" id="btn-view-finalizados">
+            <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+              <i class="fa fa-check-circle" style="font-size:1.6rem;color:var(--green);"></i>
+            </div>
+            <span style="font-size:0.85rem;font-weight:700;">Finalizados</span>
+            <span style="font-size:0.7rem;color:var(--gray);font-weight:500;" id="pro-stat-done-text">0 trabajos</span>
+          </button>
+          <button class="btn-quick-access" id="btn-edit-pro-profile">
+            <div style="background:linear-gradient(135deg, rgba(99,102,241,0.15), rgba(79,70,229,0.15));width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+              <i class="fa fa-pencil" style="font-size:1.6rem;color:var(--primary);"></i>
+            </div>
+            <span style="font-size:0.85rem;font-weight:700;">Editar</span>
+          </button>
+          <button class="btn-quick-access" id="btn-featured-pro" style="background:linear-gradient(135deg, rgba(249,115,22,0.12), rgba(251,191,36,0.12));border-color:rgba(249,115,22,0.3);">
+            <div style="background:linear-gradient(135deg, var(--orange), #dc2626);width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;box-shadow:0 4px 12px rgba(249,115,22,0.3);">
+              <i class="fa fa-crown" style="font-size:1.6rem;color:white;"></i>
+            </div>
+            <span style="font-size:0.85rem;font-weight:700;color:var(--orange);">Destacado</span>
+          </button>
+        </div>
+        
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="desktop-main" class="dashboard-content">
+        
+        <!-- Bandeja Inteligente -->
+        <div class="inbox-desktop">
+          <!-- Tabs verticales en desktop -->
+          <div class="inbox-tabs-vertical" style="background:linear-gradient(135deg, rgba(249,115,22,0.15), rgba(239,68,68,0.15));border-radius:22px;padding:6px;box-shadow:inset 0 2px 8px rgba(0,0,0,0.1);">
+            <button class="inbox-tab inbox-tab-desktop active" data-inbox="nuevas" style="font-size:0.85rem;">
+              <i class="fa fa-inbox"></i> Solicitudes Nuevas
+            </button>
+            <button class="inbox-tab inbox-tab-desktop" data-inbox="urgentes" style="font-size:0.85rem;">
+              <i class="fa fa-bolt"></i> Urgentes
+            </button>
+          </div>
+
+          <!-- Contenido de bandejas -->
+          <div>
+            <div id="inbox-nuevas" class="inbox-content" style="display:block;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="font-size:0.85rem;color:var(--gray);font-weight:600;">
+                  <i class="fa fa-list" style="margin-right:6px;"></i>
+                  <span id="pro-stat-new-badge">0</span> solicitudes
+                </div>
+              </div>
+              <div class="jobs-list jobs-grid-desktop" id="pro-jobs-new">
+                <div class="empty-state" style="grid-column:1/-1;padding:60px 20px;text-align:center;border-radius:16px;background:var(--glass);border:2px dashed var(--border);">
+                  <i class="fa fa-inbox" style="font-size:3.5rem;color:var(--gray);opacity:0.2;margin-bottom:16px;display:block;"></i>
+                  <p style="color:var(--gray);font-size:0.95rem;font-weight:500;">No tenés solicitudes nuevas</p>
+                  <p style="color:var(--gray);font-size:0.75rem;margin-top:4px;opacity:0.7;">Las nuevas solicitudes aparecerán aquí</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="inbox-urgentes" class="inbox-content" style="display:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="font-size:0.85rem;color:var(--gray);font-weight:600;">
+                  <i class="fa fa-location-dot" style="margin-right:6px;color:var(--orange);"></i>
+                  Cerca tuyo
+                </div>
+                <span id="urgent-count-badge" style="background:linear-gradient(135deg, var(--orange), #dc2626);color:white;padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:800;display:none;box-shadow:0 2px 8px rgba(249,115,22,0.4);">0</span>
+              </div>
+              <div id="urgent-requests-list" class="jobs-grid-desktop"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="uber-actions">
-      <button class="uber-action-btn" id="btn-view-activos">
-        <i class="fa fa-gears"></i>
-        <span>En Proceso</span>
-        <small id="pro-stat-active-text">0</small>
-      </button>
-      <button class="uber-action-btn" id="btn-view-finalizados">
-        <i class="fa fa-check-circle"></i>
-        <span>Finalizados</span>
-        <small id="pro-stat-done-text">0</small>
-      </button>
-      <button class="uber-action-btn" id="btn-edit-pro-profile">
-        <i class="fa fa-pencil"></i>
-        <span>Perfil</span>
-      </button>
-      <button class="uber-action-btn destacado" id="btn-featured-pro">
-        <i class="fa fa-crown"></i>
-        <span>Destacado</span>
-      </button>
-    </div>
-
-    <!-- Tabs ocultos para funcionalidad -->
+    <!-- Tabs tradicionales (ocultos pero activos para funcionalidad) -->
     <div style="display:none;">
       <div class="tabs" id="pro-tabs">
         <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
         <button class="tab" data-tab="tab-pro-activos">En proceso</button>
         <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
         <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
-        <button class="tab" data-tab="tab-pro-fotos">Fotos</button>
+        <button class="tab" data-tab="tab-pro-fotos">Mis Fotos</button>
         <button class="tab" data-tab="tab-pro-config">Configuración</button>
       </div>
-    </div>
-    
-    <!-- Tab panels (fuera del div oculto para que puedan mostrarse) -->
-    <div class="tab-panel" id="tab-pro-activos" style="display:none;">
-      <div class="jobs-list" id="pro-jobs-active"></div>
-    </div>
-    <div class="tab-panel" id="tab-pro-finalizados" style="display:none;">
-      <div class="jobs-list" id="pro-jobs-done"></div>
-    </div>
-    <div class="tab-panel" id="tab-pro-presupuestos" style="display:none;">
-      <div id="pro-budgets-list"></div>
-    </div>
-    <div class="tab-panel" id="tab-pro-fotos" style="display:none;">
-      <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir</button>
-      <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
-      <div class="photos-grid" id="pro-work-photos"></div>
-    </div>
-    <div class="tab-panel" id="tab-pro-config" style="display:none;">
+      
+      <div class="tab-panel" id="tab-pro-activos">
+        <div class="jobs-list" id="pro-jobs-active"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-finalizados">
+        <div class="jobs-list" id="pro-jobs-done"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-presupuestos">
+        <div id="pro-budgets-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-fotos">
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
+          <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+        </div>
+        <div class="photos-grid" id="pro-work-photos">
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-pro-config">
         <div class="card" style="max-width:500px;">
-          <h3>Configuración</h3>
+          <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
           <div class="form-group">
             <label class="form-label">Días laborales</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
-              <label><input type="checkbox" id="dia-lun" value="Lunes">Lunes</label>
-              <label><input type="checkbox" id="dia-mar" value="Martes">Martes</label>
-              <label><input type="checkbox" id="dia-mie" value="Miércoles">Miércoles</label>
-              <label><input type="checkbox" id="dia-jue" value="Jueves">Jueves</label>
-              <label><input type="checkbox" id="dia-vie" value="Viernes">Viernes</label>
-              <label><input type="checkbox" id="dia-sab" value="Sábado">Sábado</label>
-              <label><input type="checkbox" id="dia-dom" value="Domingo">Domingo</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Desde</label>
+              <label class="form-label">Horario desde</label>
               <input type="time" class="form-input" id="hora-desde" value="08:00">
             </div>
             <div class="form-group">
-              <label>Hasta</label>
+              <label class="form-label">Horario hasta</label>
               <input type="time" class="form-input" id="hora-hasta" value="18:00">
             </div>
           </div>
           <div class="form-group">
-            <label>
-              <input type="checkbox" id="urgencias">
-              Recibir urgencias
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+              <input type="checkbox" id="urgencias" style="accent-color:var(--green);width:16px;height:16px;">
+              <i class="fa fa-circle" style="font-size:0.6rem;color:var(--green);"></i>
+              Conectado para urgencias (recibir solicitudes urgentes)
             </label>
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;margin-left:24px;">
+              Cuando estés conectado, aparecerás como "Disponible ahora" y recibirás notificaciones de trabajos urgentes.
+              La primera vez que te conectes, se guardará tu ubicación automáticamente.
+            </div>
           </div>
-          <button class="btn btn-primary" id="btn-save-availability">Guardar</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+        <button class="btn-quick-access" id="btn-view-finalizados">
+          <div style="background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15));width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+            <i class="fa fa-check-circle" style="font-size:1.6rem;color:var(--green);"></i>
+          </div>
+          <span style="font-size:0.85rem;font-weight:700;">Finalizados</span>
+          <span style="font-size:0.7rem;color:var(--gray);font-weight:500;" id="pro-stat-done-text">0 trabajos</span>
+        </button>
+        <button class="btn-quick-access" id="btn-edit-pro-profile">
+          <div style="background:linear-gradient(135deg, rgba(99,102,241,0.15), rgba(79,70,229,0.15));width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+            <i class="fa fa-pencil" style="font-size:1.6rem;color:var(--primary);"></i>
+          </div>
+          <span style="font-size:0.85rem;font-weight:700;">Editar Perfil</span>
+        </button>
+        <button class="btn-quick-access" id="btn-featured-pro" style="background:linear-gradient(135deg, rgba(249,115,22,0.12), rgba(251,191,36,0.12));border-color:rgba(249,115,22,0.3);">
+          <div style="background:linear-gradient(135deg, var(--orange), #dc2626);width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;box-shadow:0 4px 12px rgba(249,115,22,0.3);">
+            <i class="fa fa-crown" style="font-size:1.6rem;color:white;"></i>
+          </div>
+          <span style="font-size:0.85rem;font-weight:700;color:var(--orange);">Destacado</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs tradicionales (ocultos pero activos para funcionalidad) -->
+    <div style="display:none;">
+      <div class="tabs" id="pro-tabs">
+        <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
+        <button class="tab" data-tab="tab-pro-activos">En proceso</button>
+        <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
+        <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
+        <button class="tab" data-tab="tab-pro-fotos">Mis Fotos</button>
+        <button class="tab" data-tab="tab-pro-config">Configuración</button>
+      </div>
+      
+      <div class="tab-panel" id="tab-pro-activos">
+        <div class="jobs-list" id="pro-jobs-active"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-finalizados">
+        <div class="jobs-list" id="pro-jobs-done"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-presupuestos">
+        <div id="pro-budgets-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-fotos">
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
+          <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+        </div>
+        <div class="photos-grid" id="pro-work-photos">
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-pro-config">
+        <div class="card" style="max-width:500px;">
+          <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
+          <div class="form-group">
+            <label class="form-label">Días laborales</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Horario desde</label>
+              <input type="time" class="form-input" id="hora-desde" value="08:00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Horario hasta</label>
+              <input type="time" class="form-input" id="hora-hasta" value="18:00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+              <input type="checkbox" id="urgencias" style="accent-color:var(--green);width:16px;height:16px;">
+              <i class="fa fa-circle" style="font-size:0.6rem;color:var(--green);"></i>
+              Conectado para urgencias (recibir solicitudes urgentes)
+            </label>
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;margin-left:24px;">
+              Cuando estés conectado, aparecerás como "Disponible ahora" y recibirás notificaciones de trabajos urgentes.
+              La primera vez que te conectes, se guardará tu ubicación automáticamente.
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+      </div>
+    </div>
+
+    <!-- Tabs tradicionales (ocultos pero activos para funcionalidad) -->
+    <div style="display:none;">
+      <div class="tabs" id="pro-tabs">
+        <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
+        <button class="tab" data-tab="tab-pro-activos">En proceso</button>
+        <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
+        <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
+        <button class="tab" data-tab="tab-pro-fotos">Mis Fotos</button>
+        <button class="tab" data-tab="tab-pro-config">Configuración</button>
+      </div>
+      
+      <div class="tab-panel" id="tab-pro-activos">
+        <div class="jobs-list" id="pro-jobs-active"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-finalizados">
+        <div class="jobs-list" id="pro-jobs-done"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-presupuestos">
+        <div id="pro-budgets-list"></div>
+      </div>
+      <div class="tab-panel" id="tab-pro-fotos">
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
+          <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+        </div>
+        <div class="photos-grid" id="pro-work-photos">
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photo-thumb"><i class="fa fa-image"></i></div>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-pro-config">
+        <div class="card" style="max-width:500px;">
+          <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
+          <div class="form-group">
+            <label class="form-label">Días laborales</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Horario desde</label>
+              <input type="time" class="form-input" id="hora-desde" value="08:00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Horario hasta</label>
+              <input type="time" class="form-input" id="hora-hasta" value="18:00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+              <input type="checkbox" id="urgencias" style="accent-color:var(--green);width:16px;height:16px;">
+              <i class="fa fa-circle" style="font-size:0.6rem;color:var(--green);"></i>
+              Conectado para urgencias (recibir solicitudes urgentes)
+            </label>
+            <div style="font-size:0.75rem;color:var(--gray);margin-top:4px;margin-left:24px;">
+              Cuando estés conectado, aparecerás como "Disponible ahora" y recibirás notificaciones de trabajos urgentes.
+              La primera vez que te conectes, se guardará tu ubicación automáticamente.
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<div class="page" id="page-admin">
+  <div class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-item active" data-tab="admin-overview"><i class="fa fa-gauge"></i>Dashboard</div>
+    <div class="admin-sidebar-item" data-tab="admin-users"><i class="fa fa-users"></i>Usuarios</div>
+    <div class="admin-sidebar-item" data-tab="admin-pros"><i class="fa fa-user-tie"></i>Profesionales</div>
+    <div class="admin-sidebar-item" data-tab="admin-jobs"><i class="fa fa-briefcase"></i>Trabajos</div>
+    <div class="admin-sidebar-item" data-tab="admin-subs"><i class="fa fa-crown"></i>Suscripciones</div>
+    <div class="admin-sidebar-item" data-tab="admin-ads"><i class="fa fa-bullhorn"></i>Publicidad</div>
+    <div class="admin-sidebar-item" data-tab="admin-reviews"><i class="fa fa-star"></i>Reseñas</div>
+    <div class="admin-sidebar-item" data-tab="admin-penalties"><i class="fa fa-gavel"></i>Penalizaciones</div>
+    <div class="admin-sidebar-item" data-tab="admin-security"><i class="fa fa-shield-halved"></i>Seguridad</div>
+    <div class="admin-sidebar-item" onclick="window.adminViewAuditLog()"><i class="fa fa-scroll"></i>Auditoría</div>
+    <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
+  </div>
+  <div class="admin-content">
+    <div id="admin-overview" class="admin-tab" style="display:block;">
+      <h2 style="font-size:1.5rem;margin-bottom:24px;font-family:'Inter',sans-serif;">Dashboard Administración</h2>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="adm-stat-users">0</div><div class="stat-label">Usuarios</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="adm-stat-pros">0</div><div class="stat-label">Profesionales</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="adm-stat-featured">0</div><div class="stat-label">Destacados activos</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="adm-stat-jobs">0</div><div class="stat-label">Trabajos realizados</div></div>
+      </div>
+      <div style="margin-top:28px;padding:24px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius);">
+        <p style="color:var(--gray);font-size:0.9rem;line-height:1.8;">
+          <i class="fa fa-circle-info" style="color:var(--accent);margin-right:8px;"></i>
+          Panel de administración de TECNIYA. Usá el menú lateral para gestionar usuarios, profesionales, suscripciones y publicidades.
+        </p>
+      </div>
+    </div>
+    <div id="admin-users" class="admin-tab" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Usuarios</h2>
+        <input type="text" class="search-input" style="max-width:260px;" placeholder="Buscar usuario..." id="search-users">
+      </div>
+      <div class="admin-table-wrap"><table class="admin-table" id="users-table">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Registro</th><th>Acciones</th></tr></thead>
+        <tbody id="users-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="admin-pros" class="admin-tab" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Profesionales</h2>
+      </div>
+      <div class="admin-table-wrap"><table class="admin-table" id="pros-table">
+        <thead><tr><th>Nombre</th><th>Especialidad</th><th>Ciudad</th><th>Puntuación</th><th>Destacado</th><th>Acciones</th></tr></thead>
+        <tbody id="pros-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="admin-jobs" class="admin-tab" style="display:none;">
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Trabajos</h2>
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>ID</th><th>Cliente</th><th>Profesional</th><th>Especialidad</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody id="jobs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="admin-subs" class="admin-tab" style="display:none;">
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Suscripciones</h2>
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>Profesional</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="subs-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="admin-ads" class="admin-tab" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;">Publicidades</h2>
+        <button class="btn btn-primary btn-sm" onclick="window.adminNewAd()"><i class="fa fa-plus"></i> Nueva publicidad</button>
+      </div>
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>Título</th><th>Nivel</th><th>Ubicación</th><th>Link</th><th>Activa</th><th>Acciones</th></tr></thead>
+        <tbody id="ads-tbody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
+
+
+    <div id="admin-security" class="admin-tab" style="display:none;">
+      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <i class="fa fa-shield-halved" style="color:var(--accent);"></i> Panel de Seguridad
+      </h3>
+
+      <div class="tabs" style="margin-bottom:20px;">
+        <button class="tab active" onclick="window.switchSecurityTab('sec-suspicious')">Cuentas sospechosas</button>
+        <button class="tab" onclick="window.switchSecurityTab('sec-cancels')">Usuarios con cancelaciones</button>
+        <button class="tab" onclick="window.switchSecurityTab('sec-reports')">Pros con reportes</button>
+      </div>
+
+      <div id="sec-suspicious" class="sec-tab-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Motivo</th><th>Registro</th><th>Acciones</th></tr></thead>
+            <tbody id="suspicious-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="sec-cancels" class="sec-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Cancelaciones</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="cancel-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="sec-reports" class="sec-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Profesional</th><th>Especialidad</th><th>Reportes</th><th>Score</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="report-pros-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
+    <div id="admin-penalties" class="admin-tab" style="display:none;">
+      <h3 style="font-size:1.1rem;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <i class="fa fa-gavel" style="color:var(--orange);"></i> Sistema de Penalizaciones
+      </h3>
+
+      <!-- Stats rápidas -->
+      <div class="stats-row" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-active" style="color:var(--orange);">—</div>
+          <div class="stat-label">Penalizaciones activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-reports" style="color:#f87171;">—</div>
+          <div class="stat-label">Reportes pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="pen-stat-suspended" style="color:var(--gray);">—</div>
+          <div class="stat-label">Suspendidos</div>
+        </div>
+      </div>
+
+      <!-- Tabs internas -->
+      <div class="tabs" style="margin-bottom:20px;">
+        <button class="tab active" onclick="window.switchPenaltyTab('pen-tab-pros')">Profesionales en riesgo</button>
+        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-reports')">Reportes</button>
+        <button class="tab" onclick="window.switchPenaltyTab('pen-tab-history')">Historial</button>
+      </div>
+
+      <!-- Sub-tab: Pros penalizados -->
+      <div id="pen-tab-pros" class="pen-tab-panel">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Profesional</th><th>Especialidad</th>
+              <th>Score</th><th>Incidentes</th>
+              <th>Estado</th><th>Urgentes</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="penalized-pros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Reportes -->
+      <div id="pen-tab-reports" class="pen-tab-panel" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm report-filter-btn active" data-status="pending" onclick="window.adminFilterReports('pending')">Pendientes</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="confirmed" onclick="window.adminFilterReports('confirmed')">Confirmados</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="dismissed" onclick="window.adminFilterReports('dismissed')">Desestimados</button>
+          <button class="btn btn-ghost btn-sm report-filter-btn" data-status="all" onclick="window.adminFilterReports('all')">Todos</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>ID</th><th>Motivo</th><th>Descripción</th>
+              <th>Fecha</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="reports-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Historial -->
+      <div id="pen-tab-history" class="pen-tab-panel" style="display:none;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th>ID</th><th>Tipo</th><th>Descripción</th>
+              <th>Delta</th><th>Estado</th><th>Acciones</th>
+            </tr></thead>
+            <tbody id="penalties-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-reviews" class="admin-tab" style="display:none;">
+      <h2 style="font-size:1.3rem;font-family:'Inter',sans-serif;margin-bottom:20px;">Reseñas</h2>
+      <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>Autor</th><th>Profesional</th><th>Puntuación</th><th>Comentario</th><th>Acciones</th></tr></thead>
+        <tbody id="reviews-admin-tbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray);">Cargando...</td></tr></tbody>
+      </table></div>
+    </div>
   </div>
 </div>
 
 <div class="page" id="page-chat">
-  <div class="container chat-container">
+  <div class="chat-wrap">
+
+    <!-- SIDEBAR -->
     <div class="chat-sidebar" id="chat-sidebar">
+      <div class="chat-sidebar-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="font-size:1rem;font-family:'Inter',sans-serif;margin:0;">Mensajes</h3>
+          <button class="btn btn-ghost btn-sm" id="btn-close-chat" title="Cerrar mensajes" style="padding:6px 10px;">
+            <i class="fa fa-xmark"></i>
+          </button>
+        </div>
+        <input type="text" class="chat-search" placeholder="Buscar conversación..." id="chat-search-input">
+      </div>
+      <div class="chat-conversations" id="chat-conversations">
+        <div class="empty-state" style="padding:40px 20px;text-align:center;">
+          <i class="fa fa-comments" style="font-size:2rem;margin-bottom:10px;display:block;color:var(--gray);"></i>
+          <p style="color:var(--gray);font-size:0.88rem;">No tenés conversaciones aún.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="chat-main" id="chat-main-panel">
       <div class="chat-header" id="chat-header">
         <!-- Botón volver (mobile) -->
         <button class="btn btn-ghost btn-sm" id="btn-chat-back" title="Volver" style="display:none;padding:6px 10px;margin-right:4px;">
@@ -545,6 +1012,7 @@
         <button class="btn btn-primary btn-sm" id="btn-send-chat"><i class="fa fa-paper-plane"></i></button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -1730,256 +2198,3 @@
 
 </body>
 </html>
-
-<!-- Modal Calificar Usuario -->
-<div class="modal-overlay" id="modal-rate-user">
-  <div class="modal-content" style="max-width:520px;">
-    <div class="modal-header">
-      <h3 style="margin:0;display:flex;align-items:center;gap:8px;">
-        <i class="fa fa-star" style="color:var(--accent);"></i>
-        Calificar Cliente
-      </h3>
-      <button class="modal-close" onclick="closeModal('modal-rate-user')">
-        <i class="fa fa-times"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div style="text-align:center;margin-bottom:24px;padding:16px;background:var(--glass);border-radius:var(--radius-sm);border:1px solid var(--border);">
-        <div style="font-size:0.85rem;color:var(--gray);margin-bottom:4px;">Calificando a</div>
-        <div style="font-weight:700;font-size:1.1rem;color:var(--light);" id="rate-user-name">Usuario</div>
-      </div>
-      <div style="margin-bottom:24px;">
-        <label style="display:block;font-weight:600;margin-bottom:12px;font-size:0.95rem;">
-          <i class="fa fa-star" style="color:var(--accent);margin-right:6px;"></i>
-          Calificación General
-        </label>
-        <div class="star-rating" id="user-rating-overall" style="justify-content:center;margin-bottom:8px;">
-          <i class="fa fa-star star-rate"></i>
-          <i class="fa fa-star star-rate"></i>
-          <i class="fa fa-star star-rate"></i>
-          <i class="fa fa-star star-rate"></i>
-          <i class="fa fa-star star-rate"></i>
-        </div>
-        <input type="hidden" id="user-rating-value" value="0">
-      </div>
-      <div style="display:grid;gap:16px;margin-bottom:20px;">
-        <div class="rating-category">
-          <label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.85rem;color:var(--light);">
-            <i class="fa fa-handshake" style="color:var(--green);margin-right:6px;"></i>
-            Cumplimiento
-          </label>
-          <div style="font-size:0.7rem;color:var(--gray);margin-bottom:8px;">Paga a tiempo, respeta acuerdos</div>
-          <div class="star-rating" id="user-rating-cumplimiento">
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-          </div>
-          <input type="hidden" id="user-cumplimiento-value" value="0">
-        </div>
-        <div class="rating-category">
-          <label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.85rem;color:var(--light);">
-            <i class="fa fa-heart" style="color:var(--orange);margin-right:6px;"></i>
-            Respeto
-          </label>
-          <div style="font-size:0.7rem;color:var(--gray);margin-bottom:8px;">Trato cordial y respetuoso</div>
-          <div class="star-rating" id="user-rating-respeto">
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-          </div>
-          <input type="hidden" id="user-respeto-value" value="0">
-        </div>
-        <div class="rating-category">
-          <label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.85rem;color:var(--light);">
-            <i class="fa fa-comments" style="color:var(--primary);margin-right:6px;"></i>
-            Claridad
-          </label>
-          <div style="font-size:0.7rem;color:var(--gray);margin-bottom:8px;">Explicó bien el problema</div>
-          <div class="star-rating" id="user-rating-claridad">
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-          </div>
-          <input type="hidden" id="user-claridad-value" value="0">
-        </div>
-        <div class="rating-category">
-          <label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.85rem;color:var(--light);">
-            <i class="fa fa-message" style="color:var(--accent);margin-right:6px;"></i>
-            Comunicación
-          </label>
-          <div style="font-size:0.7rem;color:var(--gray);margin-bottom:8px;">Responde rápido, disponible</div>
-          <div class="star-rating" id="user-rating-comunicacion">
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-            <i class="fa fa-star star-rate"></i>
-          </div>
-          <input type="hidden" id="user-comunicacion-value" value="0">
-        </div>
-      </div>
-      <div style="margin-bottom:20px;">
-        <label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.85rem;">
-          <i class="fa fa-comment" style="color:var(--gray);margin-right:6px;"></i>
-          Comentario (opcional)
-        </label>
-        <textarea id="user-rating-comment" placeholder="Comparte tu experiencia con este cliente..." style="width:100%;min-height:100px;padding:12px;background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--light);font-size:0.85rem;resize:vertical;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-rate-user')">Cancelar</button>
-      <button class="btn btn-primary" id="btn-submit-user-rating"><i class="fa fa-paper-plane"></i> Enviar Calificación</button>
-    </div>
-  </div>
-</div>
-
-<style>
-.star-rating {display:flex;gap:8px;font-size:1.8rem;}
-.star-rate {color:rgba(255,255,255,0.2);cursor:pointer;transition:all 0.2s;}
-.star-rate:hover,.star-rate.active {color:var(--accent);transform:scale(1.1);}
-.rating-category {padding:14px;background:var(--glass);border-radius:var(--radius-sm);border:1px solid var(--border);}
-.rating-category .star-rating {font-size:1.4rem;}
-</style>
-
-
-<!-- Modal de Alerta Urgente (tipo Uber) -->
-<div id="urgent-alert-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;background:rgba(0,0,0,0.95);backdrop-filter:blur(8px);">
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;background:linear-gradient(135deg, var(--darker), #1a1a2e);border-radius:20px;padding:0;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:2px solid var(--orange);overflow:hidden;">
-    
-    <!-- Animated header -->
-    <div style="background:linear-gradient(135deg, var(--orange), #ef4444);padding:24px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"white\" opacity=\"0.1\"/></svg>');animation:pulse 2s infinite;"></div>
-      <div style="text-align:center;position:relative;z-index:1;">
-        <div style="font-size:3.5rem;margin-bottom:8px;animation:bounce 1s infinite;">🚨</div>
-        <h2 style="margin:0;font-size:1.4rem;font-weight:900;color:white;text-transform:uppercase;letter-spacing:2px;">Solicitud Urgente</h2>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div style="padding:24px;">
-      <div id="urgent-alert-content"></div>
-      
-      <!-- Timer circular -->
-      <div style="text-align:center;margin:24px 0;">
-        <div style="position:relative;width:120px;height:120px;margin:0 auto;">
-          <svg width="120" height="120" style="transform:rotate(-90deg);">
-            <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.1)" stroke-width="6" fill="none"/>
-            <circle id="timer-circle" cx="60" cy="60" r="54" stroke="var(--orange)" stroke-width="6" fill="none" stroke-dasharray="339.292" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear;"/>
-          </svg>
-          <div id="timer-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;font-weight:900;color:var(--orange);">30</div>
-        </div>
-        <div style="font-size:0.85rem;color:var(--gray);margin-top:8px;">segundos para responder</div>
-      </div>
-
-      <!-- Action buttons -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <button id="reject-urgent-alert" style="padding:16px;border:2px solid var(--border);background:transparent;color:var(--light);border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
-          <i class="fa fa-times"></i> Rechazar
-        </button>
-        <button id="accept-urgent-alert" style="padding:16px;border:none;background:linear-gradient(135deg, var(--green), #059669);color:white;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 15px rgba(16,185,129,0.3);">
-          <i class="fa fa-check"></i> Aceptar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Sound effect -->
-  <audio id="urgent-alert-sound" preload="auto">
-    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGWi77eWSUwwOU6zn77RgGwU7k9nyz3wvBSh+zO/ekkILElyx6OyrWBUIR6Hh8r9uIgUsgs/y2ok3CBlouu7mk1MMDlSs5++1YRwFPZTa8tB+MAUpf87w4JVEDBJcr+fxrVsYCEmj4vPBbyMFLYPQ8tuKNwgZabzw5pVVDA5VrOjvtmEdBT+V2/LRgDEFKoHO8OCXRQwSXbDn8bBdGQhKpOLzwnAnBS2D0fLbjDgIGGm88OeXVgwOVqzo77dhHQU/ltzy0oIyBSuCz/DiWEYMEl2x6PGxXhoIS6Xi88NxKAUuhNHy34w4CBhqvfDnmVcMDVew6fC4Yh4FQJjd8tOENAUrhM/w41lHDBJauvHztV8bB0ul4vTDcygFLoTR8t+NOQcYar3w6ZlYDA1XsOnwumMfBUCZ3vLUhTUFK4TP8OJaSAwSWrvx87ZgGwdMpuP0xHQpBS6E0fPgjjgHF2q+8OqbWQ0MV7Dp8LtlHwVAmt/y1YY1BSuEz/DjW0kMElq78fS3YRsHTKfk9MV1KQUvhNHz4Y44BxdrvvDqnFoNDFex6fC8Zh8FQJvg8taGNgUshM/w5FxJDBFavPH0uGIfB0yo5fTGdioFLoTR8+KPOQcXa77x65xbDQxXserwvWYfBUCc4fLXhzYFLITP8OVdSgwRWr3y9blkIAdMqOX0x3cqBS6E0fPjkDoHF2u+8eudWw0MWLLr8L5oHwVBnOHy14g3BSyEz/DmXUoMEFq98vW6ZCAHTKjl9Mh4KwUvhNL05JA6BxdsvvHrnlwNDFiy6/C/aCAFQZzh89eIOQUshdDx511LDA9avvL2u2UhCE2p5vXJeSsFLoPQ8+WROgcXbL/x655cDQxZs+vwv2kgBUKd4vPYijgFLIXQ8eheSgsQW7/z97tmIQhNqub1ynorBS6D0PPlkjoHGG2/8eufXQ0MWbPr8L9qIQVCneLz2Ik5BSyF0fHpXksLEFu/8/e8ZyEITqrm9ct7LAUug9Dz5pM7Bxhtwfbqn14NClmz6/HAaiEFQ53i89mKOgUthdHx6l9LCw9bwPP3vWciB06q5vbMfCwFLoPR8+aUOwcZbcH26qFeDQpZsuzwwWsiB0Oe4/TZizoFLYXS8etgTAsPW8D0+L5oIgdOq+b2zXwsBi6D0vTnlTwHGW3B9+qiXg0KWbLs8MJsIgdDoOP02ow7BS2F0vHrYkwLD1zA9Pi/aSIHTqzm9s59LAYug9L056Y8BxptwvfqpF8NClqy7PDDbCIHQ6Hk9NuNPAUths/y7GNNCg5cwfP5v2ojB1Ct5/bOfSwGLoPT9OioOgcZbsL36aJgDQlasuzxxG0iB0Oh5PTbjjwGLYfQ8+1lTQoOXMH0+cBqJAdQref2z34sBi+D0/TpqTsHGW7D9+mjYA0JWrPs8cVuIgdDoeT03I89Bi2H0PPuZk0KDl3C9PnBayQHUK7n9tB+LAYug9T06qo7BxlvxPfqpGENClqz7PHFbyMHRKLl9N6RPQYuh9Hz72ZNCw5dw/T5wmslB1Cu5/bRfywGLoPU9OyrPAcZb8T36qVhDQlbtOzxxnAjB0Si5vTgkT0GLofR8/BnTQsOXcP1+sNrJQdQr+f203gsBi6E1PTtrDwHGW/F9+untWINCluz7PLIcCQHRKPm9OCRPgYuh9Hz8GhOCg5exPX7xGwmB1Cv6PfUeS0GLoPU9e2tPQcZcMX36q1iDQpcte7yyXEkB0Sj5fThkj4GLojS9PFpTwoOXsX1+8VsJwdSsOj31Xkuhy+D1fXurj0HGnDF+OqvYw0KXLX/8spyJAdEo+X04ZI+Bi6I0vTyak8LDl7F9fvGbSgHUrDo99Z6LkYvhNX17q8+BxpwxvjqsGMNClyx7vLLcyQHRKPl9OKSPwYuidL08mtQCw5fx/b8x24oB1Kx6PfXejBGLIPV9O+wPQcacMb46rFjDgpcse7yzHQkB0Sk5fTjkj8GLonT9PJsUAsOX8f2/MhvKAdSsej313owRi+E1vPwsTwHGXDG+OuxZA0KXLL+8sx1JQdFpOb05JI/By6J0/TzbVALD1/H9vzJbykHU7Lp99h7MUYvhNb08LI8Bxpxxvjrs2QNClyz/vTNdiUHRaTm9OWSPwcuidP082xRCw9gyPf8ynApB1Oy6ffYezFGMITV9PCzPQcaccf46rNkDQpcs/70znckB0ak5/TlkjQHLorU9fNsUQsPYcj3/ctyKAdTsuv32X0yRzCE1vXxtD4HGnHH+OuzZA4KXbT+9c93JQdGpef05JM9By6K1PXzbVIKD2HJ9/3MdCoHUrHq99l9MkcwhNb08bQ+BxpyyPjrsmQOCl20/vbPdyUHRaXn9OWTPQcui9T182xSCw9hyff9zHUrB1Ox6vfZfTJHMITW9fG0PgcacsjpXzZSDlkAAA==" type="audio/wav">
-  </audio>
-</div>
-
-<style>
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-  10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) rotate(-2deg); }
-  20%, 40%, 60%, 80% { transform: translate(-50%, -50%) rotate(2deg); }
-}
-
-@keyframes flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; background: rgba(239, 68, 68, 0.1); }
-}
-
-#urgent-alert-modal.active > div {
-  animation: shake 0.5s ease-in-out, flash 1s ease-in-out infinite;
-}
-
-#reject-urgent-alert:hover {
-  background: rgba(255,255,255,0.05);
-  transform: scale(1.02);
-}
-
-#accept-urgent-alert:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(16,185,129,0.4);
-}
-</style>
-
-<!-- Modal Instrucciones Instalación iOS -->
-<div class="modal-overlay" id="modal-install-ios">
-  <div class="modal-content" style="max-width:400px;">
-    <div class="modal-header">
-      <h3 style="margin:0;">Instalar en iPhone/iPad</h3>
-      <button class="modal-close" onclick="closeModal('modal-install-ios')">
-        <i class="fa fa-times"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div style="text-align:center;margin-bottom:20px;">
-        <div style="font-size:3rem;margin-bottom:12px;">📱</div>
-        <p style="color:var(--gray);font-size:0.9rem;">Para instalar la app en tu iPhone o iPad:</p>
-      </div>
-      
-      <div style="display:flex;flex-direction:column;gap:16px;">
-        <div style="display:flex;gap:12px;align-items:start;">
-          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">1</div>
-          <div>
-            <div style="font-weight:600;margin-bottom:4px;">Abrí el menú de Safari</div>
-            <div style="font-size:0.85rem;color:var(--gray);">Tocá el botón <i class="fa fa-share" style="color:var(--primary);"></i> de compartir (abajo en el medio)</div>
-          </div>
-        </div>
-        
-        <div style="display:flex;gap:12px;align-items:start;">
-          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">2</div>
-          <div>
-            <div style="font-weight:600;margin-bottom:4px;">Seleccioná "Agregar a Inicio"</div>
-            <div style="font-size:0.85rem;color:var(--gray);">Deslizá hacia abajo y tocá "Agregar a pantalla de inicio"</div>
-          </div>
-        </div>
-        
-        <div style="display:flex;gap:12px;align-items:start;">
-          <div style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;">3</div>
-          <div>
-            <div style="font-weight:600;margin-bottom:4px;">Confirmá</div>
-            <div style="font-size:0.85rem;color:var(--gray);">Tocá "Agregar" en la esquina superior derecha</div>
-          </div>
-        </div>
-      </div>
-      
-      <div style="background:rgba(79,70,229,0.1);padding:12px;border-radius:8px;margin-top:20px;font-size:0.85rem;color:var(--light);">
-        <i class="fa fa-info-circle" style="color:var(--primary);margin-right:6px;"></i>
-        Luego podrás abrir Tecniya como una app desde tu pantalla de inicio
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary btn-block" onclick="closeModal('modal-install-ios')">Entendido</button>
-    </div>
-  </div>
-</div>

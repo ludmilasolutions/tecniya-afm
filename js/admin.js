@@ -1348,3 +1348,26 @@ function adminPreviewAdImage(event) {
 window.adminPreviewAdImage = adminPreviewAdImage;
 
 // End of admin.js
+
+// Admin switch tab function
+window.adminSwitchTab = function(tabId) {
+  // Sidebar items
+  document.querySelectorAll('.admin-sidebar-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.tab === tabId) {
+      item.classList.add('active');
+    }
+  });
+  
+  // Tab panels
+  document.querySelectorAll('.admin-tab-panel').forEach(panel => {
+    panel.style.display = 'none';
+    panel.classList.remove('active');
+  });
+  
+  const activePanel = document.getElementById(tabId);
+  if (activePanel) {
+    activePanel.style.display = 'block';
+    activePanel.classList.add('active');
+  }
+}
