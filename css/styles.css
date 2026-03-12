@@ -3407,6 +3407,108 @@ p {
   text-align: center;
 }
 
+/* User Dashboard - Estilo nuevo */
+#page-user-dashboard {
+  background: var(--darker);
+  min-height: 100vh;
+}
+
+#page-user-dashboard .dash-wrap {
+  padding: calc(var(--header-h) + 32px) 24px 48px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+#page-user-dashboard .dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+#page-user-dashboard .dash-greeting {
+  font-weight: 800;
+  font-size: 1.6rem;
+}
+
+#page-user-dashboard .dash-greeting span {
+  background: linear-gradient(135deg, var(--accent), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#page-user-dashboard .stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+#page-user-dashboard .stat-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+}
+
+#page-user-dashboard .stat-num {
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 4px;
+}
+
+#page-user-dashboard .stat-label {
+  font-size: 0.75rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Pro Dashboard - Estilo nuevo */
+#page-pro-dashboard {
+  background: var(--darker);
+  min-height: 100vh;
+}
+
+#page-pro-dashboard .pro-dashboard-uber {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: calc(var(--header-h) + 24px) 16px 80px;
+}
+
+@media (min-width: 769px) {
+  #page-pro-dashboard .pro-dashboard-uber {
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    padding: calc(var(--header-h) + 24px) 24px 24px;
+  }
+  
+  #page-pro-dashboard .uber-header {
+    grid-column: 1 / -1;
+  }
+  
+  #page-pro-dashboard .uber-stats {
+    grid-column: 1;
+  }
+  
+  #page-pro-dashboard .uber-inbox {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    max-width: none;
+  }
+  
+  #page-pro-dashboard .uber-actions {
+    grid-column: 1;
+  }
+}
+
 .admin-content {
   margin-left: 240px;
   padding: calc(var(--header-h) + 24px) 32px 32px;
