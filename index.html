@@ -17,7 +17,7 @@
   <link href="https://fonts.cdnfonts.com/css/inter" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/styles.css?v=17">
 </head>
 <body>
 
@@ -334,15 +334,90 @@
 </div>
 
 <div class="page" id="page-pro-dashboard">
-  <div class="container dash-wrap">
+  <div class="container" style="padding-top:88px;padding-bottom:80px;">
     
-    <!-- Header compacto estilo móvil con efecto glassmorphism -->
-    <div class="pro-header-modern" style="padding:24px 20px;margin-bottom:24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:relative;z-index:1;">
-        <div>
-          <div style="font-size:0.7rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:600;">Panel Profesional</div>
-          <div style="font-size:1.4rem;font-weight:900;color:var(--light);line-height:1.2;" id="pro-dash-specialty">Tu especialidad</div>
+    <!-- Header -->
+    <div style="background:var(--glass);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="user-avatar" id="pro-header-avatar" style="width:64px;height:64px;font-size:1.8rem;">P</div>
+          <div>
+            <div style="font-size:0.7rem;color:var(--gray);text-transform:uppercase;letter-spacing:1px;">Panel Profesional</div>
+            <div style="font-size:1.4rem;font-weight:800;" id="pro-dash-specialty">Tu especialidad</div>
+          </div>
         </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="fa fa-circle" id="status-dot" style="font-size:0.7rem;color:var(--gray);"></i>
+            <span id="status-text" style="font-size:0.9rem;font-weight:600;color:var(--gray);">Desconectado</span>
+          </div>
+          <label class="toggle-switch" style="width:48px;height:26px;">
+            <input type="checkbox" id="toggle-online-status" style="display:none;">
+            <span class="toggle-slider" style="border-radius:26px;"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <div class="stat-card" style="text-align:center;">
+        <div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div>
+        <div class="stat-label">Activos</div>
+      </div>
+      <div class="stat-card" style="text-align:center;">
+        <div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div>
+        <div class="stat-label">Finalizados</div>
+      </div>
+      <div class="stat-card" style="text-align:center;">
+        <div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div>
+        <div class="stat-label">Nuevos</div>
+      </div>
+      <div class="stat-card" style="text-align:center;">
+        <div class="stat-num" style="color:#fbbf24;"><i class="fa fa-star"></i> <span id="pro-stat-rating">0</span></div>
+        <div class="stat-label">Rating</div>
+      </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs" id="pro-tabs" style="margin-bottom:20px;">
+      <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
+      <button class="tab" data-tab="tab-pro-activos">En Proceso</button>
+      <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
+      <button class="tab" data-tab="tab-pro-config">Configuración</button>
+    </div>
+    
+    <!-- Tab Panels -->
+    <div class="tab-panel active" id="tab-pro-solicitudes">
+      <div class="jobs-list" id="pro-jobs-new">
+        <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas</p></div>
+      </div>
+    </div>
+    
+    <div class="tab-panel" id="tab-pro-activos">
+      <div class="jobs-list" id="pro-jobs-active">
+        <div class="empty-state"><i class="fa fa-gears"></i><p>No tenés trabajos en proceso</p></div>
+      </div>
+    </div>
+    
+    <div class="tab-panel" id="tab-pro-finalizados">
+      <div class="jobs-list" id="pro-jobs-done">
+        <div class="empty-state"><i class="fa fa-check-circle"></i><p>No tenés trabajos finalizados</p></div>
+      </div>
+    </div>
+    
+    <div class="tab-panel" id="tab-pro-config">
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Configuración</h3>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <button class="btn btn-primary" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i> Editar Perfil</button>
+          <button class="btn btn-ghost" id="btn-featured-pro"><i class="fa fa-crown"></i> Destacar Mi Perfil</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
         <div class="user-avatar" id="pro-header-avatar" style="width:52px;height:52px;font-size:1.3rem;border:3px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.3);">U</div>
       </div>
       
