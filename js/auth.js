@@ -354,7 +354,7 @@ export async function activateProProfile() {
     return;
   }
 
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).maybeSingle();
+  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
   if (!profile?.avatar_url) {
     if (errEl) { errEl.textContent = 'Tenés que agregar una foto de perfil primero.'; errEl.classList.remove('hidden'); }
     return;

@@ -352,10 +352,6 @@ export function jobItem(j, viewAs) {
         <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
-    } else if (j.status === 'finalizado') {
-      actions = `
-        <button class="btn btn-accent btn-sm" onclick="window.openRateUserModal('${j.id}','${j.user_id}','${escHtml(j.user_name||'Cliente')}')"><i class="fa fa-star"></i>Calificar Cliente</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     }
   } else if (viewAs === 'user') {
     if (j.status === 'fecha_propuesta_pro') {
@@ -552,193 +548,48 @@ export async function updateJobStatus(jobId, status) {
   }
 }
 
+export async function showUrgentModal() {
+  if (!store.currentUser) {
+    showModal('modal-login');
+    showToast('Iniciá sesión para solicitar urgencias', 'info');
+    return;
+  }
+  
+  showModal('modal-urgent');
+  
+  const { detectLocation } = await import('./geolocation.js');
+  detectLocation();
+}
+
 export async function sendUrgentRequest() {
   const sb = getSupabase();
   const specialty = document.getElementById('urgent-specialty')?.value;
   const desc = document.getElementById('urgent-desc')?.value.trim();
-  const address = document.getElementById('urgent-address')?.value.trim();
-  const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
+  const radius = document.getElementById('urgent-radius')?.value;
   
   if (!specialty || !desc) {
     showToast('Completá especialidad y descripción', 'error');
     return;
   }
   
-  if (!address) {
-    showToast('Ingresá una dirección', 'error');
-    return;
+  const { error } = await sb.from('urgent_requests').insert({
+    user_id: store.currentUser.id,
+    specialty,
+    description: desc,
+    radius,
+    latitude: store.userLocation?.lat,
+    longitude: store.userLocation?.lng,
+    status: 'solicitado',
+    created_at: new Date().toISOString()
+  });
+  
+  closeModal('modal-urgent');
+  
+  if (error) {
+    showToast('Error al enviar. Intente de nuevo.', 'error');
+  } else {
+    showToast('🚨 Solicitud urgente enviada. Notificando profesionales cercanos...', 'success');
   }
-  
-  if (!store.userLocation?.lat || !store.userLocation?.lng) {
-    showToast('No pudimos detectar tu ubicación. Intentá de nuevo.', 'error');
-    return;
-  }
-  
-  const btn = document.getElementById('btn-send-urgent');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Buscando profesionales...';
-  }
-  
-  try {
-    // 1. Buscar profesionales online cercanos
-    let nearbyPros = null;
-    let searchError = null;
-    
-    // Intentar con RPC primero
-    try {
-      const result = await sb.rpc('get_nearby_online_professionals', {
-        user_lat: store.userLocation.lat,
-        user_lng: store.userLocation.lng,
-        search_specialty: specialty,
-        max_radius_km: radius
-      });
-      nearbyPros = result.data;
-      searchError = result.error;
-    } catch (rpcError) {
-      console.log('RPC not available, using fallback query');
-      // Fallback: query manual
-      const { data, error } = await sb
-        .from('professionals')
-        .select('id, user_id, specialty, whatsapp, city, province, latitude, longitude, profiles!user_id(full_name)')
-        .eq('is_online', true)
-        .not('latitude', 'is', null)
-        .not('longitude', 'is', null);
-      
-      if (!error && data) {
-        // Calcular distancia manualmente
-        nearbyPros = data
-          .map(p => {
-            const lat1 = store.userLocation.lat;
-            const lng1 = store.userLocation.lng;
-            const lat2 = p.latitude;
-            const lng2 = p.longitude;
-            
-            const R = 6371; // Radio tierra en km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLng/2) * Math.sin(dLng/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distance = R * c;
-            
-            return {
-              ...p,
-              name: p.profiles?.full_name || 'Profesional',
-              distance_km: Math.round(distance * 100) / 100
-            };
-          })
-          .filter(p => p.distance_km <= radius)
-          .filter(p => !specialty || p.specialty === specialty)
-          .sort((a, b) => a.distance_km - b.distance_km)
-          .slice(0, 20);
-      }
-      searchError = error;
-    }
-    
-    if (searchError) throw searchError;
-    
-    if (!nearbyPros || nearbyPros.length === 0) {
-      console.log('DEBUG: No professionals found');
-      console.log('User location:', store.userLocation);
-      console.log('Specialty:', specialty);
-      console.log('Radius:', radius);
-      showToast('No hay profesionales disponibles en este momento en tu zona. Intenta con un radio mayor.', 'warning');
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-bolt"></i> Enviar solicitud urgente';
-      }
-      return;
-    }
-    
-    console.log('DEBUG: Found professionals:', nearbyPros.length);
-    console.log('DEBUG: Professionals data:', nearbyPros);
-    
-    // 2. Crear la solicitud urgente
-    const { data: urgentReq, error: insertError } = await sb.from('urgent_requests').insert({
-      user_id: store.currentUser.id,
-      specialty,
-      description: desc,
-      address,
-      radius,
-      latitude: store.userLocation.lat,
-      longitude: store.userLocation.lng,
-      status: 'solicitado',
-      notified_pros: nearbyPros.map(p => p.user_id)
-    }).select().single();
-    
-    if (insertError) throw insertError;
-    
-    // 3. Notificar a cada profesional cercano
-    const notifications = nearbyPros.map(pro => ({
-      user_id: pro.user_id,
-      type: 'urgent_request',
-      title: '🚨 Solicitud Urgente',
-      message: `Cliente cerca tuyo necesita ${specialty}. Distancia: ${pro.distance_km} km`,
-      data: JSON.stringify({ 
-        urgent_request_id: urgentReq.id,
-        distance: pro.distance_km,
-        specialty,
-        address 
-      }),
-      read: false
-    }));
-    
-    await sb.from('notifications').insert(notifications);
-    
-    closeModal('modal-urgent');
-    showToast(`🚨 Solicitud enviada a ${nearbyPros.length} profesionales cercanos`, 'success');
-    
-    // Mostrar modal de seguimiento
-    setTimeout(() => showUrgentTrackingModal(urgentReq.id, nearbyPros.length), 500);
-    
-  } catch (error) {
-    console.error('Error sending urgent request:', error);
-    showToast('Error al enviar solicitud. Intenta nuevamente.', 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa fa-bolt"></i> Enviar solicitud urgente';
-    }
-  }
-}
-
-function showUrgentTrackingModal(requestId, prosCount) {
-  const existingModal = document.getElementById('modal-urgent-tracking');
-  if (existingModal) existingModal.remove();
-  
-  const modal = document.createElement('div');
-  modal.id = 'modal-urgent-tracking';
-  modal.className = 'modal-overlay open';
-  modal.innerHTML = `
-    <div class="modal" style="max-width:480px;">
-      <div class="modal-header">
-        <div class="modal-title"><i class="fa fa-clock" style="color:var(--orange);margin-right:8px;"></i>Esperando respuesta</div>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()"><i class="fa fa-times"></i></button>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
-        <div style="font-size:1.1rem;font-weight:600;margin-bottom:12px;color:var(--light);">
-          Notificamos a ${prosCount} profesionales cerca tuyo
-        </div>
-        <div style="color:var(--gray);font-size:0.9rem;margin-bottom:24px;">
-          Te avisaremos cuando alguno acepte tu solicitud
-        </div>
-        <div style="background:var(--glass);padding:16px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px;">
-          <div style="font-size:0.8rem;color:var(--gray);margin-bottom:8px;">Estado</div>
-          <div id="urgent-status-text" style="font-weight:600;color:var(--accent);">Esperando respuesta...</div>
-        </div>
-        <button class="btn btn-ghost btn-block" onclick="this.closest('.modal-overlay').remove()">
-          Cerrar y continuar navegando
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  
-  // Suscribirse a cambios en tiempo real
-  subscribeToUrgentRequestUpdates(requestId);
 }
 
 
@@ -821,7 +672,7 @@ export async function submitRating() {
 
   if (!professionalProfileId) {
     // Intentar obtener directamente de la tabla professionals
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
     if (proData?.user_id) {
       professionalProfileId = proData.user_id;
     }
@@ -1165,170 +1016,4 @@ export async function submitWarrantyReport() {
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
-}
-
-function subscribeToUrgentRequestUpdates(requestId) {
-  const sb = getSupabase();
-  
-  const channel = sb.channel(`urgent-${requestId}`)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'urgent_requests',
-      filter: `id=eq.${requestId}`
-    }, (payload) => {
-      const statusText = document.getElementById('urgent-status-text');
-      if (payload.new.status === 'aceptado') {
-        if (statusText) {
-          statusText.innerHTML = '<i class="fa fa-check-circle" style="color:var(--green);"></i> ¡Aceptado!';
-          statusText.style.color = 'var(--green)';
-        }
-        showToast('¡Un profesional aceptó tu solicitud!', 'success');
-        setTimeout(() => {
-          document.getElementById('modal-urgent-tracking')?.remove();
-          showPage('user-dashboard');
-        }, 2000);
-      }
-    })
-    .subscribe();
-}
-
-export async function showUrgentModal() {
-  if (!store.currentUser) {
-    showModal('modal-login');
-    return;
-  }
-  
-  const sb = getSupabase();
-  
-  // Obtener última ubicación conocida
-  const { data: profile } = await sb
-    .from('profiles')
-    .select('last_latitude, last_longitude')
-    .eq('id', store.currentUser.id)
-    .single();
-  
-  const hasLastLocation = profile?.last_latitude && profile?.last_longitude;
-  
-  // Detectar ubicación al abrir el modal
-  const statusEl = document.getElementById('location-status-text');
-  if (statusEl) statusEl.textContent = 'Detectando tu ubicación...';
-  
-  if (navigator.geolocation) {
-    const timeout = hasLastLocation ? 15000 : 30000; // 30 seg primera vez, 15 después
-    
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const newLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        
-        store.setUserLocation(newLocation);
-        
-        // Guardar nueva ubicación en BD
-        await sb.from('profiles').update({
-          last_latitude: newLocation.lat,
-          last_longitude: newLocation.lng,
-          last_location_updated_at: new Date().toISOString()
-        }).eq('id', store.currentUser.id);
-        
-        if (statusEl) {
-          statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--green);"></i> Ubicación actualizada';
-          statusEl.parentElement.style.background = 'rgba(16,185,129,0.1)';
-        }
-        
-        // Buscar profesionales cercanos para preview
-        const specialty = document.getElementById('urgent-specialty')?.value;
-        const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
-        
-        if (specialty) {
-          await updateNearbyProsPreview(newLocation.lat, newLocation.lng, specialty, radius);
-        }
-      },
-      async (error) => {
-        console.warn('No se pudo detectar ubicación:', error.message);
-        
-        if (hasLastLocation) {
-          // Usar última ubicación conocida
-          const lastLocation = {
-            lat: profile.last_latitude,
-            lng: profile.last_longitude
-          };
-          
-          store.setUserLocation(lastLocation);
-          
-          if (statusEl) {
-            statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--accent);"></i> Usando última ubicación';
-            statusEl.parentElement.style.background = 'rgba(6,182,212,0.1)';
-          }
-          
-          // Buscar profesionales con última ubicación
-          const specialty = document.getElementById('urgent-specialty')?.value;
-          const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
-          
-          if (specialty) {
-            await updateNearbyProsPreview(lastLocation.lat, lastLocation.lng, specialty, radius);
-          }
-        } else {
-          if (statusEl) {
-            statusEl.innerHTML = '<i class="fa fa-exclamation-triangle" style="color:var(--orange);"></i> No se pudo detectar ubicación';
-            statusEl.parentElement.style.background = 'rgba(249,115,22,0.1)';
-          }
-        }
-      },
-      { enableHighAccuracy: false, timeout: timeout, maximumAge: 300000 }
-    );
-  } else if (hasLastLocation) {
-    // No hay geolocalización pero hay última ubicación
-    store.setUserLocation({
-      lat: profile.last_latitude,
-      lng: profile.last_longitude
-    });
-    
-    if (statusEl) {
-      statusEl.innerHTML = '<i class="fa fa-check-circle" style="color:var(--accent);"></i> Usando última ubicación';
-      statusEl.parentElement.style.background = 'rgba(6,182,212,0.1)';
-    }
-  }
-  
-  showModal('modal-urgent');
-}
-
-async function updateNearbyProsPreview(lat, lng, specialty, radius) {
-  const sb = getSupabase();
-  
-  try {
-    const { data: nearbyPros } = await sb.rpc('get_nearby_online_professionals', {
-      user_lat: lat,
-      user_lng: lng,
-      search_specialty: specialty,
-      max_radius_km: radius
-    });
-    
-    const previewEl = document.getElementById('nearby-pros-preview');
-    const countEl = document.getElementById('nearby-pros-count');
-    
-    if (nearbyPros && nearbyPros.length > 0) {
-      if (previewEl) previewEl.style.display = 'block';
-      if (countEl) countEl.textContent = `${nearbyPros.length} profesionales disponibles`;
-    } else {
-      if (previewEl) previewEl.style.display = 'none';
-    }
-  } catch (error) {
-    console.error('Error fetching nearby pros preview:', error);
-  }
-}
-
-// Evento para actualizar preview cuando cambia especialidad o radio
-if (typeof window !== 'undefined') {
-  document.addEventListener('change', (e) => {
-    if (e.target.id === 'urgent-specialty' || e.target.id === 'urgent-radius') {
-      const specialty = document.getElementById('urgent-specialty')?.value;
-      const radius = parseInt(document.getElementById('urgent-radius')?.value) || 10;
-      if (store.userLocation?.lat && specialty) {
-        updateNearbyProsPreview(store.userLocation.lat, store.userLocation.lng, specialty, radius);
-      }
-    }
-  });
 }

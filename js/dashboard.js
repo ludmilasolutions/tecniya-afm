@@ -224,22 +224,10 @@ export async function loadProDashboard() {
     setEl('pro-stat-new',    newJ.length);
     setEl('pro-stat-active', activeJ.length);
     setEl('pro-stat-done',   doneJ.length);
-    
-    // Actualizar badge de solicitudes nuevas
-    const newBadge = document.getElementById('pro-stat-new-badge');
-    if (newBadge) newBadge.textContent = newJ.length;
 
     renderJobList('pro-jobs-new',     newJ,    'pro');
     renderJobList('pro-jobs-active',  activeJ, 'pro');
     renderJobList('pro-jobs-done',    doneJ,   'pro');
-
-    // Cargar solicitudes urgentes
-    await loadUrgentRequests();
-    
-    // Actualizar contadores de accesos rápidos
-    if (typeof window.updateQuickAccessCounters === 'function') {
-      window.updateQuickAccessCounters();
-    }
 
     // Rating promedio
     const { data: reviews } = await sb
@@ -293,25 +281,6 @@ function loadProAvailability() {
   if (desde && avail.desde) desde.value = avail.desde;
   if (hasta && avail.hasta) hasta.value = avail.hasta;
   if (urg)   urg.checked = !!avail.urgencias;
-  
-  // Sincronizar toggle de estado online
-  const toggle = document.getElementById('toggle-online-status');
-  if (toggle) {
-    toggle.checked = !!avail.urgencias;
-    updateOnlineStatusUI(!!avail.urgencias);
-  }
-}
-
-function updateOnlineStatusUI(isOnline) {
-  const dot = document.getElementById('status-dot');
-  const text = document.getElementById('status-text');
-  if (dot) {
-    dot.style.color = isOnline ? 'var(--green)' : 'var(--gray)';
-  }
-  if (text) {
-    text.textContent = isOnline ? 'Conectado' : 'Desconectado';
-    text.style.color = isOnline ? 'var(--green)' : 'var(--gray)';
-  }
 }
 
 async function loadProBudgets() {
@@ -542,91 +511,15 @@ export async function saveAvailability() {
   const hasta     = document.getElementById('hora-hasta')?.value;
   const urgencias = document.getElementById('urgencias')?.checked;
 
-  let updateData = {
+  const { error } = await sb.from('professionals').update({
     availability: { dias, desde, hasta, urgencias },
     is_online: urgencias
-  };
+  }).eq('user_id', store.currentUser.id);
 
-  // Si se está conectando, intentar obtener ubicación
-  if (urgencias && navigator.geolocation) {
-    // Verificar si ya tiene ubicación guardada
-    const { data: currentPro } = await sb
-      .from('professionals')
-      .select('latitude, longitude')
-      .eq('user_id', store.currentUser.id)
-      .single();
-    
-    const hasLocation = currentPro?.latitude && currentPro?.longitude;
-    const timeout = hasLocation ? 15000 : 30000; // 30 seg primera vez, 15 seg después
-    
-    if (!hasLocation) {
-      showToast('Primera conexión: detectando ubicación...', 'info');
-    }
-    
-    await new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          updateData.latitude = position.coords.latitude;
-          updateData.longitude = position.coords.longitude;
-          console.log('DEBUG: Nueva ubicación detectada:', updateData.latitude, updateData.longitude);
-          showToast('Ubicación actualizada', 'success');
-          resolve();
-        },
-        async (error) => {
-          console.warn('No se pudo detectar ubicación:', error.message);
-          
-          if (hasLocation) {
-            // Mantener ubicación anterior
-            updateData.latitude = currentPro.latitude;
-            updateData.longitude = currentPro.longitude;
-            console.log('DEBUG: Usando última ubicación conocida:', updateData.latitude, updateData.longitude);
-            showToast('Conectado (usando última ubicación)', 'info');
-          } else {
-            showToast('No se pudo detectar ubicación. Verifica que hayas dado permisos al navegador.', 'warning');
-          }
-          resolve();
-        },
-        { enableHighAccuracy: false, timeout: timeout, maximumAge: 300000 } // Acepta ubicaciones de hasta 5 min
-      );
-    });
-  }
-
-  console.log('DEBUG: Saving professional data:', updateData);
-  const { error } = await sb.from('professionals').update(updateData).eq('user_id', store.currentUser.id);
-
-  if (error) { 
-    console.error('saveAvailability:', error); 
-    showToast('Error al guardar: ' + error.message, 'error'); 
-  } else {
-    if (store.currentPro) {
-      Object.assign(store.currentPro, { 
-        availability: { dias, desde, hasta, urgencias },
-        latitude: updateData.latitude,
-        longitude: updateData.longitude
-      });
-    }
-    
-    const hasLocation = updateData.latitude && updateData.longitude;
-    if (urgencias && hasLocation) {
-      showToast('✅ Conectado para urgencias', 'success');
-      
-      // Inicializar sistema de alertas urgentes
-      const { initUrgentAlerts } = await import('./urgentAlerts.js');
-      initUrgentAlerts();
-      console.log('Sistema de alertas urgentes activado');
-    } else if (urgencias && !hasLocation) {
-      showToast('⚠️ Conectado pero sin ubicación. No recibirás urgencias hasta que permitas acceso a ubicación.', 'warning');
-    } else {
-      showToast('Disponibilidad actualizada', 'success');
-      
-      // Detener sistema de alertas si se desconecta
-      const { stopUrgentAlerts } = await import('./urgentAlerts.js');
-      stopUrgentAlerts();
-      console.log('Sistema de alertas urgentes desactivado');
-    }
-    
-    // Actualizar UI del toggle
-    updateOnlineStatusUI(urgencias);
+  if (error) { console.error('saveAvailability:', error); showToast('Error al guardar: ' + error.message, 'error'); }
+  else {
+    if (store.currentPro) Object.assign(store.currentPro, { availability: { dias, desde, hasta, urgencias } });
+    showToast('Disponibilidad actualizada', 'success');
   }
 }
 
@@ -754,208 +647,3 @@ export function getSelectedSpecialties() {
   const chips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
   return Array.from(chips).map(c => c.textContent.trim());
 }
-
-// Sistema de solicitudes urgentes para profesionales
-export async function loadUrgentRequests() {
-  const sb = getSupabase();
-  if (!store.currentUser || !store.isPro) return;
-  
-  try {
-    const { data: urgentReqs, error } = await sb
-      .from('urgent_requests')
-      .select('*, user:profiles!user_id(full_name)')
-      .eq('status', 'solicitado')
-      .contains('notified_pros', [store.currentUser.id])
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    const container = document.getElementById('urgent-requests-list');
-    const badge = document.getElementById('urgent-count-badge');
-    
-    if (!urgentReqs || urgentReqs.length === 0) {
-      if (container) container.innerHTML = '<div class="empty-state"><i class="fa fa-bolt"></i><p>No hay urgencias</p></div>';
-      if (badge) badge.style.display = 'none';
-      return;
-    }
-    
-    if (badge) {
-      badge.textContent = urgentReqs.length;
-      badge.style.display = 'inline-block';
-    }
-    
-    if (container) {
-      container.innerHTML = urgentReqs.map(req => renderUrgentRequestCard(req)).join('');
-    }
-    
-  } catch (error) {
-    console.error('Error loading urgent requests:', error);
-  }
-}
-
-function renderUrgentRequestCard(req) {
-  const userName = req.user?.full_name || 'Cliente';
-  const timeAgo = getTimeAgo(new Date(req.created_at));
-  
-  return `
-    <div class="job-card-urgent" style="background:linear-gradient(135deg, rgba(249,115,22,0.08), rgba(239,68,68,0.08));border:2px solid var(--orange);margin-bottom:14px;position:relative;overflow:hidden;border-radius:18px;box-shadow:0 4px 16px rgba(249,115,22,0.2);">
-      <div style="position:absolute;top:0;right:0;background:linear-gradient(135deg, var(--orange), #dc2626);color:white;padding:6px 14px;border-bottom-left-radius:12px;font-size:0.7rem;font-weight:800;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(249,115,22,0.4);">
-        <i class="fa fa-bolt" style="margin-right:4px;"></i>URGENTE
-      </div>
-      <div style="padding:18px;padding-top:14px;">
-        <div style="display:flex;align-items:start;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:1.3rem;flex-shrink:0;box-shadow:0 4px 12px rgba(79,70,229,0.3);">
-            ${userName.charAt(0).toUpperCase()}
-          </div>
-          <div style="flex:1;">
-            <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">${escHtml(userName)}</div>
-            <div style="font-size:0.75rem;color:var(--gray);font-weight:500;">
-              <i class="fa fa-clock" style="margin-right:4px;"></i>${timeAgo}
-            </div>
-          </div>
-        </div>
-        
-        <div style="background:rgba(0,0,0,0.2);backdrop-filter:blur(8px);padding:14px;border-radius:14px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.05);">
-          <div style="font-size:0.9rem;font-weight:700;color:var(--orange);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-            <i class="fa fa-wrench"></i>
-            <span>${escHtml(req.specialty)}</span>
-          </div>
-          <div style="font-size:0.85rem;color:var(--light);margin-bottom:10px;line-height:1.5;">
-            ${escHtml(req.description)}
-          </div>
-          <div style="font-size:0.8rem;color:var(--gray);display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;">
-            <i class="fa fa-location-dot" style="color:var(--accent);"></i>
-            <span>${escHtml(req.address || 'Sin dirección')}</span>
-          </div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
-          <button class="btn btn-success btn-sm" style="font-weight:700;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(16,185,129,0.3);" onclick="window.acceptUrgentRequest('${req.id}', '${req.user_id}')">
-            <i class="fa fa-check" style="margin-right:6px;"></i>Aceptar
-          </button>
-          <button class="btn btn-ghost btn-sm" style="padding:12px;border-radius:12px;" onclick="window.openMapLocation(${req.latitude}, ${req.longitude})">
-            <i class="fa fa-map"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function getTimeAgo(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  if (seconds < 60) return 'Hace unos segundos';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `Hace ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
-  return `Hace ${Math.floor(hours / 24)} día${Math.floor(hours / 24) > 1 ? 's' : ''}`;
-}
-
-export async function acceptUrgentRequest(requestId, userId) {
-  const sb = getSupabase();
-  
-  try {
-    // Verificar que aún está disponible
-    const { data: req, error: checkError } = await sb
-      .from('urgent_requests')
-      .select('status')
-      .eq('id', requestId)
-      .single();
-    
-    if (checkError) throw checkError;
-    
-    if (req.status !== 'solicitado') {
-      showToast('Esta solicitud ya fue aceptada por otro profesional', 'warning');
-      await loadUrgentRequests();
-      return;
-    }
-    
-    // Marcar como aceptada
-    const { error: updateError } = await sb
-      .from('urgent_requests')
-      .update({ 
-        status: 'aceptado',
-        accepted_by: store.currentUser.id,
-        accepted_at: new Date().toISOString()
-      })
-      .eq('id', requestId);
-    
-    if (updateError) throw updateError;
-    
-    // Crear el trabajo asociado
-    const { data: urgentReq } = await sb
-      .from('urgent_requests')
-      .select('*')
-      .eq('id', requestId)
-      .single();
-    
-    const { error: jobError } = await sb.from('jobs').insert({
-      user_id: userId,
-      professional_id: store.currentUser.id,
-      specialty: urgentReq.specialty,
-      description: urgentReq.description,
-      address: urgentReq.address,
-      latitude: urgentReq.latitude,
-      longitude: urgentReq.longitude,
-      status: 'aceptado',
-      is_urgent: true,
-      created_at: new Date().toISOString()
-    });
-    
-    if (jobError) throw jobError;
-    
-    showToast('¡Solicitud urgente aceptada! El cliente será notificado', 'success');
-    await loadUrgentRequests();
-    await loadProDashboard();
-    
-  } catch (error) {
-    console.error('Error accepting urgent request:', error);
-    showToast('Error al aceptar solicitud', 'error');
-  }
-}
-
-window.acceptUrgentRequest = acceptUrgentRequest;
-window.openMapLocation = (lat, lng) => {
-  window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-};
-
-// Función para guardar ubicación manualmente (primera vez)
-export async function setInitialLocation() {
-  if (!store.currentUser || !store.isPro) return;
-  
-  const sb = getSupabase();
-  
-  showToast('Detectando ubicación inicial...', 'info');
-  
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { error } = await sb.from('professionals').update({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        }).eq('user_id', store.currentUser.id);
-        
-        if (error) {
-          showToast('Error al guardar ubicación', 'error');
-          reject(error);
-        } else {
-          console.log('✅ Ubicación inicial guardada:', position.coords.latitude, position.coords.longitude);
-          showToast('Ubicación guardada correctamente', 'success');
-          if (store.currentPro) {
-            store.currentPro.latitude = position.coords.latitude;
-            store.currentPro.longitude = position.coords.longitude;
-          }
-          resolve({ lat: position.coords.latitude, lng: position.coords.longitude });
-        }
-      },
-      (error) => {
-        showToast('No se pudo detectar ubicación. Verifica los permisos del navegador.', 'error');
-        reject(error);
-      },
-      { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 }
-    );
-  });
-}
-
-window.setInitialLocation = setInitialLocation;

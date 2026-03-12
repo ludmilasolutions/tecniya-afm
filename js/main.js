@@ -10,8 +10,6 @@ import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
 import { loadAds, openAdLink, saveAd } from './ads.js';
 import { detectLocation } from './geolocation.js';
 import { checkAndShowTour } from './tour.js';
-import { initRatingEvents } from './userRatings.js';
-import { initUrgentAlerts, stopUrgentAlerts } from './urgentAlerts.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
@@ -353,17 +351,6 @@ async function initApp() {
   });
   on('btn-featured-pro',      'click', showSuscripcion);
   on('btn-save-availability', 'click', saveAvailability);
-  
-  // Toggle conectado/desconectado para urgencias
-  const toggleOnline = document.getElementById('toggle-online-status');
-  if (toggleOnline) {
-    toggleOnline.addEventListener('change', async () => {
-      const isOnline = toggleOnline.checked;
-      const urg = document.getElementById('urgencias');
-      if (urg) urg.checked = isOnline;
-      await saveAvailability();
-    });
-  }
   on('btn-save-pro-profile',  'click', saveProProfile);
   on('btn-new-budget',        'click', () => showModal('modal-new-budget'));
   on('btn-save-budget',       'click', saveBudget);
@@ -405,7 +392,6 @@ async function initApp() {
 
   // ── MODALES DE JOBS ──────────────────────────────────────────────────────
   on('btn-submit-job',    'click', submitJobRequest);
-  on('urgent-btn',        'click', showUrgentModal);
   on('btn-send-urgent',   'click', sendUrgentRequest);
   on('btn-submit-rating', 'click', submitRating);
 
@@ -447,14 +433,8 @@ async function initApp() {
 
   initStorage();
   initUploadEvents();
-  initRatingEvents();
   animateStats();
   setupRealtimeNotifications();
-  
-  // Iniciar sistema de alertas urgentes si es profesional
-  if (store.isPro && store.currentUser) {
-    initUrgentAlerts();
-  }
 
   setTimeout(() => {
     const overlay = document.getElementById('loading-overlay');
@@ -486,231 +466,3 @@ window.switchSecurityTab = function(tabId) {
     t.classList.toggle('active', ids[i] === tabId);
   });
 };
-
-// ============================================
-// PWA - INSTALACIÓN
-// ============================================
-
-let deferredPrompt;
-
-// Detectar evento de instalación
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevenir que Chrome muestre el prompt automáticamente
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  // Mostrar botón de instalación
-  const installBtn = document.getElementById('install-btn');
-  if (installBtn) {
-    installBtn.style.display = 'flex';
-  }
-});
-
-// Click en botón de instalación
-window.addEventListener('DOMContentLoaded', () => {
-  const installBtn = document.getElementById('install-btn');
-  
-  // Mostrar botón siempre en móviles
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (installBtn && isMobile) {
-    installBtn.style.display = 'flex';
-  }
-  
-  if (installBtn) {
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) {
-        // Mostrar instrucciones según el navegador
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        
-        if (isIOS) {
-          showModal('modal-install-ios');
-        } else if (isAndroid) {
-          showToast('Usa el menú del navegador (⋮) y selecciona "Agregar a pantalla de inicio"', 'info');
-        } else {
-          showToast('La aplicación ya está instalada o no se puede instalar desde este navegador', 'info');
-        }
-        return;
-      }
-      
-      // Mostrar prompt de instalación
-      deferredPrompt.prompt();
-      
-      // Esperar respuesta del usuario
-      const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        showToast('¡App instalada! Ahora podés acceder desde tu pantalla de inicio', 'success');
-      }
-      
-      // Limpiar el prompt
-      deferredPrompt = null;
-    });
-  }
-});
-
-// Detectar cuando se instaló
-window.addEventListener('appinstalled', () => {
-  console.log('PWA instalada exitosamente');
-  showToast('¡Aplicación instalada correctamente!', 'success');
-  deferredPrompt = null;
-  
-  const installBtn = document.getElementById('install-btn');
-  if (installBtn) installBtn.style.display = 'none';
-});
-
-// Registrar Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registrado:', registration);
-      })
-      .catch((error) => {
-        console.log('Error registrando Service Worker:', error);
-      });
-  });
-}
-
-// Detectar si ya está instalado (modo standalone)
-if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-  console.log('App ejecutándose en modo instalado');
-  // Ocultar botón de instalación si ya está instalado
-  const installBtn = document.getElementById('install-btn');
-  if (installBtn) installBtn.style.display = 'none';
-}
-
-// ============================================
-// MODERN DASHBOARD - TABS & STATUS
-// ============================================
-
-function initInboxTabs() {
-  const tabs = document.querySelectorAll('.tab-btn');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      if (navigator.vibrate) navigator.vibrate(10);
-      
-      // Remove active
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      
-      // Show content
-      const inboxType = tab.dataset.inbox;
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active', 'block'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      const content = document.getElementById(`inbox-${inboxType}`);
-      if (content) {
-        content.classList.add('active', 'block');
-        content.classList.remove('hidden');
-      }
-    });
-  });
-  
-  // Update status indicator
-  const toggle = document.getElementById('toggle-online-status');
-  const statusDot = document.getElementById('status-dot');
-  const statusText = document.getElementById('status-text');
-  const statusContainer = document.getElementById('status-container');
-  
-  if (toggle && statusDot && statusText) {
-    toggle.addEventListener('change', () => {
-      if (toggle.checked) {
-        statusDot.classList.remove('bg-slate-500');
-        statusDot.classList.add('bg-emerald-500', 'animate-pulse');
-        statusText.classList.remove('text-slate-500');
-        statusText.classList.add('text-emerald-500');
-        statusText.textContent = 'Conectado';
-      } else {
-        statusDot.classList.remove('bg-emerald-500', 'animate-pulse');
-        statusDot.classList.add('bg-slate-500');
-        statusText.classList.remove('text-emerald-500');
-        statusText.classList.add('text-slate-500');
-        statusText.textContent = 'Desconectado';
-      }
-    });
-  }
-  
-  // Navigation back to dashboard
-  const navDashboard = document.getElementById('nav-dashboard');
-  if (navDashboard) {
-    navDashboard.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Hide all tab-panels
-      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-      // Show main dashboard
-      document.querySelector('.min-h-screen')?.scrollTo(0, 0);
-      window.scrollTo(0, 0);
-    });
-  }
-}
-
-// Inicializar
-document.addEventListener('DOMContentLoaded', () => {
-  initInboxTabs();
-  
-  // Quick actions - abrir en modal
-  document.getElementById('btn-view-activos')?.addEventListener('click', () => {
-    // Activar el tab correcto
-    const tab = document.querySelector('[data-tab="tab-pro-activos"]');
-    if (tab) {
-      // Quitar active de todos los tabs
-      document.querySelectorAll('#pro-tabs .tab').forEach(t => t.classList.remove('active'));
-      // Activar el tab clickeado
-      tab.classList.add('active');
-      
-      // Mostrar el panel
-      document.querySelectorAll('.tab-panel').forEach(p => {
-        p.classList.remove('active');
-        p.style.display = 'none';
-      });
-      
-      const panel = document.getElementById('tab-pro-activos');
-      if (panel) {
-        panel.classList.add('active');
-        panel.style.display = 'block';
-      }
-      
-      // Hacer scroll al panel
-      panel?.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-  
-  document.getElementById('btn-view-finalizados')?.addEventListener('click', () => {
-    const tab = document.querySelector('[data-tab="tab-pro-finalizados"]');
-    if (tab) {
-      document.querySelectorAll('#pro-tabs .tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      
-      document.querySelectorAll('.tab-panel').forEach(p => {
-        p.classList.remove('active');
-        p.style.display = 'none';
-      });
-      
-      const panel = document.getElementById('tab-pro-finalizados');
-      if (panel) {
-        panel.classList.add('active');
-        panel.style.display = 'block';
-      }
-      
-      panel?.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
-});
-
-// Actualizar contadores
-function updateQuickAccessCounters() {
-  const activeCount = document.getElementById('pro-stat-active')?.textContent || '0';
-  const doneCount = document.getElementById('pro-stat-done')?.textContent || '0';
-  const newCount = document.getElementById('pro-stat-new')?.textContent || '0';
-  
-  // Update display stats
-  const newDisplay = document.getElementById('pro-stat-new-display');
-  const newBadge = document.getElementById('pro-stat-new-badge');
-  
-  if (newDisplay) newDisplay.textContent = newCount;
-  if (newBadge) newBadge.textContent = newCount;
-}
-
-window.updateQuickAccessCounters = updateQuickAccessCounters;
-window.initInboxTabs = initInboxTabs;
