@@ -257,7 +257,17 @@ async function initApp() {
   });
   on('menu-profile',       'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
   // menu-chat ahora abre el chat flotante (manejado inline en el HTML)
-  on('menu-logout',        'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
+  on('menu-logout',        'click', async e => { 
+    e.preventDefault(); 
+    hideUserMenu();
+    try {
+      const { logout } = await import('./auth.js');
+      await logout();
+    } catch(err) {
+      console.error('Logout error:', err);
+      window.location.reload();
+    }
+  });
 
   // Switch entre panel cliente y profesional
   on('menu-switch-pro', 'click', async e => {
