@@ -5,6 +5,42 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--darker);
+  color: var(--light);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  
+  #page-home .search-section {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  #page-user-dashboard .dash-wrap {
+    max-width: 1100px;
+  }
+  
+  #page-pro-dashboard .pro-dashboard-uber {
+    max-width: 1200px;
+  }
+}
+
 :root {
   --primary: #4f46e5;
   --secondary: #7c3aed;
@@ -3506,6 +3542,47 @@ p {
   
   #page-pro-dashboard .uber-actions {
     grid-column: 1;
+  }
+  
+  /* User Dashboard Desktop */
+  #page-user-dashboard .dash-wrap {
+    max-width: 1000px;
+    padding: calc(var(--header-h) + 32px) 32px 48px;
+  }
+  
+  #page-user-dashboard .stats-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  #page-user-dashboard .jobs-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  #page-user-dashboard .pros-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  /* User Dashboard Mobile */
+  #page-user-dashboard .dash-wrap {
+    padding: calc(var(--header-h) + 16px) 16px 32px;
+  }
+  
+  #page-user-dashboard .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  #page-user-dashboard .dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  #page-user-dashboard .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
