@@ -3066,6 +3066,61 @@ p {
   transform: translateX(24px);
 }
 
+/* Bandeja de entrada */
+.inbox-desktop {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.inbox-tabs-vertical {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.inbox-tab {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--gray);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.inbox-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--light);
+}
+
+.inbox-tab.active {
+  background: var(--darker);
+  color: var(--light);
+  border: 1px solid var(--border);
+}
+
+.inbox-content {
+  display: none;
+}
+
+.inbox-content.active {
+  display: block;
+}
+
+.jobs-grid-desktop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Pro dashboard Uber */
 .pro-dashboard-uber {
   min-height: 100vh;
