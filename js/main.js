@@ -398,6 +398,18 @@ async function initApp() {
     });
   });
 
+  // Tabs de bandeja (solicitudes nuevas / urgentes)
+  document.querySelectorAll('.inbox-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.inbox-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.inbox-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      const inbox = tab.dataset.inbox;
+      const content = document.getElementById('inbox-' + inbox);
+      if (content) content.classList.add('active');
+    });
+  });
+
   // ── ADMIN ────────────────────────────────────────────────────────────────
   on('btn-new-ad',  'click', () => showModal('modal-new-ad'));
   on('btn-save-ad', 'click', saveAd);
