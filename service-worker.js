@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tecniya-v4';
+const CACHE_NAME = 'tecniya-v5';
 const urlsToCache = [
   '/',
   '/index.html',
