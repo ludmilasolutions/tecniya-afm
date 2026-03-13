@@ -29,7 +29,6 @@ export async function uploadAvatar(file, userId) {
   }
   
   const fileName = `${userId}/avatar.${fileExt}`;
-  const filePath = `${BUCKETS.AVATARS}/${fileName}`;
   
   const contentTypes = {
     jpg: 'image/jpeg',
@@ -42,7 +41,7 @@ export async function uploadAvatar(file, userId) {
   try {
     const { data, error } = await sb.storage
       .from(BUCKETS.AVATARS)
-      .upload(filePath, file, {
+      .upload(fileName, file, {
         upsert: true,
         contentType: contentTypes[fileExt] || 'image/jpeg'
       });
@@ -55,7 +54,7 @@ export async function uploadAvatar(file, userId) {
 
     const { data: { publicUrl } } = sb.storage
       .from(BUCKETS.AVATARS)
-      .getPublicUrl(filePath);
+      .getPublicUrl(fileName);
 
     // Actualizar en tabla profiles
     await sb.from('profiles')
@@ -91,11 +90,10 @@ export async function uploadWorkPhoto(file, professionalId, title = '', descript
   const timestamp = Date.now();
   const fileExt = file.name.split('.').pop();
   const fileName = `${professionalId}/${timestamp}.${fileExt}`;
-  const filePath = `${BUCKETS.WORK_PHOTOS}/${fileName}`;
 
   const { data, error } = await sb.storage
     .from(BUCKETS.WORK_PHOTOS)
-    .upload(filePath, file, {
+    .upload(fileName, file, {
       contentType: file.type
     });
 
@@ -106,7 +104,7 @@ export async function uploadWorkPhoto(file, professionalId, title = '', descript
 
   const { data: { publicUrl } } = sb.storage
     .from(BUCKETS.WORK_PHOTOS)
-    .getPublicUrl(filePath);
+    .getPublicUrl(fileName);
 
   const { data: photo, error: dbError } = await sb
     .from('work_photos')
@@ -165,11 +163,10 @@ export async function uploadCertification(file, professionalId, name, issuer = '
   const timestamp = Date.now();
   const fileExt = file.name.split('.').pop();
   const fileName = `${professionalId}/${timestamp}.${fileExt}`;
-  const filePath = `${BUCKETS.CERTIFICATIONS}/${fileName}`;
 
   const { data, error } = await sb.storage
     .from(BUCKETS.CERTIFICATIONS)
-    .upload(filePath, file, {
+    .upload(fileName, file, {
       contentType: file.type
     });
 
@@ -180,7 +177,7 @@ export async function uploadCertification(file, professionalId, name, issuer = '
 
   const { data: { publicUrl } } = sb.storage
     .from(BUCKETS.CERTIFICATIONS)
-    .getPublicUrl(filePath);
+    .getPublicUrl(fileName);
 
   const { data: cert, error: dbError } = await sb
     .from('certifications')
