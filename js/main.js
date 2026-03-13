@@ -425,10 +425,10 @@ async function initApp() {
   on('photo-upload-input',    'change', async e => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!store.currentUser) return;
+    if (!store.currentPro) { showToast('No se encontró tu perfil profesional', 'error'); return; }
     const title = prompt('Título de la foto (opcional):') || '';
     const { uploadWorkPhoto } = await import('./upload.js');
-    await uploadWorkPhoto(file, store.currentUser.id, title);
+    await uploadWorkPhoto(file, store.currentPro.id, title);
     e.target.value = '';
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
