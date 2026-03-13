@@ -994,7 +994,7 @@
 </div>
 
 <div class="modal-overlay" id="modal-activate-pro">
-  <div class="modal" style="max-width:440px;">
+  <div class="modal" style="max-width:500px;">
     <div class="modal-header">
       <div class="modal-title">🔧 Activar perfil profesional</div>
       <button class="modal-close" data-close="modal-activate-pro"><i class="fa fa-times"></i></button>
@@ -1002,10 +1002,14 @@
     <div class="modal-body">
       <p style="color:var(--gray);font-size:0.88rem;margin-bottom:18px;">Completá tus datos para empezar a ofrecer servicios en TECNIYA. Podés editar todo esto después desde tu panel.</p>
       <div class="form-group">
-        <label class="form-label">Especialidad principal <span style="color:#ef4444;">*</span></label>
-        <select class="form-select" id="activate-specialty">
-          <option value="">Seleccioná tu especialidad</option>
-        </select>
+        <label class="form-label">Especialidades <span style="color:#ef4444;">*</span></label>
+        <div id="activate-specialty-chips" class="specialty-chips-editor" style="max-height:150px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;">
+          <!-- Se llena dinámicamente -->
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <p style="font-size:0.75rem;color:var(--gray);">Seleccioná tus especialidades</p>
+          <span id="activate-specialty-counter" style="font-size:0.75rem;font-weight:600;">0/3 seleccionadas</span>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">

@@ -287,11 +287,56 @@ async function initApp() {
   on('menu-activate-pro', 'click', e => {
     e.preventDefault(); hideUserMenu();
     showModal('modal-activate-pro');
-    import('./professionals.js').then(m => {
-      const sel = document.getElementById('activate-specialty');
-      if (sel && sel.options.length <= 1) m.loadSpecialties(sel);
-    });
+    initActivateSpecialtyChips();
   });
+
+  // Inicializar chips de especialidades en modal de activar
+  async function initActivateSpecialtyChips() {
+    const container = document.getElementById('activate-specialty-chips');
+    if (!container) return;
+    
+    // Si ya está lleno, no volver a cargar
+    if (container.children.length > 0) return;
+    
+    const { store } = await import('./store.js');
+    let allSpecs = store.allSpecialties?.length ? store.allSpecialties : (window._allSpecialties || []);
+    
+    if (!allSpecs.length) {
+      const { loadSpecialties } = await import('./professionals.js');
+      await loadSpecialties();
+      allSpecs = store.allSpecialties || window._allSpecialties || [];
+    }
+    
+    if (!allSpecs.length) {
+      allSpecs = ['Plomería','Electricidad','Gas','Carpintería','Pintura','Albañilería','Refrigeración','Aire Acondicionado','Herrería','Cerrajería','Jardinería','Limpieza','Informática','Mudanzas','Fumigación'];
+    }
+    
+    container.innerHTML = allSpecs.map(s => {
+      return `<span class="specialty-chip specialty-chip--toggle" onclick="window.toggleActivateSpecialtyChip(this,'${s}')">${s}</span>`;
+    }).join('');
+  }
+  
+  // Función para togglear chips en modal de activar
+  window.toggleActivateSpecialtyChip = function(el, specialty) {
+    const counter = document.getElementById('activate-specialty-counter');
+    const selected = document.querySelectorAll('#activate-specialty-chips .specialty-chip--toggle.active');
+    
+    if (el.classList.contains('active')) {
+      el.classList.remove('active');
+    } else if (selected.length < 3) {
+      el.classList.add('active');
+    } else {
+      const { showToast } = require('./ui.js');
+      showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info');
+    }
+    
+    // Actualizar contador
+    const count = document.querySelectorAll('#activate-specialty-chips .specialty-chip--toggle.active').length;
+    if (counter) {
+      counter.textContent = `${count}/3 seleccionadas`;
+      counter.style.color = count >= 3 ? 'var(--orange)' : 'var(--gray)';
+    }
+  };
   // ── NOTIFICACIONES ──────────────────────────────────────────────────────
   on('notif-btn',        'click', toggleNotifPanel);
   on('mark-all-read-btn','click', markAllRead);

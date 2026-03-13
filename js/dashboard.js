@@ -201,6 +201,10 @@ export async function loadProDashboard() {
 
   // Actualizar contador de especialidades
   updateSpecialtyCounter();
+  
+  // Renderizar editor de chips con las especialidades actuales
+  const currentSpecialties = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
+  renderSpecialtyEditor(currentSpecialties);
 
   // Cargar avatar en el formulario de edición profesional
   const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();

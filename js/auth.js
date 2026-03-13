@@ -365,14 +365,29 @@ function translateAuthError(msg) {
 export async function activateProProfile() {
   if (!store.currentUser) return;
   const sb = getSupabase();
-  const specialty = document.getElementById('activate-specialty')?.value;
+  
+  // Obtener especialidades del editor de chips
+  const specialtyChips = document.querySelectorAll('#activate-specialty-chips .specialty-chip--toggle.active');
+  let specialties = [];
+  if (specialtyChips.length > 0) {
+    specialties = Array.from(specialtyChips).map(c => c.textContent.trim());
+  }
+  
+  const mainSpecialty = specialties[0] || '';
   const city      = document.getElementById('activate-city')?.value.trim() || '';
   const province  = document.getElementById('activate-province')?.value.trim() || '';
   const whatsapp  = document.getElementById('activate-whatsapp')?.value.trim() || '';
   const errEl     = document.getElementById('activate-pro-error');
 
-  if (!specialty) {
-    if (errEl) { errEl.textContent = 'Seleccioná tu especialidad principal.'; errEl.classList.remove('hidden'); }
+  if (specialties.length === 0) {
+    if (errEl) { errEl.textContent = 'Seleccioná al menos una especialidad.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  // Verificar límite (3 para gratis)
+  const maxSpecialties = 3;
+  if (specialties.length > maxSpecialties) {
+    if (errEl) { errEl.textContent = `Máximo ${maxSpecialties} especialidades. ¡Contratá Plan Destacado para ilimitadas!`; errEl.classList.remove('hidden'); }
     return;
   }
 
@@ -386,7 +401,8 @@ export async function activateProProfile() {
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Activando...</span>'; }
 
   const { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, {
-    specialty,
+    specialty: mainSpecialty,
+    specialties: specialties,
     city,
     province,
     whatsapp,
