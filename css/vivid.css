@@ -1,0 +1,522 @@
+/* =====================================================================
+   TECNIYA — VIVID OVERRIDES
+   Cards energéticas + Modales premium
+   Cargar DESPUÉS de styles.css
+   ===================================================================== */
+
+/* ══════════════════════════════════════════════════════════════════════
+   PROFESSIONAL CARDS — energía visual total
+══════════════════════════════════════════════════════════════════════ */
+
+.pro-card {
+  background: linear-gradient(145deg, rgba(15,23,42,0.95) 0%, rgba(8,14,36,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+/* Línea de acento superior — cyan por defecto */
+.pro-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #06b6d4, #4f46e5, #7c3aed);
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+/* Glow ambiental en hover */
+.pro-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(79,70,229,0.12), rgba(249,115,22,0.10));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.pro-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(6,182,212,0.35);
+  box-shadow:
+    0 0 0 1px rgba(6,182,212,0.15),
+    0 8px 32px rgba(6,182,212,0.15),
+    0 24px 56px rgba(0,0,0,0.4);
+}
+
+.pro-card:hover::before { opacity: 1; }
+.pro-card:hover::after  { opacity: 1; }
+
+/* Cards destacadas (naranja) */
+.pro-card.featured::before {
+  background: linear-gradient(90deg, #f97316, #dc2626, #f97316);
+  opacity: 1;
+  animation: shimmerLine 2.5s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes shimmerLine {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Avatar con gradiente vivo */
+.pro-avatar {
+  background: linear-gradient(135deg, #f97316 0%, #4f46e5 50%, #06b6d4 100%);
+  box-shadow:
+    0 0 0 3px rgba(6,182,212,0.20),
+    0 6px 20px rgba(79,70,229,0.45);
+  font-size: 1.4rem;
+}
+
+/* Indicador online — pulso animado */
+.online-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+  animation: onlinePulse 2s ease-in-out infinite;
+}
+
+@keyframes onlinePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+/* Nombre del pro */
+.pro-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #f1f5f9;
+}
+
+/* Especialidad — cyan brillante */
+.pro-specialty {
+  color: #22d3ee;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Rating — estrellas naranja más grandes */
+.stars {
+  color: #f97316;
+  font-size: 0.9rem;
+  filter: drop-shadow(0 0 4px rgba(249,115,22,0.5));
+}
+
+.rating-num {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #f97316;
+}
+
+/* Footer de card — fondo con micro-gradiente */
+.pro-card-footer {
+  background: linear-gradient(135deg, rgba(6,182,212,0.04), rgba(79,70,229,0.04));
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 14px 18px;
+  gap: 8px;
+}
+
+/* Botón primario en card */
+.pro-card-footer .btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  box-shadow: 0 4px 16px rgba(6,182,212,0.30);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.pro-card-footer .btn-primary:hover {
+  box-shadow: 0 6px 24px rgba(6,182,212,0.50);
+  transform: translateY(-2px);
+}
+
+/* Botón WhatsApp en card */
+.pro-card-footer .btn-whatsapp {
+  box-shadow: 0 4px 14px rgba(37,211,102,0.25);
+}
+
+/* Botón ghost en card */
+.pro-card-footer .btn-ghost {
+  border-color: rgba(6,182,212,0.25);
+  color: #94a3b8;
+}
+
+.pro-card-footer .btn-ghost:hover {
+  border-color: #06b6d4;
+  color: #22d3ee;
+  background: rgba(6,182,212,0.08);
+}
+
+/* Badge "añadir múltiple" */
+.pro-card-footer .btn-add-multi {
+  color: #22d3ee;
+  border-color: rgba(6,182,212,0.30);
+  background: rgba(6,182,212,0.05);
+}
+
+.pro-card-footer .btn-add-multi:hover {
+  background: rgba(6,182,212,0.15);
+  border-color: #06b6d4;
+  box-shadow: 0 0 12px rgba(6,182,212,0.30);
+}
+
+/* Badges en la esquina */
+.badge-destacado {
+  background: linear-gradient(135deg, #f97316, #dc2626);
+  box-shadow: 0 2px 12px rgba(249,115,22,0.50);
+  font-size: 0.67rem;
+  letter-spacing: 0.8px;
+}
+
+.badge-certificado {
+  background: linear-gradient(135deg, #06b6d4, #4f46e5);
+  box-shadow: 0 2px 12px rgba(6,182,212,0.45);
+}
+
+/* Tags de zona */
+.zone-tag {
+  background: rgba(79,70,229,0.10);
+  border: 1px solid rgba(79,70,229,0.20);
+  color: #a5b4fc;
+  font-size: 0.69rem;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+
+/* Specialty chips */
+.specialty-chip {
+  background: rgba(6,182,212,0.10);
+  border-color: rgba(6,182,212,0.25);
+  color: #22d3ee;
+}
+
+/* Score de ranking */
+.ranking-score {
+  background: rgba(249,115,22,0.20);
+  border-color: rgba(249,115,22,0.45);
+  color: #fb923c;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.20);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODALES — premium y dramáticos
+══════════════════════════════════════════════════════════════════════ */
+
+/* Overlay más dramático con tinte de color */
+.modal-overlay {
+  background: rgba(2,6,23,0.92);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+
+/* Modal base — más dramático */
+.modal {
+  background: linear-gradient(160deg,
+    rgba(13,20,45,0.99) 0%,
+    rgba(8,12,30,0.99) 100%
+  );
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 1px rgba(6,182,212,0.08),
+    0 32px 80px rgba(0,0,0,0.70),
+    0 0 120px rgba(79,70,229,0.08);
+}
+
+/* Línea de acento superior del modal */
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 24px; right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(6,182,212,0.50), rgba(249,115,22,0.40), transparent);
+  border-radius: var(--radius-full);
+}
+
+.modal-header {
+  padding: 26px 28px 0;
+  margin-bottom: 20px;
+}
+
+/* Título del modal — gradiente */
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #f1f5f9 60%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Botón de cierre — más elegante */
+.modal-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #64748b;
+  transition: all 0.2s ease;
+  width: 34px;
+  height: 34px;
+}
+
+.modal-close:hover {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.30);
+  color: #f87171;
+  transform: rotate(90deg);
+  box-shadow: 0 0 12px rgba(239,68,68,0.15);
+}
+
+/* Inputs dentro de modales — más vivos al focus */
+.modal .form-input:focus,
+.modal .form-select:focus,
+.modal .form-textarea:focus {
+  border-color: #06b6d4;
+  background: rgba(6,182,212,0.05);
+  box-shadow:
+    0 0 0 3px rgba(6,182,212,0.15),
+    0 0 20px rgba(6,182,212,0.08);
+}
+
+/* Labels de formulario en modales */
+.modal .form-label {
+  color: #94a3b8;
+  font-size: 0.76rem;
+  letter-spacing: 0.7px;
+}
+
+/* Botón primario en modales */
+.modal .btn-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  box-shadow: 0 4px 20px rgba(6,182,212,0.30);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.modal .btn-primary:hover {
+  box-shadow:
+    0 6px 28px rgba(6,182,212,0.45),
+    0 0 40px rgba(79,70,229,0.20);
+  transform: translateY(-2px);
+}
+
+/* Sección de info dentro de modales (fondos) */
+.modal [style*="rgba(79,70,229,0.1)"],
+.modal [style*="rgba(79, 70, 229, 0.1)"] {
+  background: rgba(6,182,212,0.06) !important;
+  border: 1px solid rgba(6,182,212,0.15) !important;
+}
+
+/* Social login buttons */
+.modal .social-login-btn:hover {
+  border-color: #06b6d4;
+  background: rgba(6,182,212,0.07);
+  box-shadow: 0 0 14px rgba(6,182,212,0.10);
+}
+
+/* Divider de formulario */
+.modal .form-divider {
+  color: #475569;
+  font-size: 0.80rem;
+}
+
+/* Scrollbar dentro del modal */
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.30); border-radius: 2px; }
+
+/* ── MODAL DE URGENCIAS — especialmente llamativo ── */
+#modal-urgent .modal::before {
+  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.70), rgba(220,38,38,0.50), transparent);
+}
+
+#modal-urgent .modal {
+  box-shadow:
+    0 0 0 1px rgba(249,115,22,0.12),
+    0 32px 80px rgba(0,0,0,0.70),
+    0 0 120px rgba(249,115,22,0.10);
+}
+
+.urgent-icon {
+  color: #f97316;
+  filter: drop-shadow(0 0 20px rgba(249,115,22,0.60));
+}
+
+/* ── MODAL DE CALIFICACIÓN — estrellas vívidas ── */
+.rating-input-stars .star {
+  color: rgba(255,255,255,0.12);
+  transition: color 0.15s ease, filter 0.15s ease, transform 0.15s ease;
+}
+
+.rating-input-stars .star.active,
+.rating-input-stars .star:hover {
+  color: #f97316;
+  filter: drop-shadow(0 0 6px rgba(249,115,22,0.70));
+  transform: scale(1.15);
+}
+
+/* ── MODAL DE LOGIN/REGISTRO ── */
+#modal-login .modal-title,
+#modal-register .modal-title {
+  background: linear-gradient(135deg, #f1f5f9, #06b6d4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BOTONES GLOBALES — más energía
+══════════════════════════════════════════════════════════════════════ */
+
+/* Botón urgente — ícono animado */
+.urgent-btn .fa-bolt {
+  filter: drop-shadow(0 0 6px rgba(249,115,22,0.80));
+  animation: boltFlicker 1.5s ease-in-out infinite;
+}
+
+@keyframes boltFlicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.15) rotate(-5deg); }
+}
+
+/* Notif badge — más vivo */
+.notif-count {
+  background: linear-gradient(135deg, #f97316, #dc2626);
+  box-shadow: 0 2px 8px rgba(249,115,22,0.50);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(249,115,22,0.50); }
+  50% { box-shadow: 0 2px 14px rgba(249,115,22,0.80); }
+}
+
+/* Burbuja de chat flotante */
+.fchat-bubble {
+  box-shadow:
+    0 0 0 0 rgba(79,70,229,0.50),
+    0 6px 24px rgba(79,70,229,0.45);
+  animation: chatBubblePulse 3s ease-in-out infinite;
+}
+
+@keyframes chatBubblePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79,70,229,0.40), 0 6px 24px rgba(79,70,229,0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(79,70,229,0), 0 6px 24px rgba(79,70,229,0.45); }
+}
+
+.fchat-send-btn {
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   STAT CARDS — más color
+══════════════════════════════════════════════════════════════════════ */
+
+.stat-card:nth-child(1) .stat-num { color: #22d3ee; }
+.stat-card:nth-child(2) .stat-num { color: #a78bfa; }
+.stat-card:nth-child(3) .stat-num { color: #f97316; }
+.stat-card:nth-child(4) .stat-num { color: #34d399; }
+
+.stat-card:nth-child(1):hover { border-color: rgba(6,182,212,0.35); box-shadow: 0 0 24px rgba(6,182,212,0.10); }
+.stat-card:nth-child(2):hover { border-color: rgba(124,58,237,0.35); box-shadow: 0 0 24px rgba(124,58,237,0.10); }
+.stat-card:nth-child(3):hover { border-color: rgba(249,115,22,0.35); box-shadow: 0 0 24px rgba(249,115,22,0.10); }
+.stat-card:nth-child(4):hover { border-color: rgba(16,185,129,0.35); box-shadow: 0 0 24px rgba(16,185,129,0.10); }
+
+/* Línea de acento por color */
+.stat-card:nth-child(1)::after { background: linear-gradient(90deg, transparent, #06b6d4, transparent); }
+.stat-card:nth-child(2)::after { background: linear-gradient(90deg, transparent, #7c3aed, transparent); }
+.stat-card:nth-child(3)::after { background: linear-gradient(90deg, transparent, #f97316, transparent); }
+.stat-card:nth-child(4)::after { background: linear-gradient(90deg, transparent, #10b981, transparent); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TABS — selector de color vivo
+══════════════════════════════════════════════════════════════════════ */
+
+.tab.active {
+  background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(79,70,229,0.15));
+  color: #22d3ee;
+  border: 1px solid rgba(6,182,212,0.25);
+  box-shadow: 0 0 14px rgba(6,182,212,0.10);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   JOB ITEMS — íconos de color
+══════════════════════════════════════════════════════════════════════ */
+
+.job-icon {
+  background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(6,182,212,0.10));
+  color: #818cf8;
+  border-color: rgba(79,70,229,0.25);
+  box-shadow: 0 0 10px rgba(79,70,229,0.10);
+}
+
+.job-item:hover {
+  border-color: rgba(6,182,212,0.25);
+  box-shadow: 0 4px 20px rgba(6,182,212,0.06);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SEARCH CARD — más viva
+══════════════════════════════════════════════════════════════════════ */
+
+.search-card {
+  background: linear-gradient(145deg, rgba(13,20,45,0.95), rgba(8,14,36,0.98));
+  border: 1px solid rgba(6,182,212,0.12);
+  box-shadow: 0 4px 32px rgba(6,182,212,0.05);
+}
+
+.search-input:focus, .search-select:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.15), 0 0 20px rgba(6,182,212,0.06);
+}
+
+.toggle-chip.active {
+  background: rgba(6,182,212,0.14);
+  border-color: rgba(6,182,212,0.40);
+  color: #22d3ee;
+  box-shadow: 0 0 10px rgba(6,182,212,0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HERO EYEBROW — más llamativo
+══════════════════════════════════════════════════════════════════════ */
+
+.hero-eyebrow {
+  background: linear-gradient(135deg, rgba(6,182,212,0.12), rgba(249,115,22,0.08));
+  border-color: rgba(6,182,212,0.30);
+  color: #22d3ee;
+  box-shadow: 0 4px 16px rgba(6,182,212,0.10);
+}
+
+.hero-eyebrow .fa-bolt {
+  color: #f97316;
+  filter: drop-shadow(0 0 4px rgba(249,115,22,0.60));
+}
+
+/* Gradiente del título hero */
+.hero-title {
+  background: linear-gradient(135deg, #f1f5f9 20%, #22d3ee 60%, #f97316 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Stats hero */
+.hero-stat-num {
+  background: linear-gradient(135deg, #f1f5f9, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
