@@ -199,6 +199,9 @@ export async function loadProDashboard() {
   setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
   setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
 
+  // Actualizar contador de especialidades
+  updateSpecialtyCounter();
+
   // Cargar avatar en el formulario de edición profesional
   const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
   if (profile?.avatar_url) {
@@ -639,8 +642,46 @@ export function renderSpecialtyEditor(selected = []) {
   }).join('');
 }
 
+export function canSelectUnlimitedSpecialties() {
+  return store.currentPro?.is_featured === true;
+}
+
 export function toggleSpecialtyChip(el, specialty) {
-  el.classList.toggle('active');
+  const isUnlimited = canSelectUnlimitedSpecialties();
+  
+  if (isUnlimited) {
+    el.classList.toggle('active');
+    updateSpecialtyCounter();
+    return;
+  }
+  
+  const selected = getSelectedSpecialties();
+  if (el.classList.contains('active')) {
+    el.classList.remove('active');
+    updateSpecialtyCounter();
+  } else if (selected.length < 3) {
+    el.classList.add('active');
+    updateSpecialtyCounter();
+  } else {
+    const { showToast } = require('./ui.js');
+    showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info');
+  }
+}
+
+export function updateSpecialtyCounter() {
+  const counter = document.getElementById('specialty-counter');
+  if (!counter) return;
+  
+  const selected = getSelectedSpecialties();
+  const isUnlimited = canSelectUnlimitedSpecialties();
+  
+  if (isUnlimited) {
+    counter.innerHTML = '<i class="fa fa-infinity"></i> Ilimitadas';
+    counter.style.color = 'var(--green)';
+  } else {
+    counter.textContent = `${selected.length}/3 seleccionadas`;
+    counter.style.color = selected.length >= 3 ? 'var(--orange)' : 'var(--gray)';
+  }
 }
 
 export function getSelectedSpecialties() {

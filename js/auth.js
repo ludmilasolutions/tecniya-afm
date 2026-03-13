@@ -189,8 +189,25 @@ export async function registerEmail() {
   const province  = document.getElementById('reg-province')?.value.trim() || '';
   const whatsapp  = document.getElementById('reg-whatsapp')?.value.trim() || '';
 
-  if (role === 'professional' && !specialty) {
-    showAuthError(errEl, 'Seleccioná tu especialidad principal.');
+  // Obtener especialidades del editor de chips (si existe)
+  let specialties = [];
+  const specialtyChips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
+  if (specialtyChips.length > 0) {
+    specialties = Array.from(specialtyChips).map(c => c.textContent.trim());
+  } else if (specialty) {
+    specialties = [specialty];
+  }
+
+  if (role === 'professional' && specialties.length === 0) {
+    showAuthError(errEl, 'Seleccioná al menos una especialidad.');
+    return;
+  }
+
+  // Verificar límite (3 para gratis, ilimitadas para destacados)
+  // Por defecto en registro siempre limitado a 3
+  const maxSpecialties = 3;
+  if (role === 'professional' && specialties.length > maxSpecialties) {
+    showAuthError(errEl, `Máximo ${maxSpecialties} especialidades. ¡Contratá Plan Destacado para ilimitadas!`);
     return;
   }
 
@@ -219,9 +236,11 @@ export async function registerEmail() {
     }, { onConflict: 'id', ignoreDuplicates: true });
 
     if (role === 'professional') {
+      const mainSpecialty = specialties[0] || 'General';
       await sb.from('professionals').upsert({
         user_id: data.user.id,
-        specialty: specialty || 'General',
+        specialty: mainSpecialty,
+        specialties: specialties,
         city,
         province,
         whatsapp,
@@ -229,7 +248,8 @@ export async function registerEmail() {
       });
       // Guardar pro sin depender de UNIQUE constraint
       await saveProfessional(sb, data.user.id, {
-        specialty: specialty || 'General',
+        specialty: mainSpecialty,
+        specialties: specialties,
         city,
         province,
         whatsapp,

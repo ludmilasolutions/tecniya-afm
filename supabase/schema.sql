@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS public.professionals (
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     specialty_id UUID REFERENCES public.specialties(id),
     specialty TEXT NOT NULL,
+    specialties TEXT[],  -- Array de especialidades (máx 3 para gratis, ilimitadas para destacados)
     description TEXT,
     city TEXT,
     province TEXT,
@@ -683,6 +684,121 @@ COMMENT ON TABLE public.jobs IS 'Trabajos/solicitudes de servicios';
 COMMENT ON TABLE public.reviews IS 'Reseñas y calificaciones';
 COMMENT ON TABLE public.subscriptions IS 'Suscripciones de profesionales destacados';
 COMMENT ON TABLE public.audit_log IS 'Log de auditoría para cumplimiento';
+
+-- =====================================================
+-- POLÍTICAS RLS (Row Level Security)
+-- IMPORTANTE: Ejecuta estas políticas en Supabase SQL Editor
+-- =====================================================
+
+-- profiles
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "profiles_select" ON profiles FOR SELECT USING (true);
+CREATE POLICY "profiles_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "profiles_update" ON profiles FOR UPDATE USING (auth.uid() = id);
+
+-- professionals
+ALTER TABLE public.professionals ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "pros_select" ON professionals FOR SELECT USING (true);
+CREATE POLICY "pros_insert" ON professionals FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "pros_update" ON professionals FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "pros_delete" ON professionals FOR DELETE USING (auth.uid() = user_id);
+
+-- jobs
+ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "jobs_select" ON jobs FOR SELECT USING (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "jobs_insert" ON jobs FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "jobs_update" ON jobs FOR UPDATE USING (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "jobs_delete" ON jobs FOR DELETE USING (auth.uid() = user_id OR auth.uid() = professional_id);
+
+-- work_photos
+ALTER TABLE public.work_photos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "work_photos_select" ON work_photos FOR SELECT USING (true);
+CREATE POLICY "work_photos_insert" ON work_photos FOR INSERT WITH CHECK (auth.uid() = professional_id);
+CREATE POLICY "work_photos_update" ON work_photos FOR UPDATE USING (auth.uid() = professional_id);
+CREATE POLICY "work_photos_delete" ON work_photos FOR DELETE USING (auth.uid() = professional_id);
+
+-- budgets
+ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "budgets_select" ON budgets FOR SELECT USING (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "budgets_insert" ON budgets FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "budgets_update" ON budgets FOR UPDATE USING (auth.uid() = user_id OR auth.uid() = professional_id);
+CREATE POLICY "budgets_delete" ON budgets FOR DELETE USING (auth.uid() = user_id OR auth.uid() = professional_id);
+
+-- reviews
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "reviews_select" ON reviews FOR SELECT USING (true);
+CREATE POLICY "reviews_insert" ON reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "reviews_update" ON reviews FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "reviews_delete" ON reviews FOR DELETE USING (auth.uid() = user_id);
+
+-- notifications
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "notif_select" ON notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "notif_insert" ON notifications FOR INSERT WITH CHECK (true);
+CREATE POLICY "notif_update" ON notifications FOR UPDATE USING (auth.uid() = user_id);
+
+-- conversations
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "conv_select" ON conversations FOR SELECT USING (auth.uid() = participant_one OR auth.uid() = participant_two);
+CREATE POLICY "conv_insert" ON conversations FOR INSERT WITH CHECK (auth.uid() = participant_one OR auth.uid() = participant_two);
+CREATE POLICY "conv_update" ON conversations FOR UPDATE USING (auth.uid() = participant_one OR auth.uid() = participant_two);
+
+-- messages
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "msg_select" ON messages FOR SELECT USING (auth.uid() = sender_id);
+CREATE POLICY "msg_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "msg_update" ON messages FOR UPDATE USING (auth.uid() = sender_id);
+
+-- favorites
+ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "fav_select" ON favorites FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "fav_insert" ON favorites FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "fav_delete" ON favorites FOR DELETE USING (auth.uid() = user_id);
+
+-- subscriptions
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "subs_select" ON subscriptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "subs_insert" ON subscriptions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "subs_update" ON subscriptions FOR UPDATE USING (auth.uid() = user_id);
+
+-- certifications
+ALTER TABLE public.certifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "cert_select" ON certifications FOR SELECT USING (true);
+CREATE POLICY "cert_insert" ON certifications FOR INSERT WITH CHECK (auth.uid() = professional_id);
+CREATE POLICY "cert_update" ON certifications FOR UPDATE USING (auth.uid() = professional_id);
+CREATE POLICY "cert_delete" ON certifications FOR DELETE USING (auth.uid() = professional_id);
+
+-- addresses
+ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "addr_select" ON addresses FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "addr_insert" ON addresses FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "addr_update" ON addresses FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "addr_delete" ON addresses FOR DELETE USING (auth.uid() = user_id);
+
+-- ads
+ALTER TABLE public.ads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ads_select" ON ads FOR SELECT USING (active = true);
+CREATE POLICY "ads_insert" ON ads FOR INSERT WITH CHECK (true);
+CREATE POLICY "ads_update" ON ads FOR UPDATE USING (true);
+CREATE POLICY "ads_delete" ON ads FOR DELETE USING (true);
+
+-- urgent_requests
+ALTER TABLE public.urgent_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "urgent_select" ON urgent_requests FOR SELECT USING (true);
+CREATE POLICY "urgent_insert" ON urgent_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "urgent_update" ON urgent_requests FOR UPDATE USING (true);
+
+-- audit_log (solo admins)
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "audit_select" ON audit_log FOR SELECT USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- specialties, cities (públicas)
+ALTER TABLE public.specialties ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "specialties_select" ON specialties FOR SELECT USING (true);
+ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "cities_select" ON cities FOR SELECT USING (true);
 
 -- =====================================================
 -- FIN DEL SCHEMA

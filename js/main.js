@@ -124,6 +124,9 @@ window.adminToggleBlock   = adminToggleBlock;
 window.adminToggleFeatured= adminToggleFeatured;
 window.adminDeleteAd      = adminDeleteAd;
 window.filterAdminTable   = filterAdminTable;
+window.adminFilterReports = adminFilterReports;
+window.submitProReport   = submitProReport;
+window.openReportModal   = openReportModal;
 
 window.toggleFloatChat        = toggleFloatChat;
 window.fchatGoList            = fchatGoList;
