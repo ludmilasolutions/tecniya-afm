@@ -8,7 +8,7 @@ import { showPage, showModal, closeModal, toggleMobileMenu, toggleUserMenu, hide
 import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
-import { detectLocation } from './geolocation.js';
+import { detectLocation, onActivateProvinceChange, detectActivateLocation } from './geolocation.js';
 import { checkAndShowTour } from './tour.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
@@ -115,6 +115,8 @@ window.showSuscripcion  = showSuscripcion;
 window.subscribePro     = subscribePro;
 window.installPWA       = installPWA;
 window.detectLocation   = detectLocation;
+window.onActivateProvinceChange = onActivateProvinceChange;
+window.detectActivateLocation = detectActivateLocation;
 
 window.loadAdminData      = loadAdminData;
 window.switchAdminTab     = switchAdminTab;
@@ -336,6 +338,20 @@ async function initApp() {
       counter.textContent = `${count}/3 seleccionadas`;
       counter.style.color = count >= 3 ? 'var(--orange)' : 'var(--gray)';
     }
+  };
+
+  // Preview de avatar en modal de activar
+  window.previewActivateAvatar = function(input) {
+    const file = input.files?.[0];
+    const preview = document.getElementById('activate-avatar-preview');
+    if (!file || !preview) return;
+    
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.style.backgroundImage = `url('${e.target.result}')`;
+      preview.innerHTML = '';
+    };
+    reader.readAsDataURL(file);
   };
   // ── NOTIFICACIONES ──────────────────────────────────────────────────────
   on('notif-btn',        'click', toggleNotifPanel);

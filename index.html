@@ -1001,6 +1001,19 @@
     </div>
     <div class="modal-body">
       <p style="color:var(--gray);font-size:0.88rem;margin-bottom:18px;">Completá tus datos para empezar a ofrecer servicios en TECNIYA. Podés editar todo esto después desde tu panel.</p>
+      
+      <!-- Foto de perfil -->
+      <div class="form-group" style="text-align:center;margin-bottom:20px;">
+        <div id="activate-avatar-preview" class="avatar-preview" style="width:100px;height:100px;margin:0 auto 12px;background:var(--bg2);border-radius:50%;background-size:cover;background-position:center;border:3px solid var(--border);">
+          <i class="fa fa-camera" style="font-size:1.5rem;color:var(--gray);margin-top:30px;"></i>
+        </div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+          <i class="fa fa-camera"></i> Agregar foto de perfil
+          <input type="file" id="activate-avatar-file" accept="image/*" style="display:none;" onchange="window.previewActivateAvatar(this)">
+        </label>
+        <p style="font-size:0.75rem;color:var(--gray);margin-top:8px;">* required para activar</p>
+      </div>
+      
       <div class="form-group">
         <label class="form-label">Especialidades <span style="color:#ef4444;">*</span></label>
         <div id="activate-specialty-chips" class="specialty-chips-editor" style="max-height:150px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;">
@@ -1011,15 +1024,43 @@
           <span id="activate-specialty-counter" style="font-size:0.75rem;font-weight:600;">0/3 seleccionadas</span>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="form-group">
-          <label class="form-label">Ciudad</label>
-          <input type="text" class="form-input" id="activate-city" placeholder="Rosario">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Provincia</label>
-          <input type="text" class="form-input" id="activate-province" placeholder="Santa Fe">
-        </div>
+      <div class="form-group">
+        <label class="form-label">Provincia</label>
+        <select class="form-select" id="activate-province" onchange="window.onActivateProvinceChange(this.value)">
+          <option value="">Seleccioná tu provincia</option>
+          <option value="Buenos Aires">Buenos Aires</option>
+          <option value="Córdoba">Córdoba</option>
+          <option value="Santa Fe">Santa Fe</option>
+          <option value="Mendoza">Mendoza</option>
+          <option value="Tucumán">Tucumán</option>
+          <option value="Salta">Salta</option>
+          <option value="Neuquén">Neuquén</option>
+          <option value="Entre Ríos">Entre Ríos</option>
+          <option value="Chaco">Chaco</option>
+          <option value="Corrientes">Corrientes</option>
+          <option value="Misiones">Misiones</option>
+          <option value="Formosa">Formosa</option>
+          <option value="Jujuy">Jujuy</option>
+          <option value="La Pampa">La Pampa</option>
+          <option value="La Rioja">La Rioja</option>
+          <option value="San Juan">San Juan</option>
+          <option value="San Luis">San Luis</option>
+          <option value="Santiago del Estero">Santiago del Estero</option>
+          <option value="Tierra del Fuego">Tierra del Fuego</option>
+          <option value="Chubut">Chubut</option>
+          <option value="Río Negro">Río Negro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ciudad</label>
+        <select class="form-select" id="activate-city">
+          <option value="">Seleccioná una provincia primero</option>
+        </select>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="window.detectActivateLocation()">
+          <i class="fa fa-location-crosshairs"></i> Usar mi ubicación actual
+        </button>
       </div>
       <div class="form-group">
         <label class="form-label">WhatsApp <span style="color:var(--gray);font-weight:400;">(opcional)</span></label>
