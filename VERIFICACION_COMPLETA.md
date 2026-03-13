@@ -62,3 +62,32 @@
 - Sistema de urgencias funcional
 - PWA instalable con iconos
 - Geolocalización automática
+
+## 💳 INTEGRACIÓN MERCADOPAGO (Pagos)
+
+### Archivos creados:
+- `js/mercadopago.js` - Módulo de integración con MercadoPago
+- `supabase/functions/mercadopago-webhook/index.ts` - Webhook para notificaciones
+
+### Configuración necesaria:
+1. **En config.js** - Reemplazar credenciales:
+   ```js
+   MERCADOPAGO_CONFIG = {
+     ACCESS_TOKEN: 'TU_ACCESS_TOKEN_DE_MERCADOPAGO',
+     PUBLIC_KEY: 'TU_PUBLIC_KEY',
+     BACKEND_URL: 'URL_DE_TU_SUPABASE'
+   }
+   ```
+
+2. **En Supabase** - Agregar variable de entorno:
+   - `MERCADOPAGO_ACCESS_TOKEN` en Edge Functions
+
+3. **En MercadoPago** - Configurar webhook:
+   - URL: `https://TU_PROYECTO.supabase.co/functions/v1/mercadopago-webhook`
+   - Eventos: `payment`
+
+### Funcionalidades:
+- ✅ Botón "Pagar con MercadoPago" - Redirecciona al checkout
+- ✅ Botón "Prueba gratis 7 días" - Activación inmediata sin pago
+- ✅ Webhook procesa pagos aprobados y activa suscripción
+- ✅ Sistema pendiente → active al confirmar pago

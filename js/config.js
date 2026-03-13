@@ -32,3 +32,18 @@ export const MOCK_PROS = [
 ];
 
 export const SUBSCRIPTION_PRICE = 5000;
+
+export const MERCADOPAGO_CONFIG = {
+  ACCESS_TOKEN: 'APP_USR-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  PUBLIC_KEY: 'APP_USR-xxxxxxxxxxxxxxxxxxxxxxxx',
+  BACKEND_URL: 'https://dkswhmujymvsbosghrsd.supabase.co'
+};
+
+export const FIREBASE_CONFIG = {
+  apiKey: "TU_API_KEY",
+  authDomain: "tu-proyecto.firebaseapp.com",
+  projectId: "tu-proyecto",
+  storageBucket: "tu-proyecto.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};

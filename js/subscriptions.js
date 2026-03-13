@@ -8,6 +8,11 @@ export function showSuscripcion() {
 }
 
 export async function subscribePro() {
+  const { createSubscriptionPayment } = await import('./mercadopago.js');
+  await createSubscriptionPayment();
+}
+
+export async function subscribeProFree() {
   if (!store.currentUser) {
     closeModal('modal-subscription');
     showModal('modal-login');
@@ -21,7 +26,7 @@ export async function subscribePro() {
     user_id: store.currentUser.id,
     type: 'destacado',
     status: 'active',
-    price: 5000,
+    price: 0,
     currency: 'ARS',
     starts_at: new Date().toISOString(),
     ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -58,7 +63,9 @@ export async function checkSubscription() {
         return true;
       }
     }
-  } catch {}
+  } catch (e) {
+    console.warn('checkSubscription:', e?.message);
+  }
   
   return false;
 }

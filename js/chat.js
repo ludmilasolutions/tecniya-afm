@@ -350,7 +350,9 @@ function renderMsgBubble(msg, isSent) {
     </a>`;
   } else if (msg.type === 'budget') {
     let b = {};
-    try { b = JSON.parse(msg.content); } catch {}
+    try { b = JSON.parse(msg.content); } catch (e) {
+      console.warn('Error parsing budget message:', e?.message);
+    }
     bubble = `<div class="chat-budget-card">
       <div style="font-size:0.75rem;color:var(--orange);font-weight:700;margin-bottom:6px;"><i class="fa fa-file-invoice-dollar"></i> PRESUPUESTO</div>
       <div style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">${escHtml(b.description || 'Trabajo')}</div>

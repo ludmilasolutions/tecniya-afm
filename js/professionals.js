@@ -15,7 +15,8 @@ export async function loadSpecialties() {
     if (!sb) throw new Error('no sb');
     const { data } = await sb.from('specialties').select('*').order('name');
     allSpecialties = (data && data.length > 0) ? data.map(s => s.name) : SPECIALTIES_DEFAULT;
-  } catch {
+  } catch (e) {
+    console.warn('loadSpecialties:', e?.message);
     allSpecialties = SPECIALTIES_DEFAULT;
   }
   

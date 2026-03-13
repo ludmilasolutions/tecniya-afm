@@ -12,6 +12,8 @@
   <link href="https://fonts.cdnfonts.com/css/inter" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/vivid.css">
 </head>
@@ -1266,7 +1268,17 @@
           <li><i class="fa fa-check"></i>Estadísticas avanzadas</li>
         </ul>
       </div>
-      <button class="btn btn-orange btn-block btn-lg" style="margin-top:20px;" id="btn-subscribe"><i class="fa fa-crown"></i>Activar Plan Destacado</button>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px;">
+        <button class="btn btn-orange btn-block btn-lg" id="btn-subscribe-mp">
+          <i class="fa fa-credit-card"></i> Pagar con MercadoPago
+        </button>
+        <button class="btn btn-ghost btn-block" id="btn-subscribe-free">
+          <i class="fa fa-gift"></i> Activar prueba gratis (7 días)
+        </button>
+      </div>
+      <p style="text-align:center;font-size:0.75rem;color:var(--gray);margin-top:12px;">
+        <i class="fa fa-lock"></i> Pago seguro con MercadoPago
+      </p>
     </div>
   </div>
 </div>
@@ -1675,6 +1687,83 @@
       </div>
 
       <button class="btn btn-primary btn-block" onclick="window.adminSaveUser()">
+        <i class="fa fa-floppy-disk"></i> Guardar cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: editar perfil profesional -->
+<div class="modal-overlay" id="modal-edit-pro">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-user-pen" style="color:var(--accent);margin-right:8px;"></i>Editar mi perfil</h3>
+      <button class="modal-close" data-close="modal-edit-pro"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div id="pro-edit-avatar-preview" class="avatar-preview avatar-lg" style="width:100px;height:100px;margin:0 auto 12px;background:var(--bg2);border-radius:50%;background-size:cover;background-position:center;">
+          <i class="fa fa-camera" style="font-size:1.5rem;color:var(--gray);"></i>
+        </div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+          <i class="fa fa-camera"></i> Cambiar foto
+          <input type="file" accept="image/*" onchange="window.proEditAvatarSelected(this)" style="display:none;">
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre completo *</label>
+        <input class="form-input" type="text" id="pro-edit-name" placeholder="Tu nombre">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Especialidad principal *</label>
+        <select class="form-select" id="pro-edit-specialty">
+          <option value="">Seleccionar...</option>
+          <option value="Electricista">Electricista</option>
+          <option value="Plomero">Plomero</option>
+          <option value="Carpintero">Carpintero</option>
+          <option value="Pintor">Pintor</option>
+          <option value="Gasista">Gasista</option>
+          <option value="Albañil">Albañil</option>
+          <option value="Técnico HVAC">Técnico HVAC</option>
+          <option value="Cerrajero">Cerrajero</option>
+          <option value="Jardinero">Jardinero</option>
+          <option value="Limpieza">Limpieza</option>
+          <option value="Fumigador">Fumigador</option>
+          <option value="Técnico PC">Técnico PC</option>
+          <option value="Técnico CEL">Técnico CEL</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-input" id="pro-edit-desc" rows="3" placeholder="Describe tu experiencia y servicios..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <input class="form-input" type="text" id="pro-edit-city" placeholder="Ciudad">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Provincia</label>
+          <input class="form-input" type="text" id="pro-edit-province" placeholder="Provincia">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Zonas de trabajo (separadas por coma)</label>
+        <input class="form-input" type="text" id="pro-edit-zones" placeholder="Zona norte, Zona sur, CABA...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">WhatsApp</label>
+        <input class="form-input" type="tel" id="pro-edit-whatsapp" placeholder="+54 9 11 1234 5678">
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="window.saveProProfile()">
         <i class="fa fa-floppy-disk"></i> Guardar cambios
       </button>
     </div>

@@ -381,6 +381,26 @@ CREATE TABLE IF NOT EXISTS public.ads (
 CREATE INDEX idx_ads_level ON public.ads(level, province, city) WHERE active = true;
 
 -- =====================================================
+-- PUSH TOKENS (Firebase Cloud Messaging)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.push_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    device_type TEXT DEFAULT 'web',
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_push_tokens_user ON public.push_tokens(user_id, active);
+
+ALTER TABLE public.push_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own tokens"
+    ON public.push_tokens FOR ALL
+    USING (auth.uid() = user_id);
+
+-- =====================================================
 -- NOTIFICATIONS
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.notifications (

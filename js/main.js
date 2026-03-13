@@ -29,7 +29,7 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
-         adminDeleteAd, filterAdminTable } from './admin.js';
+         adminDeleteAd, filterAdminTable, switchSecurityTab, switchPenaltyTab } from './admin.js';
 import { setupRealtimeNotifications, toggleNotifPanel, markAllRead, initNotificationsEvents, createNotification, handleNotifClick } from './notifications.js';
 import { sendChatMsg, sendChatMsgBtn, initChatEvents, loadChatPage, openChatWith, cleanupChat, closeChat } from './chat.js';
 import { showSuscripcion, subscribePro } from './subscriptions.js';
@@ -118,6 +118,8 @@ window.detectLocation   = detectLocation;
 
 window.loadAdminData      = loadAdminData;
 window.switchAdminTab     = switchAdminTab;
+window.switchSecurityTab  = switchSecurityTab;
+window.switchPenaltyTab   = switchPenaltyTab;
 window.adminToggleBlock   = adminToggleBlock;
 window.adminToggleFeatured= adminToggleFeatured;
 window.adminDeleteAd      = adminDeleteAd;
@@ -140,6 +142,9 @@ window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
 window.editAvatarSelected = editAvatarSelected;
 window.proEditAvatarSelected = proEditAvatarSelected;
+window.renderSpecialtyEditor = renderSpecialtyEditor;
+window.toggleSpecialtyChip = toggleSpecialtyChip;
+window.getSelectedSpecialties = getSelectedSpecialties;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;
@@ -341,13 +346,10 @@ async function initApp() {
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
   on('btn-edit-pro-profile',  'click', async () => {
-    showPage('pro-profile-edit');
-    const { renderSpecialtyEditor, loadProDashboard } = await import('./dashboard.js');
+    const { showModal } = await import('./ui.js');
+    const { loadProDashboard } = await import('./dashboard.js');
     await loadProDashboard();
-    const container = document.getElementById('specialty-chips-editor');
-    if (container && store.currentPro) {
-      renderSpecialtyEditor(store.currentPro.specialties || [store.currentPro.specialty]);
-    }
+    showModal('modal-edit-pro');
   });
   on('btn-featured-pro',      'click', showSuscripcion);
   on('btn-save-availability', 'click', saveAvailability);
@@ -403,7 +405,11 @@ async function initApp() {
   });
 
   // ── SUSCRIPCIÓN ──────────────────────────────────────────────────────────
-  on('btn-subscribe',    'click', subscribePro);
+  on('btn-subscribe-mp',   'click', subscribePro);
+  on('btn-subscribe-free', 'click', async () => {
+    const { subscribeProFree } = await import('./subscriptions.js');
+    await subscribeProFree();
+  });
 
   // ── CÓMO FUNCIONA ────────────────────────────────────────────────────────
   on('btn-register-how', 'click', () => showModal('modal-register'));

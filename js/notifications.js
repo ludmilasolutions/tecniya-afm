@@ -17,7 +17,9 @@ export function setupRealtimeNotifications() {
         addNotification(payload.new);
       })
       .subscribe();
-  } catch {}
+  } catch (e) {
+    console.warn('setupRealtimeNotifications:', e?.message);
+  }
 }
 
 // ─── BADGE (solo cuenta no leídas) ───────────────────────────────────────────
@@ -40,7 +42,9 @@ export async function setupNotifBadge() {
       badge.textContent = count;
       badge.classList.toggle('hidden', count === 0);
     }
-  } catch {}
+  } catch (e) {
+    console.warn('setupNotifBadge:', e?.message);
+  }
 }
 
 // ─── CARGAR LISTA COMPLETA (últimas 30) ───────────────────────────────────────

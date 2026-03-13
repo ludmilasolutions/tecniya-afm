@@ -65,6 +65,8 @@ export async function initAuth() {
     });
   } catch (e) {
     console.error('Auth init error:', e.message);
+    const { showToast } = await import('./ui.js');
+    showToast('Error al inicializar sesión. Recargá la página.', 'error');
   }
 }
 

@@ -2,7 +2,7 @@ import { getSupabase } from './supabase.js';
 import { showToast, showPage } from './ui.js';
 import { formatDate } from './utils.js';
 
-console.log('[admin.js] Loading...');
+
 
 export async function loadAdminData() {
   const sb = getSupabase();
@@ -29,7 +29,7 @@ export async function loadAdminData() {
       loadAdminReviews()
     ]);
   } catch (e) {
-    console.log('Admin data:', e.message);
+
   }
 }
 
@@ -277,6 +277,24 @@ export function switchAdminTab(tabId) {
       i.classList.toggle('active', isActive);
     }
   });
+}
+
+export function switchSecurityTab(tabId) {
+  document.querySelectorAll('#admin-security .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sec-tab-panel').forEach(p => p.style.display = 'none');
+  
+  event.target.classList.add('active');
+  const panel = document.getElementById(tabId);
+  if (panel) panel.style.display = 'block';
+}
+
+export function switchPenaltyTab(tabId) {
+  document.querySelectorAll('#admin-penalties .tabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pen-tab-panel').forEach(p => p.style.display = 'none');
+  
+  event.target.classList.add('active');
+  const panel = document.getElementById(tabId);
+  if (panel) panel.style.display = 'block';
 }
 
 export async function adminEditUser(userId) {
@@ -1318,7 +1336,7 @@ async function adImageUploadAndGetUrl() {
   return null;
 }
 
-console.log('[admin.js] Asignando funciones de imagen...');
+
 window.adImageFileSelected = adImageFileSelected;
 window.adImageZoomIn = adImageZoomIn;
 window.adImageZoomOut = adImageZoomOut;
@@ -1329,7 +1347,7 @@ window.adImageMoveRight = adImageMoveRight;
 window.adImageClear = adImageClear;
 window.adImageUrlChanged = adImageUrlChanged;
 window.adImageUploadAndGetUrl = adImageUploadAndGetUrl;
-console.log('[admin.js] Funciones asignadas:', typeof window.adImageFileSelected);
+
 
 function adminPreviewAdImage(event) {
   const file = event.target.files[0];

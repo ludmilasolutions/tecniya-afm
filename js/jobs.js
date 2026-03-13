@@ -209,14 +209,23 @@ export async function submitJobRequest() {
 }
 
 // Preview foto adjunta
+let jobPhotoObjectURL = null;
+
 export function previewJobPhoto(input) {
   const file = input.files?.[0];
   const nameEl = document.getElementById('job-req-photo-name');
   const prev   = document.getElementById('job-req-photo-preview');
   if (!file) return;
+  
+  // Liberar URL anterior para evitar memory leak
+  if (jobPhotoObjectURL) {
+    URL.revokeObjectURL(jobPhotoObjectURL);
+  }
+  
+  jobPhotoObjectURL = URL.createObjectURL(file);
   if (nameEl) nameEl.textContent = file.name;
   if (prev) {
-    prev.src = URL.createObjectURL(file);
+    prev.src = jobPhotoObjectURL;
     prev.style.display = 'block';
   }
 }
@@ -231,7 +240,8 @@ export async function loadUserJobs() {
       .eq('user_id', store.currentUser.id)
       .or(`status.not.in.(cancelado,rechazado),created_at.gt.${thirtyDaysAgo}`);
     return data || [];
-  } catch {
+  } catch (e) {
+    console.warn('loadUserJobs:', e?.message);
     return [];
   }
 }
@@ -243,7 +253,8 @@ export async function loadProJobs() {
   try {
     const { data } = await sb.from('jobs').select('*').eq('professional_id', store.currentPro.id);
     return data || [];
-  } catch {
+  } catch (e) {
+    console.warn('loadProJobs:', e?.message);
     return [];
   }
 }
@@ -299,7 +310,9 @@ export function jobItem(j, viewAs) {
       const cd = new Date(j.confirmed_date);
       const fmt = cd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
       confirmedDateBadge = `<span style="font-size:0.78rem;background:rgba(6,182,212,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;"><i class="fa fa-calendar-check" style="margin-right:4px;"></i>${fmt} — ${j.confirmed_period||''}</span>`;
-    } catch {}
+    } catch (e) {
+      console.warn('Error formatting confirmed_date:', e?.message);
+    }
   }
 
   // Badge check-in
@@ -361,7 +374,9 @@ export function jobItem(j, viewAs) {
       if (slot) try {
         const d = new Date(slot.date);
         slotStr = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}) + ' — ' + slot.period;
-      } catch {}
+      } catch (e) {
+        console.warn('Error formatting pro_proposed_dates:', e?.message);
+      }
       actions = `
         <div style="width:100%;font-size:0.82rem;color:var(--light);background:rgba(79,70,229,0.08);border-radius:8px;padding:8px 12px;margin-bottom:6px;">
           <i class="fa fa-calendar-plus" style="color:var(--accent);margin-right:6px;"></i>
@@ -463,13 +478,17 @@ export async function acceptJob(jobId) {
           }
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Error sending rejection notifications:', e?.message);
+    }
     // Desbloquear chat: pre_acceptance = false
     try {
       const sbLocal = getSupabase();
       await sbLocal.from('conversations').update({ pre_acceptance: false })
         .eq('job_id', jobId);
-    } catch {}
+    } catch (e) {
+      console.warn('Error updating conversation:', e?.message);
+    }
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else showToast('Error: ' + error.message, 'error');
@@ -487,7 +506,10 @@ function renderDatePickerModal(slots, jobId) {
     try {
       const d = new Date(s.date);
       return `${d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})} — ${s.period}`;
-    } catch { return s.date + ' — ' + s.period; }
+    } catch (e) {
+      console.warn('Error formatting slot date:', e?.message);
+      return s.date + ' — ' + s.period;
+    }
   };
   modal.innerHTML = `
     <div class="modal" style="max-width:420px;">
@@ -533,7 +555,10 @@ export async function confirmJobDate(jobId, date, period) {
           `El profesional confirmó para el ${fmt} — ${period}`
         ));
       }
-    } catch { showToast('Trabajo aceptado', 'success'); }
+    } catch (e) { 
+      console.warn('Error sending job_accepted notification:', e?.message);
+      showToast('Trabajo aceptado', 'success'); 
+    }
     const { loadProDashboard } = await import('./dashboard.js');
     loadProDashboard();
   } else showToast('Error: ' + error.message, 'error');
@@ -769,7 +794,9 @@ export async function startJob(jobId) {
           'Podés seguir el progreso desde tu panel.'
         ));
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Error in startJob notifications:', e?.message);
+    }
     const fmt = new Date(now).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
     showToast(`Check-in registrado a las ${fmt}. ¡Éxito con el trabajo!`, 'success');
     const { loadProDashboard } = await import('./dashboard.js');
@@ -952,7 +979,10 @@ export async function approveProDate(jobId) {
       const d = new Date(slot.date);
       const fmt = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
       showToast(`Fecha confirmada: ${fmt} — ${slot.period}`, 'success');
-    } catch { showToast('Fecha confirmada.', 'success'); }
+    } catch (e) { 
+      console.warn('Error formatting confirmed date:', e?.message);
+      showToast('Fecha confirmada.', 'success'); 
+    }
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
