@@ -407,21 +407,31 @@ export async function activateProProfile() {
       return;
     }
     // Actualizar el perfil del usuario con la nueva foto
-    await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', store.currentUser.id);
+    try {
+      await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', store.currentUser.id);
+    } catch (e) {
+      console.warn('Error updating avatar in profiles:', e);
+    }
   } else {
     // Verificar si ya tiene foto en la base de datos
-    const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-    if (!profile?.avatar_url) {
+    try {
+      const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).maybeSingle();
+      if (profile?.avatar_url) {
+        avatarUrl = profile.avatar_url;
+      }
+    } catch (e) {
+      console.warn('Error loading profile:', e);
+    }
+    if (!avatarUrl) {
       if (errEl) { errEl.textContent = 'Tenés que agregar una foto de perfil primero.'; errEl.classList.remove('hidden'); }
       return;
     }
-    avatarUrl = profile.avatar_url;
   }
 
   const btn = document.getElementById('btn-activate-pro');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Activando...</span>'; }
 
-  // Preparar datos para guardar (solo enviar specialties si hay valores)
+  // Preparar datos para guardar
   const proData = {
     specialty: mainSpecialty,
     city,
@@ -430,12 +440,23 @@ export async function activateProProfile() {
     description: ''
   };
   
-  // Solo agregar specialties si tiene valores
-  if (specialties && specialties.length > 0) {
-    proData.specialties = specialties;
+  // Intentar agregar specialties, si falla el campo no existe en la DB
+  try {
+    if (specialties && specialties.length > 0) {
+      proData.specialties = specialties;
+    }
+  } catch (e) {
+    console.warn('specialties field may not exist:', e);
   }
 
-  const { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, proData);
+  let { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, proData);
+
+  // Si error puede ser por specialties, reintentar sin ese campo
+  if (error && error.message?.includes('specialties')) {
+    console.warn('Retrying without specialties field...');
+    delete proData.specialties;
+    ({ data: newPro, error } = await saveProfessional(sb, store.currentUser.id, proData));
+  }
 
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-wrench"></i>Activar perfil profesional'; }
 

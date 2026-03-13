@@ -197,19 +197,26 @@ export async function updateAuthUI() {
     let avatarUrl = meta.avatar_url || meta.picture || null;
     
     // Cargar avatar desde profiles si no está en metadata
-    if (!avatarUrl && store.currentUser.id) {
+    if (!avatarUrl && store.currentUser?.id) {
       const { getSupabase } = await import('./supabase.js');
       const sb = getSupabase();
       try {
-        const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-        if (profile && profile.avatar_url) {
+        const { data: profile, error } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).maybeSingle();
+        
+        // Si no existe el perfil, crearlo
+        if (error?.code === 'PGRST116' || !profile) {
+          await sb.from('profiles').insert({
+            id: store.currentUser.id,
+            full_name: store.currentUser.user_metadata?.full_name || ''
+          });
+        } else if (profile?.avatar_url) {
           avatarUrl = profile.avatar_url;
-          if (store.currentUser.user_metadata) {
+          if (store.currentUser?.user_metadata) {
             store.currentUser.user_metadata.avatar_url = avatarUrl;
           }
         }
       } catch (err) {
-        console.warn('Could not load avatar:', err);
+        console.warn('Could not load avatar:', err.message || err);
       }
     }
     
