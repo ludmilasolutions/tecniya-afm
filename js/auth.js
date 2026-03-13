@@ -391,28 +391,60 @@ export async function activateProProfile() {
     return;
   }
 
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (!profile?.avatar_url) {
-    if (errEl) { errEl.textContent = 'Tenés que agregar una foto de perfil primero.'; errEl.classList.remove('hidden'); }
-    return;
+  // Verificar foto de perfil - puede ser existente en BD o nueva seleccionada
+  const avatarInput = document.getElementById('activate-avatar-file');
+  const hasNewAvatar = avatarInput?.files?.length > 0;
+  
+  let avatarUrl = null;
+  
+  if (hasNewAvatar) {
+    // Subir la nueva foto primero
+    showToast('Subiendo foto...', 'info');
+    const { uploadAvatar } = await import('./upload.js');
+    avatarUrl = await uploadAvatar(avatarInput.files[0], store.currentUser.id);
+    if (!avatarUrl) {
+      if (errEl) { errEl.textContent = 'Error al subir la foto. Intentá de nuevo.'; errEl.classList.remove('hidden'); }
+      return;
+    }
+    // Actualizar el perfil del usuario con la nueva foto
+    await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', store.currentUser.id);
+  } else {
+    // Verificar si ya tiene foto en la base de datos
+    const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
+    if (!profile?.avatar_url) {
+      if (errEl) { errEl.textContent = 'Tenés que agregar una foto de perfil primero.'; errEl.classList.remove('hidden'); }
+      return;
+    }
+    avatarUrl = profile.avatar_url;
   }
 
   const btn = document.getElementById('btn-activate-pro');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:0.7">Activando...</span>'; }
 
-  const { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, {
+  // Preparar datos para guardar (solo enviar specialties si hay valores)
+  const proData = {
     specialty: mainSpecialty,
-    specialties: specialties,
     city,
     province,
     whatsapp,
     description: ''
-  });
+  };
+  
+  // Solo agregar specialties si tiene valores
+  if (specialties && specialties.length > 0) {
+    proData.specialties = specialties;
+  }
+
+  const { data: newPro, error } = await saveProfessional(sb, store.currentUser.id, proData);
 
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-wrench"></i>Activar perfil profesional'; }
 
   if (error) {
-    if (errEl) { errEl.textContent = 'Error al activar el perfil. Intentá de nuevo.'; errEl.classList.remove('hidden'); }
+    console.error('Error activating pro:', error);
+    if (errEl) { 
+      errEl.textContent = 'Error al activar: ' + (error.message || 'Verificá los datos e intentá de nuevo'); 
+      errEl.classList.remove('hidden'); 
+    }
     return;
   }
 
