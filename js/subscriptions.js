@@ -21,8 +21,17 @@ export async function subscribeProFree() {
   
   const sb = getSupabase();
   
-  const { error } = await sb.from('subscriptions').upsert({
-    professional_id: store.currentPro?.id,
+  const proId = store.currentPro?.id;
+  if (!proId) { showToast('Error: no se encontró tu perfil profesional', 'error'); return; }
+
+  // Verificar si ya existe una suscripción
+  const { data: existing } = await sb.from('subscriptions')
+    .select('id')
+    .eq('professional_id', proId)
+    .maybeSingle();
+
+  const subData = {
+    professional_id: proId,
     user_id: store.currentUser.id,
     type: 'destacado',
     status: 'active',
@@ -30,7 +39,11 @@ export async function subscribeProFree() {
     currency: 'ARS',
     starts_at: new Date().toISOString(),
     ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  }, { onConflict: 'professional_id' });
+  };
+
+  const { error } = existing
+    ? await sb.from('subscriptions').update(subData).eq('id', existing.id)
+    : await sb.from('subscriptions').insert(subData);
   
   if (!error && store.currentPro) {
     await sb.from('professionals').update({ is_featured: true }).eq('id', store.currentPro.id);
