@@ -191,7 +191,10 @@ export async function loadProDashboard() {
   setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
 
   // Pre-llenar formulario de edición del pro
-  setVal('pro-edit-name',      store.currentUser.user_metadata?.full_name || '');
+  // Cargar datos desde profiles para tener full_name actualizado
+  const { data: profileData } = await sb.from('profiles').select('full_name, avatar_url, phone').eq('id', store.currentUser.id).maybeSingle();
+  
+  setVal('pro-edit-name',      profileData?.full_name || store.currentUser.user_metadata?.full_name || '');
   setVal('pro-edit-specialty', store.currentPro.specialty || '');
   setVal('pro-edit-desc',      store.currentPro.description || '');
   setVal('pro-edit-city',      store.currentPro.city || '');
@@ -207,11 +210,10 @@ export async function loadProDashboard() {
   renderSpecialtyEditor(currentSpecialties);
 
   // Cargar avatar en el formulario de edición profesional
-  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
-  if (profile?.avatar_url) {
+  if (profileData?.avatar_url) {
     const avatarPreview = document.getElementById('pro-edit-avatar-preview');
     if (avatarPreview) {
-      avatarPreview.style.backgroundImage = `url('${profile.avatar_url}')`;
+      avatarPreview.style.backgroundImage = `url('${profileData.avatar_url}')`;
       avatarPreview.innerHTML = '';
     }
   }

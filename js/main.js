@@ -263,7 +263,13 @@ async function initApp() {
       showPage('user-dashboard'); loadUserDashboard();
     }
   });
-  on('menu-profile',       'click', e => { e.preventDefault(); showPage('profile-edit'); hideUserMenu(); });
+  on('menu-profile',       'click', async e => { 
+    e.preventDefault(); 
+    const { loadUserDashboard } = await import('./dashboard.js');
+    await loadUserDashboard();
+    showPage('profile-edit'); 
+    hideUserMenu(); 
+  });
   // menu-chat ahora abre el chat flotante (manejado inline en el HTML)
   on('menu-logout',        'click', e => { e.preventDefault(); import('./auth.js').then(m => m.logout()); hideUserMenu(); });
 
