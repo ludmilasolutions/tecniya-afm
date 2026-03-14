@@ -139,11 +139,14 @@ export function proCard(p) {
   const stars = generateStars(p.rating);
   const zones = (p.zones || []).slice(0, 3).map(z => `<span class="zone-tag">${escapeHtml(z)}</span>`).join('');
   const score = Math.round(rankingScore(p));
+  const avatarContent = p.avatar_url
+    ? `<img src="${p.avatar_url}" alt="${escapeHtml(p.name || '')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">`
+    : initial;
   
   return `<div class="pro-card" data-pro-id="${p.id}" onclick="window.showProProfile('${p.id}')">
     <div class="pro-card-header">
       <span class="ranking-score" style="display:${score > 50 ? 'block' : 'none'}">★ ${score}</span>
-      <div class="pro-avatar">${initial}${p.is_online ? '<span class="online-dot"></span>' : ''}</div>
+      <div class="pro-avatar" style="${p.avatar_url ? 'padding:0;overflow:hidden;' : ''}">${avatarContent}${p.is_online ? '<span class="online-dot"></span>' : ''}</div>
       <div class="pro-info">
         <div class="pro-name">${escapeHtml(p.name) || 'Profesional'}</div>
         <div class="pro-specialties">${
