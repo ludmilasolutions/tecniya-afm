@@ -669,8 +669,7 @@ export function toggleSpecialtyChip(el, specialty) {
     el.classList.add('active');
     updateSpecialtyCounter();
   } else {
-    const { showToast } = require('./ui.js');
-    showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info');
+    import('./ui.js').then(m => m.showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info'));
   }
 }
 

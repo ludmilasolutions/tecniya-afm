@@ -1700,24 +1700,14 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Especialidad principal *</label>
-        <select class="form-select" id="pro-edit-specialty">
-          <option value="">Seleccionar...</option>
-          <option value="Electricista">Electricista</option>
-          <option value="Plomero">Plomero</option>
-          <option value="Carpintero">Carpintero</option>
-          <option value="Pintor">Pintor</option>
-          <option value="Gasista">Gasista</option>
-          <option value="Albañil">Albañil</option>
-          <option value="Técnico HVAC">Técnico HVAC</option>
-          <option value="Cerrajero">Cerrajero</option>
-          <option value="Jardinero">Jardinero</option>
-          <option value="Limpieza">Limpieza</option>
-          <option value="Fumigador">Fumigador</option>
-          <option value="Técnico PC">Técnico PC</option>
-          <option value="Técnico CEL">Técnico CEL</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <label class="form-label">Especialidades *</label>
+        <div id="specialty-chips-editor" class="specialty-chips-editor" style="max-height:180px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;padding:8px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);">
+          <!-- Se rellena dinámicamente con renderSpecialtyEditor() -->
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <p style="font-size:0.75rem;color:var(--gray);">Tocá para seleccionar o deseleccionar</p>
+          <span id="specialty-counter" style="font-size:0.75rem;font-weight:600;color:var(--accent);">0/3 seleccionadas</span>
+        </div>
       </div>
 
       <div class="form-group">
