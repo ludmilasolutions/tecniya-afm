@@ -476,10 +476,6 @@ async function initApp() {
 
   // ── SUSCRIPCIÓN ──────────────────────────────────────────────────────────
   on('btn-subscribe-mp',   'click', subscribePro);
-  on('btn-subscribe-free', 'click', async () => {
-    const { subscribeProFree } = await import('./subscriptions.js');
-    await subscribeProFree();
-  });
 
   // ── CÓMO FUNCIONA ────────────────────────────────────────────────────────
   on('btn-register-how', 'click', () => showModal('modal-register'));
