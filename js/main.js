@@ -25,7 +25,8 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF,
-         editAvatarSelected, proEditAvatarSelected } from './dashboard.js';
+         editAvatarSelected, proEditAvatarSelected,
+         openAddAddressModal, editAddress, saveAddress, deleteAddress } from './dashboard.js';
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
@@ -145,6 +146,10 @@ window.saveProfile      = saveProfile;
 window.saveProProfile   = saveProProfile;
 window.saveBudget       = saveBudget;
 window.generateBudgetPDF= generateBudgetPDF;
+window.openAddAddressModal = openAddAddressModal;
+window.editAddress      = editAddress;
+window.saveAddress      = saveAddress;
+window.deleteAddress    = deleteAddress;
 window.editAvatarSelected = editAvatarSelected;
 window.proEditAvatarSelected = proEditAvatarSelected;
 window.renderSpecialtyEditor = renderSpecialtyEditor;

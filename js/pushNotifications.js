@@ -66,7 +66,7 @@ export async function requestPushPermission() {
 async function getFCMToken() {
   try {
     const token = await messaging.getToken({
-      vapidKey: 'TU_VAPID_KEY_AQUI'
+      vapidKey: (await import('./config.js')).VAPID_KEY
     });
     
     if (token) {

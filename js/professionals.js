@@ -73,7 +73,9 @@ export async function loadProfessionals() {
       is_certified:  p.is_certified,
       is_online:     p.is_online,
       zones:         p.zones || [],
-      whatsapp:      p.whatsapp
+      whatsapp:      p.whatsapp,
+      lat:           p.latitude || null,
+      lng:           p.longitude || null
     }));
   } catch (e) {
     console.error('loadProfessionals error:', e.message);
@@ -352,6 +354,7 @@ export function applyFilters() {
   const city = document.getElementById('filter-city')?.value.toLowerCase();
   const zone = document.getElementById('filter-zone')?.value.toLowerCase();
   const sort = document.getElementById('filter-sort')?.value;
+  const distance = parseInt(document.getElementById('filter-distance')?.value) || 0;
   
   let filtered = [...allProfessionals];
   
@@ -365,9 +368,28 @@ export function applyFilters() {
   if (store.activeFilters.cert) filtered = filtered.filter(p => p.is_certified);
   if (store.activeFilters.dest) filtered = filtered.filter(p => p.is_featured);
   if (store.activeFilters.online) filtered = filtered.filter(p => p.is_online);
-  
+
+  const userLocation = store.userLocation;
+
+  // Filtro por distancia
+  if (distance && userLocation) {
+    import('./geolocation.js').then(({ filterByDistance, sortByDistance }) => {
+      const distFiltered = sortByDistance(filterByDistance(filtered, distance, userLocation), userLocation);
+      renderGrid('grid-all', distFiltered);
+      updateCount('count-all', distFiltered.length);
+    });
+    return;
+  }
+
   if (sort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
   else if (sort === 'jobs') filtered.sort((a, b) => (b.jobs_count || 0) - (a.jobs_count || 0));
+  else if (sort === 'distance' && userLocation) {
+    import('./geolocation.js').then(({ sortByDistance }) => {
+      renderGrid('grid-all', sortByDistance(filtered, userLocation));
+      updateCount('count-all', filtered.length);
+    });
+    return;
+  }
   else filtered.sort((a, b) => rankingScore(b) - rankingScore(a));
   
   renderGrid('grid-all', filtered);

@@ -47,3 +47,8 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "123456789",
   appId: "1:123456789:web:abcdef123456"
 };
+
+// Push notifications VAPID key
+// Para configurar: ir a Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+// Copiar la clave pública y reemplazar el valor aquí
+export const VAPID_KEY = 'TU_VAPID_KEY_AQUI';

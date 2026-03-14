@@ -303,6 +303,7 @@
       <button class="tab active" data-tab="tab-mis-trabajos">Mis Trabajos</button>
       <button class="tab" data-tab="tab-presupuestos">Presupuestos</button>
       <button class="tab" data-tab="tab-favoritos">Favoritos</button>
+      <button class="tab" data-tab="tab-direcciones">Direcciones</button>
       <button class="tab" data-tab="tab-historial">Historial</button>
     </div>
     <div class="tab-panel active" id="tab-mis-trabajos">
@@ -318,6 +319,15 @@
     <div class="tab-panel" id="tab-favoritos">
       <div class="pros-grid" id="user-favs-grid">
         <div class="empty-state" style="grid-column:1/-1;padding:40px;"><i class="fa fa-heart"></i><p>No guardaste profesionales favoritos.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-direcciones">
+      <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.9rem;color:var(--gray);">Guardá tus direcciones frecuentes para agilizar las solicitudes.</span>
+        <button class="btn btn-primary btn-sm" onclick="window.openAddAddressModal()"><i class="fa fa-plus"></i> Agregar</button>
+      </div>
+      <div id="user-addresses-list">
+        <div class="empty-state"><i class="fa fa-location-dot"></i><p>No tenés direcciones guardadas.</p></div>
       </div>
     </div>
     <div class="tab-panel" id="tab-historial">
@@ -1894,6 +1904,45 @@
 
       <button class="btn btn-primary btn-block" onclick="window.adminSaveAd()" style="margin-top:16px;">
         <i class="fa fa-floppy-disk"></i> Guardar publicidad
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: agregar/editar dirección -->
+<div class="modal-overlay" id="modal-address-form">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa fa-location-dot" style="color:var(--accent);margin-right:8px;"></i><span id="address-modal-title">Agregar dirección</span></h3>
+      <button class="modal-close" data-close="modal-address-form"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="address-form-id">
+      <div class="form-group">
+        <label class="form-label">Etiqueta <span style="color:#f87171;">*</span></label>
+        <input class="form-input" type="text" id="address-label" placeholder="Ej: Casa, Trabajo, Mamá...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dirección completa <span style="color:#f87171;">*</span></label>
+        <input class="form-input" type="text" id="address-street" placeholder="Ej: Av. Corrientes 1234, CABA">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <input class="form-input" type="text" id="address-city" placeholder="Ciudad">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Provincia</label>
+          <input class="form-input" type="text" id="address-province" placeholder="Provincia">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas adicionales</label>
+        <input class="form-input" type="text" id="address-notes" placeholder="Ej: Piso 3, timbre B, portón azul...">
+      </div>
+      <div id="address-form-error" class="form-error hidden"></div>
+      <button class="btn btn-primary btn-block" onclick="window.saveAddress()">
+        <i class="fa fa-floppy-disk"></i> Guardar dirección
       </button>
     </div>
   </div>

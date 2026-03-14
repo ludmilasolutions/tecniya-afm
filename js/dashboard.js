@@ -76,6 +76,7 @@ export async function loadUserDashboard() {
 
   await loadFavorites();
   await loadUserBudgets();
+  await loadAddresses();
 }
 
 export async function loadFavorites() {
@@ -486,9 +487,25 @@ export async function saveProProfile() {
   const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
   if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
 
+  // Geocodificar ciudad/provincia para guardar coordenadas
+  let latitude = store.currentPro.latitude || null;
+  let longitude = store.currentPro.longitude || null;
+  if (city || province) {
+    try {
+      const query = encodeURIComponent(`${city}, ${province}, Argentina`);
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+      const geoData = await geo.json();
+      if (geoData?.[0]) {
+        latitude = parseFloat(geoData[0].lat);
+        longitude = parseFloat(geoData[0].lon);
+      }
+    } catch(e) { console.warn('Geocoding error:', e); }
+  }
+
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     sb.from('professionals').update({
       specialty: specialties[0] || specialty, specialties, description: desc, city, province, zones,
+      latitude, longitude,
       updated_at: new Date().toISOString()
     }).eq('user_id', store.currentUser.id),
     sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
@@ -692,4 +709,127 @@ export function updateSpecialtyCounter() {
 export function getSelectedSpecialties() {
   const chips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
   return Array.from(chips).map(c => c.textContent.trim());
+}
+
+// ─── DIRECCIONES GUARDADAS ─────────────────────────────────────────────────────
+
+export async function loadAddresses() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  const el = document.getElementById('user-addresses-list');
+  if (!el) return;
+
+  try {
+    const { data: addresses, error } = await sb
+      .from('addresses')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (error) { console.warn('loadAddresses:', error); return; }
+
+    if (!addresses?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-location-dot"></i><p>No tenés direcciones guardadas.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = addresses.map(a => `
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1rem;">
+            <i class="fa fa-location-dot"></i>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;">${escapeHtml(a.label || 'Dirección')}</div>
+            <div style="font-size:0.82rem;color:var(--gray);">${escapeHtml(a.street || '')}${a.city ? ', ' + escapeHtml(a.city) : ''}${a.province ? ', ' + escapeHtml(a.province) : ''}</div>
+            ${a.notes ? `<div style="font-size:0.78rem;color:var(--gray2);margin-top:2px;">${escapeHtml(a.notes)}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="window.editAddress('${a.id}')" title="Editar"><i class="fa fa-pencil"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="window.deleteAddress('${a.id}')" title="Eliminar" style="color:#f87171;"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error('loadAddresses:', e);
+  }
+}
+
+export function openAddAddressModal() {
+  document.getElementById('address-form-id').value = '';
+  document.getElementById('address-label').value = '';
+  document.getElementById('address-street').value = '';
+  document.getElementById('address-city').value = '';
+  document.getElementById('address-province').value = '';
+  document.getElementById('address-notes').value = '';
+  document.getElementById('address-modal-title').textContent = 'Agregar dirección';
+  document.getElementById('address-form-error')?.classList.add('hidden');
+  showModal('modal-address-form');
+}
+
+export async function editAddress(id) {
+  const sb = getSupabase();
+  const { data: a } = await sb.from('addresses').select('*').eq('id', id).maybeSingle();
+  if (!a) return;
+  document.getElementById('address-form-id').value = a.id;
+  document.getElementById('address-label').value = a.label || '';
+  document.getElementById('address-street').value = a.street || '';
+  document.getElementById('address-city').value = a.city || '';
+  document.getElementById('address-province').value = a.province || '';
+  document.getElementById('address-notes').value = a.notes || '';
+  document.getElementById('address-modal-title').textContent = 'Editar dirección';
+  document.getElementById('address-form-error')?.classList.add('hidden');
+  showModal('modal-address-form');
+}
+
+export async function saveAddress() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  const id       = document.getElementById('address-form-id')?.value;
+  const label    = document.getElementById('address-label')?.value.trim();
+  const street   = document.getElementById('address-street')?.value.trim();
+  const city     = document.getElementById('address-city')?.value.trim();
+  const province = document.getElementById('address-province')?.value.trim();
+  const notes    = document.getElementById('address-notes')?.value.trim();
+  const errEl    = document.getElementById('address-form-error');
+
+  if (!label || !street) {
+    if (errEl) { errEl.textContent = 'La etiqueta y la dirección son obligatorias.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const payload = { user_id: store.currentUser.id, label, street, city, province, notes };
+
+  const { error } = id
+    ? await sb.from('addresses').update(payload).eq('id', id)
+    : await sb.from('addresses').insert(payload);
+
+  if (error) {
+    if (errEl) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  closeModal('modal-address-form');
+  showToast(id ? 'Dirección actualizada' : 'Dirección guardada', 'success');
+  await loadAddresses();
+}
+
+export async function deleteAddress(id) {
+  if (!confirm('¿Eliminar esta dirección?')) return;
+  const sb = getSupabase();
+  const { error } = await sb.from('addresses').delete().eq('id', id);
+  if (!error) {
+    showToast('Dirección eliminada', 'info');
+    await loadAddresses();
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
