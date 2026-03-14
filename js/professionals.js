@@ -53,6 +53,7 @@ export async function loadProfessionals() {
       id:            p.id,
       user_id:       p.user_id,
       name:          p.name || p.full_name || 'Profesional',
+      avatar_url:    p.avatar_url || null,
       specialty:     p.specialties?.[0] || p.specialty,
       trust_score:    p.trust_score    ?? 100,
       ranking_score:  p.ranking_score  ?? 100,
@@ -186,17 +187,20 @@ export function showProProfile(proId) {
   
   const initial = (p.name || 'P').charAt(0).toUpperCase();
   const stars = generateStars(p.rating);
+  const avatarHtml = p.avatar_url
+    ? `<img src="${p.avatar_url}" alt="${escapeHtml(p.name || '')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : initial;
   
   document.getElementById('pro-profile-content').innerHTML = `
     <div class="pro-profile-header">
-      <div class="pro-avatar-lg">${initial}</div>
+      <div class="pro-avatar-lg">${avatarHtml}</div>
       <div class="pro-profile-info">
-        <div class="pro-name">${escapeHtml(p.name)}</div>
+        <div class="pro-name">${escapeHtml(p.name || 'Profesional')}</div>
         <div class="pro-specialties">${
           (p.specialties?.length ? p.specialties : [p.specialty||'Técnico'])
             .map(s => `<span class="specialty-chip">${escapeHtml(s)}</span>`).join('')
         }</div>
-        <div class="pro-location"><i class="fa fa-location-dot"></i> ${escapeHtml(p.city)}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
+        <div class="pro-location"><i class="fa fa-location-dot"></i> ${escapeHtml(p.city || '')}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}${p.is_online ? '<span class="badge badge-disponible"><i class="fa fa-circle" style="font-size:0.5rem;"></i>Disponible</span>' : ''}</div>
         <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num" style="font-size:1.1rem;">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos)</span></div>
       </div>
@@ -205,7 +209,7 @@ export function showProProfile(proId) {
           ${renderProStats(p)}
         </div>
         <div class="pro-profile-actions">
-        <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${p.name}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
+        <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
         <button class="btn btn-ghost" onclick="window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
         <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>
       </div>
@@ -235,9 +239,8 @@ export function showProProfile(proId) {
         </div>
         <div class="card">
           <h3 style="font-size:0.95rem;margin-bottom:14px;"><i class="fa fa-images" style="color:var(--accent);margin-right:8px;"></i>Fotos de trabajos</h3>
-          <div class="photos-grid" style="grid-template-columns:1fr 1fr;">
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
+          <div class="photos-grid" id="pro-profile-photos-${p.id}" style="grid-template-columns:1fr 1fr;">
+            <div class="empty-state" style="grid-column:1/-1;padding:16px;"><i class="fa fa-images"></i><p style="font-size:0.8rem;">Cargando...</p></div>
           </div>
         </div>
       </div>
@@ -245,6 +248,36 @@ export function showProProfile(proId) {
   
   showPage('pro-profile');
   loadProReviews(p.user_id || p.id, p.id);
+  loadProWorkPhotos(p.id);
+}
+
+async function loadProWorkPhotos(proId) {
+  const { getSupabase } = await import('./supabase.js');
+  const sb = getSupabase();
+  if (!sb) return;
+
+  const container = document.getElementById(`pro-profile-photos-${proId}`);
+  if (!container) return;
+
+  const { data: photos } = await sb
+    .from('work_photos')
+    .select('id, photo_url, title')
+    .eq('professional_id', proId)
+    .eq('is_public', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  if (!photos?.length) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:16px;"><i class="fa fa-images"></i><p style="font-size:0.8rem;">Sin fotos aún.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = photos.map(ph => `
+    <div class="photo-thumb" style="background-image:url('${ph.photo_url}');background-size:cover;background-position:center;cursor:pointer;" 
+         title="${escapeHtml(ph.title || '')}"
+         onclick="window.open('${ph.photo_url}','_blank')">
+    </div>
+  `).join('');
 }
 
 async function loadProReviews(proUserId, proId) {
