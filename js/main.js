@@ -21,6 +21,7 @@ import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBad
          openProposeDateModal, submitProposedDate, approveProDate, rejectProDate,
          openWarrantyReport, submitWarrantyReport,
          previewJobPhoto,
+         openRatingModal, setRating, submitRating,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
@@ -58,6 +59,7 @@ window.filterByType     = filterByType;
 window.toggleFilter     = toggleFilter;
 
 window.openJobRequest        = openJobRequest;
+window.openRatingModal       = openRatingModal;
 window.toggleProSelection    = toggleProSelection;
 window.handleNotifClick      = handleNotifClick;
 window.openMultiRequest      = openMultiRequest;

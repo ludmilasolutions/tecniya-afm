@@ -1271,3 +1271,52 @@ export async function submitWarrantyReport() {
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
 }
+
+// ─── RATINGS & REVIEWS ───────────────────────────────────────────────────────
+
+export function openRatingModal(proId, jobId) {
+  store.setCurrentProIdForAction({ proId, jobId });
+  showModal('modal-rating');
+}
+
+export function setRating(event, category) {
+  const container = document.getElementById('stars-' + category);
+  if (!container) return;
+  const stars = container.querySelectorAll('.star');
+  const clickedVal = parseInt(event.target.dataset.v || event.target.closest('[data-v]')?.dataset.v || 0);
+  if (!clickedVal) return;
+  
+  store.ratings[category] = clickedVal;
+  stars.forEach((s, i) => {
+    s.style.color = i < clickedVal ? 'var(--orange)' : 'var(--gray2)';
+  });
+}
+
+export async function submitRating() {
+  if (!store.currentUser || !store.currentProIdForAction) return;
+  
+  const comment = document.getElementById('rate-comment')?.value.trim() || '';
+  const r = store.ratings;
+  const avg = (r.puntualidad + r.calidad + r.precio + r.comunicacion) / 4;
+  
+  const sb = getSupabase();
+  const { error } = await sb.from('reviews').insert({
+    user_id: store.currentUser.id,
+    professional_id: store.currentProIdForAction.proId,
+    job_id: store.currentProIdForAction.jobId,
+    comment,
+    avg_rating: avg,
+    puntualidad: r.puntualidad,
+    calidad: r.calidad,
+    precio: r.precio,
+    comunicacion: r.comunicacion,
+    created_at: new Date().toISOString()
+  });
+
+  if (error) {
+    showToast('Error al enviar calificación: ' + error.message, 'error');
+  } else {
+    closeModal('modal-rating');
+    showToast('¡Gracias por tu calificación!', 'success');
+  }
+}
