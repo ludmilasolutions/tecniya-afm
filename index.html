@@ -373,12 +373,7 @@
           </div>
         </div>
 
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="user-stat-active">0</div><div class="stat-label">Activos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="user-stat-done">0</div><div class="stat-label">Finalizados</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="user-stat-favs">0</div><div class="stat-label">Favoritos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="user-stat-budgets">0</div><div class="stat-label">Presupuestos</div></div>
-        </div>
+        <p id="user-dash-context-text" style="color:var(--gray);font-size:0.95rem;margin:10px 0 20px;">Cargando tus trabajos...</p>
         <div class="tab-panel active" id="tab-mis-trabajos">
           <div class="jobs-list" id="user-jobs-list">
             <div class="empty-state"><i class="fa fa-briefcase"></i><p>No tenés trabajos activos.<br><a href="#" id="link-search-pro" style="color:var(--accent);">Buscar un profesional</a></p></div>
@@ -456,26 +451,10 @@
           </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <div class="quick-action-card qa-budget" onclick="window.switchDashTab('tab-pro-presupuestos', 'pro')">
-            <i class="fa fa-file-invoice-dollar"></i>
-            <span>Presupuesto</span>
-          </div>
-          <div class="quick-action-card qa-photo" onclick="document.getElementById('btn-upload-photo')?.click()">
-            <i class="fa fa-camera"></i>
-            <span>Subir Foto</span>
-          </div>
-          <div class="quick-action-card qa-new" onclick="window.showSuscripcion()">
-            <i class="fa fa-crown"></i>
-            <span>Destacado</span>
-          </div>
-        </div>
-
         <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Nuevas</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">En Proceso</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Finalizados</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Pendientes</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">Activos</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Hechos</div></div>
           <div class="stat-card"><div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div><div class="stat-label">Rating</div></div>
         </div>
         <div class="tab-panel active" id="tab-pro-trabajos">

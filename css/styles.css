@@ -1145,3 +1145,12 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 /* Loading overlay — logo color */
 .loading-overlay { background: var(--bg-base); }
 .loading-overlay .loader { border-top-color: var(--accent); border-right-color: rgba(91,79,255,0.3); }
+
+/* Cards de trabajo — acciones */
+.job-card-primary-btn {
+  width: 100%;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  /* Las acciones ya son columna en el nuevo diseño, nada extra necesario */
+}

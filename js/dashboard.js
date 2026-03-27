@@ -58,12 +58,21 @@ export async function loadUserDashboard() {
       .eq('user_id', store.currentUser.id)
       .order('created_at', { ascending: false });
 
-    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa'].includes(j.status));
+    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa','para_revision'].includes(j.status));
     const done    = (jobs || []).filter(j => j.status === 'finalizado');
     const history = (jobs || []).filter(j => ['finalizado','cancelado','rechazado'].includes(j.status));
 
-    setEl('user-stat-active', active.length);
-    setEl('user-stat-done',   done.length);
+    // Mensaje de contexto en lugar de stats de números
+    const ctxEl = document.getElementById('user-dash-context-text');
+    if (ctxEl) {
+      if (active.length === 0 && done.length === 0) {
+        ctxEl.innerHTML = '¿Necesitás un técnico? <a href="#" onclick="window.showPage(\'professionals-list\')" style="color:var(--accent);text-decoration:none;">Buscá uno acá</a>';
+      } else if (active.length > 0) {
+        ctxEl.textContent = `Tenés ${active.length} trabajo${active.length > 1 ? 's' : ''} activo${active.length > 1 ? 's' : ''}`;
+      } else {
+        ctxEl.textContent = `${done.length} trabajo${done.length > 1 ? 's' : ''} completado${done.length > 1 ? 's' : ''}`;
+      }
+    }
 
     // Actualizar badges del sidebar
     updateSidebarBadge('user-sidebar-active-badge', active.length);
@@ -72,17 +81,17 @@ export async function loadUserDashboard() {
     if (jobsEl) {
       jobsEl.innerHTML = active.length
         ? active.map(j => jobItem(j, 'user')).join('')
-        : `<div class="empty-state"><i class="fa fa-briefcase"></i>
+        : `<div class="empty-state" style="padding:40px;"><i class="fa fa-briefcase"></i>
            <p>No tenés trabajos activos.<br>
-           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);">
-           Buscar un profesional</a></p></div>`;
+           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);text-decoration:none;">
+           Buscar un técnico</a></p></div>`;
     }
 
     const histEl = document.getElementById('user-history-list');
     if (histEl) {
       histEl.innerHTML = history.length
         ? history.map(j => jobItem(j, 'user')).join('')
-        : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+        : `<div class="empty-state" style="padding:40px;"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
     }
   } catch (e) {
     console.error('loadUserDashboard jobs:', e);
