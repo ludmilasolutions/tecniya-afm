@@ -1248,21 +1248,84 @@
   </div>
 </div>
 
-<!-- FEATURE 3: Modal confirmación de cierre por cliente -->
-<div class="modal-overlay" id="modal-confirm-finish">
+<!-- Nuevo modal unificado: confirmar + calificar en 2 pasos -->
+<div class="modal-overlay" id="modal-review-flow">
   <div class="modal" style="max-width:440px;">
-    <div class="modal-header" style="border-bottom:none;">
-      <div class="modal-title" style="font-size:1.1rem;">✅ ¿El trabajo quedó terminado?</div>
-    </div>
-    <div class="modal-body">
-      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Confirmá que el profesional terminó el trabajo correctamente para liberar el cierre.</p>
-      <div class="form-group">
-        <label class="form-label">Comentario opcional</label>
-        <textarea class="form-textarea" id="confirm-finish-comment" rows="2" placeholder="¿Algo que quieras destacar?"></textarea>
+    <div class="modal-header" style="border-bottom:none;padding-bottom:10px;">
+      <div style="display:flex;justify-content:center;gap:8px;width:100%;margin-bottom:10px;" class="rvf-step-dots">
+        <div class="rvf-step-dot" id="rvf-step1-dot" style="width:30px;height:4px;border-radius:2px;background:var(--primary);"></div>
+        <div class="rvf-step-dot" id="rvf-step2-dot" style="width:30px;height:4px;border-radius:2px;background:var(--border);"></div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-success btn-block" id="btn-confirm-finish-yes" onclick="window.clientConfirmFinish(true)"><i class="fa fa-check"></i>Sí, está terminado</button>
-        <button class="btn btn-ghost" style="min-width:120px;" onclick="window.clientConfirmFinish(false)"><i class="fa fa-times"></i>Hay problemas</button>
+      <button class="modal-close" data-close="modal-review-flow"><i class="fa fa-times"></i></button>
+    </div>
+
+    <!-- PASO 1: CONFIRMAR -->
+    <div id="rvf-step1" style="display:block;">
+      <div class="modal-body" style="padding-top:0;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+        <div class="modal-title" style="font-size:1.3rem;margin-bottom:8px;">¿El trabajo quedó listo?</div>
+        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:24px;">Confirmá que <strong id="rvf-pro-name">el técnico</strong> terminó el trabajo correctamente.</p>
+        
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label" style="font-size:0.85rem;">Comentario para el técnico <span style="font-weight:400;color:var(--gray2);">(opcional)</span></label>
+          <textarea class="form-textarea" id="rvf-comment" rows="2" placeholder="¿Algo que quieras destacar?"></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-lg" id="btn-rvf-confirm" style="margin-bottom:12px;"><i class="fa fa-check"></i> Sí, quedó listo</button>
+        <button class="btn btn-ghost btn-block" id="btn-rvf-dispute" style="color:#ef4444;"><i class="fa fa-triangle-exclamation"></i> Hubo un problema</button>
+      </div>
+    </div>
+
+    <!-- PASO 2: CALIFICAR -->
+    <div id="rvf-step2" style="display:none;">
+      <div class="modal-body" style="padding-top:0;text-align:center;">
+        <div class="modal-title" style="font-size:1.2rem;margin-bottom:4px;">¡Excelente!</div>
+        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">¿Cómo calificarías el servicio?</p>
+
+        <!-- Estrellas principales -->
+        <div id="rvf-stars-main" style="font-size:2.5rem;display:flex;justify-content:center;gap:10px;margin-bottom:10px;color:var(--gray2);">
+           <i class="fa fa-star rvf-star" data-v="1" style="cursor:pointer;"></i>
+           <i class="fa fa-star rvf-star" data-v="2" style="cursor:pointer;"></i>
+           <i class="fa fa-star rvf-star" data-v="3" style="cursor:pointer;"></i>
+           <i class="fa fa-star rvf-star" data-v="4" style="cursor:pointer;"></i>
+           <i class="fa fa-star rvf-star" data-v="5" style="cursor:pointer;"></i>
+        </div>
+        <div id="rvf-star-label" style="font-weight:700;color:var(--orange);margin-bottom:20px;min-height:20px;font-size:1.1rem;"></div>
+
+        <!-- Sub-calificaciones (más compactas) -->
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Puntualidad</div>
+            <div class="rvf-sub-stars" data-cat="puntualidad" style="font-size:0.9rem;display:flex;gap:4px;color:var(--gray2);">
+              <i class="fa fa-star" data-v="1" style="cursor:pointer;"></i><i class="fa fa-star" data-v="2" style="cursor:pointer;"></i><i class="fa fa-star" data-v="3" style="cursor:pointer;"></i><i class="fa fa-star" data-v="4" style="cursor:pointer;"></i><i class="fa fa-star" data-v="5" style="cursor:pointer;"></i>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Calidad</div>
+            <div class="rvf-sub-stars" data-cat="calidad" style="font-size:0.9rem;display:flex;gap:4px;color:var(--gray2);">
+              <i class="fa fa-star" data-v="1" style="cursor:pointer;"></i><i class="fa fa-star" data-v="2" style="cursor:pointer;"></i><i class="fa fa-star" data-v="3" style="cursor:pointer;"></i><i class="fa fa-star" data-v="4" style="cursor:pointer;"></i><i class="fa fa-star" data-v="5" style="cursor:pointer;"></i>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Precio</div>
+            <div class="rvf-sub-stars" data-cat="precio" style="font-size:0.9rem;display:flex;gap:4px;color:var(--gray2);">
+              <i class="fa fa-star" data-v="1" style="cursor:pointer;"></i><i class="fa fa-star" data-v="2" style="cursor:pointer;"></i><i class="fa fa-star" data-v="3" style="cursor:pointer;"></i><i class="fa fa-star" data-v="4" style="cursor:pointer;"></i><i class="fa fa-star" data-v="5" style="cursor:pointer;"></i>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Comunicación</div>
+            <div class="rvf-sub-stars" data-cat="comunicacion" style="font-size:0.9rem;display:flex;gap:4px;color:var(--gray2);">
+              <i class="fa fa-star" data-v="1" style="cursor:pointer;"></i><i class="fa fa-star" data-v="2" style="cursor:pointer;"></i><i class="fa fa-star" data-v="3" style="cursor:pointer;"></i><i class="fa fa-star" data-v="4" style="cursor:pointer;"></i><i class="fa fa-star" data-v="5" style="cursor:pointer;"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="text-align:left;">
+          <textarea class="form-textarea" id="rvf-review-text" rows="2" placeholder="Contanos más sobre el servicio..."></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-lg" id="btn-rvf-submit" style="margin-bottom:12px;">Enviar calificación</button>
+        <button class="btn btn-ghost btn-block" id="btn-rvf-skip" style="font-size:0.85rem;">Omitir por ahora</button>
       </div>
     </div>
   </div>
@@ -1287,28 +1350,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-rating">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Calificar servicio</div>
-      <button class="modal-close" data-close="modal-rating"><i class="fa fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <p style="color:var(--gray);font-size:0.88rem;margin-bottom:24px;">¿Cómo fue tu experiencia con <strong id="rate-pro-name" style="color:var(--light);">el profesional</strong>?</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-        <div><div style="font-size:0.82rem;color:var(--gray);margin-bottom:6px;">Puntualidad</div><div class="rating-input-stars" id="stars-puntualidad" data-category="puntualidad"><i class="fa fa-star star" data-v="1"></i><i class="fa fa-star star" data-v="2"></i><i class="fa fa-star star" data-v="3"></i><i class="fa fa-star star" data-v="4"></i><i class="fa fa-star star" data-v="5"></i></div></div>
-        <div><div style="font-size:0.82rem;color:var(--gray);margin-bottom:6px;">Calidad</div><div class="rating-input-stars" id="stars-calidad" data-category="calidad"><i class="fa fa-star star" data-v="1"></i><i class="fa fa-star star" data-v="2"></i><i class="fa fa-star star" data-v="3"></i><i class="fa fa-star star" data-v="4"></i><i class="fa fa-star star" data-v="5"></i></div></div>
-        <div><div style="font-size:0.82rem;color:var(--gray);margin-bottom:6px;">Precio</div><div class="rating-input-stars" id="stars-precio" data-category="precio"><i class="fa fa-star star" data-v="1"></i><i class="fa fa-star star" data-v="2"></i><i class="fa fa-star star" data-v="3"></i><i class="fa fa-star star" data-v="4"></i><i class="fa fa-star star" data-v="5"></i></div></div>
-        <div><div style="font-size:0.82rem;color:var(--gray);margin-bottom:6px;">Comunicación</div><div class="rating-input-stars" id="stars-comunicacion" data-category="comunicacion"><i class="fa fa-star star" data-v="1"></i><i class="fa fa-star star" data-v="2"></i><i class="fa fa-star star" data-v="3"></i><i class="fa fa-star star" data-v="4"></i><i class="fa fa-star star" data-v="5"></i></div></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Comentario</label>
-        <textarea class="form-textarea" id="rate-comment" placeholder="Contá tu experiencia..."></textarea>
-      </div>
-      <button class="btn btn-primary btn-block" id="btn-submit-rating">Enviar calificación</button>
-    </div>
-  </div>
-</div>
 
 <div class="modal-overlay" id="modal-subscription">
   <div class="modal">

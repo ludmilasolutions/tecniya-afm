@@ -14,10 +14,10 @@ import { checkAndShowTour } from './tour.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
-         addFavorite, openRatingModal, setRating, submitRating,
+         addFavorite, openReviewFlow,
          acceptJob, rejectJob, openRejectModal, startJob, finishJob,
          cancelJob, openCancelModal,
-         confirmJobDate, clientConfirmFinish, submitDispute, reHireJob,
+         confirmJobDate, submitDispute, reHireJob,
          openProposeDateModal, submitProposedDate, approveProDate, rejectProDate,
          openWarrantyReport, submitWarrantyReport,
          previewJobPhoto,
@@ -69,18 +69,7 @@ window.submitJobRequest = submitJobRequest;
 window.showUrgentModal  = showUrgentModal;
 window.sendUrgentRequest= sendUrgentRequest;
 window.addFavorite      = addFavorite;
-window.openRatingModal  = openRatingModal;
-window.setRating        = setRating;
-window.submitRating     = submitRating;
-window.acceptJob        = acceptJob;
-window.rejectJob        = rejectJob;
-window.startJob         = startJob;
-window.finishJob        = finishJob;
-window.cancelJob        = cancelJob;
-window.openCancelModal  = openCancelModal;
-window.openRejectModal  = openRejectModal;
-window.confirmJobDate   = confirmJobDate;
-window.clientConfirmFinish = clientConfirmFinish;
+window.openReviewFlow   = openReviewFlow;
 window.submitDispute    = submitDispute;
 window.reHireJob             = reHireJob;
 window.openProposeDateModal  = openProposeDateModal;
@@ -106,12 +95,6 @@ window.syncRejectReason = (val) => {
   else if (ta && val === 'Otro') ta.value = '';
 };
 
-window.openConfirmFinish = (jobId) => {
-  store._confirmingJobId = jobId;
-  const el = document.getElementById('confirm-finish-comment');
-  if (el) el.value = '';
-  showModal('modal-confirm-finish');
-};
 
 window.showSuscripcion  = showSuscripcion;
 window.subscribePro     = subscribePro;

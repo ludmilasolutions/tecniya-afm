@@ -1154,3 +1154,12 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 @media (max-width: 640px) {
   /* Las acciones ya son columna en el nuevo diseño, nada extra necesario */
 }
+
+/* -- REVIEW FLOW UNIFICADO ------------------------------------------- */
+.rvf-step-dot { transition: background 0.3s var(--ease-smooth), width 0.3s var(--ease-smooth); }
+.rvf-star { font-size: 2.5rem; color: var(--gray2); cursor: pointer; transition: transform 0.25s var(--ease-spring), color 0.15s var(--ease-smooth); padding: 5px; }
+.rvf-star:hover { transform: scale(1.15) rotate(5deg); }
+.rvf-star:active { transform: scale(0.9); }
+.rvf-sub-stars i { font-size: 1.25rem; color: var(--gray2); cursor: pointer; transition: transform 0.2s var(--ease-spring), color 0.1s var(--ease-smooth); padding: 4px; }
+.rvf-sub-stars i:hover { transform: scale(1.3); }
+#rvf-star-label { font-weight: 700; color: var(--orange); min-height: 1.5em; display: block; }

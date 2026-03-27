@@ -473,7 +473,7 @@ export function jobItem(j, viewAs) {
         `<a href="#" onclick="event.preventDefault(); window.openProposeDateModal('${j.id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Proponer otra fecha</a>`,
       ];
     } else if (['pendiente_confirmacion', 'para_revision'].includes(j.status)) {
-      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.openConfirmFinish('${j.id}')">
+      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','confirm')">
                        <i class="fa fa-check-double"></i> Sí, el trabajo quedó listo
                     </button>`;
       secondaryLinks = [
@@ -498,15 +498,30 @@ export function jobItem(j, viewAs) {
         `<a href="#" onclick="event.preventDefault(); window.openCancelModal('${j.id}','activo')" style="color:var(--gray);font-size:0.85rem;text-decoration:none;">Cancelar trabajo</a>`,
       ];
     } else if (j.status === 'finalizado') {
-      const ratingBtn = j.client_confirmed
-        ? `<button class="btn btn-orange job-card-primary-btn" onclick="window.openRatingModal('${j.professional_id}','${j.id}')">
+      const alreadyReviewed = localStorage.getItem(`reviewed_${j.id}`) === '1';
+      const ratingPromptHtml = (j.client_confirmed && !alreadyReviewed)
+        ? `<div style="margin-top:12px;padding:12px;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+             <div style="font-size:0.82rem;color:var(--light);flex:1;">
+               <i class="fa fa-star" style="color:var(--orange);margin-right:6px;"></i> ¿Querés calificar a ${escHtml(j.pro_name || 'el técnico')}?
+             </div>
+             <button class="btn btn-orange btn-sm" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','rate-only')">Calificar</button>
+           </div>`
+        : '';
+
+      const ratingBtn = (j.client_confirmed && !alreadyReviewed)
+        ? `<button class="btn btn-orange job-card-primary-btn" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','rate-only')">
                  <i class="fa fa-star"></i> Calificar al técnico
               </button>`
         : '';
+
       const warrantyActive = j.warranty_until && new Date(j.warranty_until) > new Date();
       primaryBtn = ratingBtn || `<button class="btn btn-primary job-card-primary-btn" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')">
                        <i class="fa fa-rotate-right"></i> Volver a contratar
                     </button>`;
+      
+      // Inject banner before actions if needed
+      primaryBtn = ratingPromptHtml + primaryBtn;
+
       if (warrantyActive) {
         secondaryLinks = [
           `<a href="#" onclick="event.preventDefault(); window.openWarrantyReport('${j.id}')" style="color:#f59e0b;font-size:0.85rem;text-decoration:none;"><i class="fa fa-shield-halved"></i> Reportar problema (garantía activa)</a>`,
@@ -784,93 +799,199 @@ export async function addFavorite(proId) {
   }
 }
 
-export function openRatingModal(proId, jobId) {
-  // Buscar el profesional en la lista o usar el ID directamente
-  let userProfileId = null;
-  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId);
-  if (pro?.user_id) {
-    userProfileId = pro.user_id;
-  }
-  
-  store.setCurrentProIdForAction({ proId, jobId, userProfileId });
-  showModal('modal-rating');
-}
+// Estado interno del flujo de review
+let _rvfJobId = null;
+let _rvfProId = null;
+let _rvfMainRating = 0;
+let _rvfSubRatings = { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 };
 
-export function setRating(event, category) {
-  const container = document.getElementById('stars-' + category);
-  if (!container) return;
-  
-  const stars = container.querySelectorAll('.star');
-  const clickedVal = parseInt(event.target.dataset.v || event.target.closest('[data-v]')?.dataset.v || 0);
-  
-  if (!clickedVal) return;
-  
-  store.ratings[category] = clickedVal;
-  stars.forEach((s, i) => {
-    s.style.color = i < clickedVal ? 'var(--orange)' : 'var(--gray2)';
+const RVF_STAR_LABELS = ['', 'Muy malo', 'Malo', 'Bueno', 'Muy bueno', 'Excelente'];
+
+export function openReviewFlow(jobId, proId, proName, mode = 'confirm') {
+  _rvfJobId = jobId;
+  _rvfProId = proId;
+  _rvfMainRating = 0;
+  _rvfSubRatings = { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 };
+  store._confirmingJobId = jobId;
+
+  // Nombre del pro en el paso 1
+  const nameEl = document.getElementById('rvf-pro-name');
+  if (nameEl) nameEl.textContent = proName || 'el técnico';
+
+  // Limpiar estrellas
+  document.querySelectorAll('#rvf-stars-main .rvf-star').forEach(s => {
+    s.style.color = 'var(--gray2)';
   });
+  document.querySelectorAll('.rvf-sub-stars i').forEach(s => {
+    s.style.color = 'var(--gray2)';
+  });
+  const labelEl = document.getElementById('rvf-star-label');
+  if (labelEl) labelEl.textContent = '';
+
+  // Limpiar textareas
+  const c1 = document.getElementById('rvf-comment');
+  const c2 = document.getElementById('rvf-review-text');
+  if (c1) c1.value = '';
+  if (c2) c2.value = '';
+
+  // Si mode === 'rate-only', ir directo al paso 2
+  if (mode === 'rate-only') {
+    rvfGoToStep(2);
+  } else {
+    rvfGoToStep(1);
+  }
+
+  showModal('modal-review-flow');
 }
 
-export async function submitRating() {
-  if (!store.currentUser || !store.currentProIdForAction) return;
-  
+function rvfGoToStep(n) {
+  document.getElementById('rvf-step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('rvf-step2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('rvf-step1-dot').style.background = 'var(--primary)';
+  document.getElementById('rvf-step2-dot').style.background = n === 2 ? 'var(--primary)' : 'var(--border)';
+}
+
+export async function rvfConfirm() {
+  if (!_rvfJobId) return;
   const sb = getSupabase();
-  const comment = document.getElementById('rate-comment')?.value.trim();
-  const avg = Object.values(store.ratings).reduce((a, b) => a + b, 0) / 4;
-  
-  const proId = store.currentProIdForAction.proId;
-  const jobId = store.currentProIdForAction.jobId;
-  let professionalProfileId = store.currentProIdForAction.userProfileId;
-  
-  // Si no hay userProfileId, intentar buscar en allProfessionals
-  if (!professionalProfileId) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const pro = store.allProfessionals?.find(x => String(x.id) === String(proId) || x.id == proId);
-    if (pro?.user_id && uuidRegex.test(pro.user_id)) {
-      professionalProfileId = pro.user_id;
-    }
-  }
+  const comment = document.getElementById('rvf-comment')?.value.trim();
 
-  if (!professionalProfileId) {
-    // Intentar obtener directamente de la tabla professionals
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
-    if (proData?.user_id) {
-      professionalProfileId = proData.user_id;
-    }
-  }
+  const btn = document.getElementById('btn-rvf-confirm');
+  if (btn) { btn.disabled = true; btn.innerHTML = ' Confirmando...'; }
 
-  if (!professionalProfileId) {
-    showToast('No se puede calificar este profesional', 'info');
-    closeModal('modal-rating');
+  const { error } = await sb.from('jobs').update({
+    status: 'finalizado',
+    client_confirmed: true,
+    client_comment: comment || null
+  }).eq('id', _rvfJobId);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = ' Sí, quedó listo'; }
+
+  if (error) {
+    showToast('Error al confirmar. Intentá de nuevo.', 'error');
     return;
   }
 
-  if (!professionalProfileId) {
-    showToast('No se puede calificar este profesional', 'info');
-    closeModal('modal-rating');
+  // Avanzar al paso 2 sin cerrar el modal
+  rvfGoToStep(2);
+  // Recargar dashboard en background
+  import('./dashboard.js').then(m => m.loadUserDashboard());
+}
+
+export async function rvfSubmitRating() {
+  if (!_rvfJobId || !_rvfProId) return;
+  if (_rvfMainRating === 0) {
+    showToast('Seleccioná al menos una estrella', 'warning');
     return;
   }
+
+  const sb = getSupabase();
+  const comment = document.getElementById('rvf-review-text')?.value.trim();
+
+  // Si no completó las subcategorías, usar la calificación general para todas
+  const sub = _rvfSubRatings;
+  const puntualidad  = sub.puntualidad  || _rvfMainRating;
+  const calidad      = sub.calidad      || _rvfMainRating;
+  const precio       = sub.precio       || _rvfMainRating;
+  const comunicacion = sub.comunicacion || _rvfMainRating;
+
+  const btn = document.getElementById('btn-rvf-submit');
+  if (btn) { btn.disabled = true; btn.innerHTML = ' Enviando...'; }
+
+  // Resolver professional_id (UUID)
+  let professionalProfileId = _rvfProId;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(professionalProfileId)) {
+    const pro = store.allProfessionals?.find(x => String(x.id) === String(_rvfProId));
+    professionalProfileId = pro?.user_id || null;
+  }
+  if (!professionalProfileId) {
+    const { data } = await sb.from('professionals').select('user_id').eq('id', _rvfProId).maybeSingle();
+    professionalProfileId = data?.user_id || null;
+  }
+
+  if (!professionalProfileId) {
+    showToast('No se pudo enviar la calificación', 'error');
+    closeModal('modal-review-flow');
+    return;
+  }
+
+  const avg = parseFloat(((puntualidad + calidad + precio + comunicacion) / 4).toFixed(2));
 
   const { error } = await sb.from('reviews').insert({
-    user_id: store.currentUser.id,
+    user_id:         store.currentUser.id,
     professional_id: professionalProfileId,
-    job_id: jobId,
-    comment,
-    rating: parseFloat(avg.toFixed(2)),
-    puntualidad: store.ratings.puntualidad,
-    calidad: store.ratings.calidad,
-    precio: store.ratings.precio,
-    comunicacion: store.ratings.comunicacion,
-    created_at: new Date().toISOString()
+    job_id:          _rvfJobId,
+    comment:         comment || null,
+    rating:          avg,
+    puntualidad,
+    calidad,
+    precio,
+    comunicacion,
+    created_at:      new Date().toISOString()
   });
-  
-  closeModal('modal-rating');
-  
+
+  if (btn) { btn.disabled = false; btn.innerHTML = ' Enviar calificación'; }
+  closeModal('modal-review-flow');
+
   if (error) {
     showToast('Error al enviar calificación', 'error');
   } else {
-    showToast('¡Gracias por tu calificación!', 'success');
+    localStorage.setItem(`reviewed_${_rvfJobId}`, '1');
+    showToast('¡Gracias por calificar! Tu opinión ayuda a la comunidad.', 'success');
+    import('./dashboard.js').then(m => m.loadUserDashboard());
   }
+}
+
+export function rvfSkipRating() {
+  closeModal('modal-review-flow');
+  showToast('Podés calificar desde tus trabajos finalizados cuando quieras.', 'info');
+}
+
+export function rvfOpenDispute() {
+  closeModal('modal-review-flow');
+  store._disputeJobId = _rvfJobId;
+  const disputeId = document.getElementById('dispute-job-id');
+  if (disputeId) disputeId.textContent = _rvfJobId;
+  showModal('modal-dispute');
+}
+
+// Inicializar eventos de estrellas del nuevo modal
+export function initReviewFlowEvents() {
+  // Estrellas principales
+  const mainStars = document.getElementById('rvf-stars-main');
+  if (mainStars) {
+    mainStars.addEventListener('click', e => {
+      const star = e.target.closest('.rvf-star');
+      if (!star) return;
+      _rvfMainRating = parseInt(star.dataset.v);
+      mainStars.querySelectorAll('.rvf-star').forEach((s, i) => {
+        s.style.color = i < _rvfMainRating ? 'var(--orange)' : 'var(--gray2)';
+      });
+      const labelEl = document.getElementById('rvf-star-label');
+      if (labelEl) labelEl.textContent = RVF_STAR_LABELS[_rvfMainRating] || '';
+    });
+  }
+
+  // Estrellas de subcategorías
+  document.querySelectorAll('.rvf-sub-stars').forEach(container => {
+    container.addEventListener('click', e => {
+      const star = e.target.closest('[data-v]');
+      if (!star) return;
+      const cat = container.dataset.cat;
+      const val = parseInt(star.dataset.v);
+      _rvfSubRatings[cat] = val;
+      container.querySelectorAll('i').forEach((s, i) => {
+        s.style.color = i < val ? 'var(--orange)' : 'var(--gray2)';
+      });
+    });
+  });
+
+  // Botones
+  document.getElementById('btn-rvf-confirm')?.addEventListener('click', rvfConfirm);
+  document.getElementById('btn-rvf-dispute')?.addEventListener('click', rvfOpenDispute);
+  document.getElementById('btn-rvf-submit')?.addEventListener('click', rvfSubmitRating);
+  document.getElementById('btn-rvf-skip')?.addEventListener('click', rvfSkipRating);
 }
 
 export async function initJobsEventListeners() {
@@ -879,6 +1000,7 @@ export async function initJobsEventListeners() {
     const { loadSpecialties } = await import('./professionals.js');
     await loadSpecialties();
   }
+  initReviewFlowEvents();
 }
 
 export async function rejectJob() {
@@ -958,40 +1080,6 @@ export async function finishJob(jobId) {
   } else showToast('Error: ' + error.message, 'error');
 }
 
-export async function clientConfirmFinish(confirmed) {
-  const jobId = store._confirmingJobId;
-  if (!jobId) return;
-  const sb = getSupabase();
-  const comment = document.getElementById('confirm-finish-comment')?.value.trim();
-
-  if (confirmed) {
-    const { error } = await sb.from('jobs').update({
-      status: 'finalizado',
-      client_confirmed: true,
-      client_comment: comment || null
-    }).eq('id', jobId);
-
-    closeModal('modal-confirm-finish');
-    if (!error) {
-      showToast('¡Trabajo confirmado! Podés calificar al profesional.', 'success');
-      store._confirmingJobId = null;
-      const { loadUserDashboard } = await import('./dashboard.js');
-      await loadUserDashboard();
-      // Abrir modal de calificación automáticamente
-      const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
-      if (job?.professional_id) {
-        setTimeout(() => openRatingModal(job.professional_id, jobId), 600);
-      }
-    }
-  } else {
-    // Abrir modal de disputa
-    closeModal('modal-confirm-finish');
-    store._disputeJobId = jobId;
-    const disputeId = document.getElementById('dispute-job-id');
-    if (disputeId) disputeId.textContent = jobId;
-    showModal('modal-dispute');
-  }
-}
 
 export async function submitDispute() {
   const jobId = store._disputeJobId;
