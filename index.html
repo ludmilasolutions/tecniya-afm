@@ -409,125 +409,237 @@
 </div>
 
 <div class="page" id="page-pro-dashboard">
-  <div class="container dash-wrap">
-    <button class="dash-sidebar-toggle" onclick="document.querySelector('#pro-dashboard .dash-sidebar').classList.toggle('open')">
-      <i class="fa fa-bars"></i> Menú
-    </button>
-    <div class="dash-container">
-      <aside class="dash-sidebar" id="pro-sidebar">
-        <div class="dash-sidebar-header">
-          <div class="dash-sidebar-title"><i class="fa fa-user-tie"></i> Panel Profesional</div>
+  <div class="pro-dash-grid">
+
+    <!-- SIDEBAR -->
+    <aside class="pro-sidebar">
+
+
+      <div class="pro-sidebar-pro">
+        <div class="pro-avatar" id="pro-sidebar-avatar">
+          <i class="fa fa-user"></i>
         </div>
-        <div class="dash-sidebar-item active" data-tab="tab-pro-trabajos" onclick="window.switchDashTab('tab-pro-trabajos', 'pro')">
-          <i class="fa fa-briefcase"></i> Mis Trabajos <span class="sidebar-badge hidden" id="pro-sidebar-requests-badge">0</span>
+        <div class="pro-info">
+          <div class="pro-name" id="pro-sidebar-name">Profesional</div>
+          <div class="pro-specialty" id="pro-sidebar-specialty">Especialidad</div>
         </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-presupuestos" onclick="window.switchDashTab('tab-pro-presupuestos', 'pro')">
-          <i class="fa fa-file-invoice-dollar"></i> Presupuestos
+
+        <label class="pro-toggle-urgencias" for="pro-toggle-urgencias">
+          <span>Urgencias</span>
+          <div class="toggle-track" id="pro-urgencias-track">
+            <input type="checkbox" id="pro-toggle-urgencias" onchange="window.saveAvailabilityQuick(this.checked)">
+            <div class="toggle-thumb" id="pro-urgencias-thumb"></div>
+          </div>
+        </label>
+      </div>
+
+
+      <nav class="pro-sidebar-nav">
+        <div class="pro-sidebar-item active" data-tab="tab-pro-trabajos" onclick="window.switchDashTab('tab-pro-trabajos','pro')">
+          <i class="fa fa-briefcase"></i> Trabajos
+          <span class="pro-badge hidden" id="pro-sidebar-requests-badge">0</span>
         </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-fotos" onclick="window.switchDashTab('tab-pro-fotos', 'pro')">
-          <i class="fa fa-images"></i> Mis Fotos
+
+        <div class="pro-sidebar-item" data-tab="tab-pro-herramientas" onclick="window.switchDashTab('tab-pro-herramientas','pro')">
+          <i class="fa fa-screwdriver-wrench"></i> Herramientas
         </div>
-        <div class="dash-sidebar-divider"></div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-config" onclick="window.switchDashTab('tab-pro-config', 'pro')">
-          <i class="fa fa-sliders"></i> Configuración
+
+        <div class="pro-sidebar-divider"></div>
+
+        <div class="pro-sidebar-item" data-tab="tab-pro-config" onclick="window.switchDashTab('tab-pro-config', 'pro')">
+          <i class="fa fa-cog"></i> Configuración
         </div>
-        <div class="dash-sidebar-item" onclick="window.showPage('profile-edit')">
-          <i class="fa fa-user-pen"></i> Mi Perfil
-        </div>
-        <div class="dash-sidebar-action">
-          <button class="btn btn-orange btn-block" onclick="window.showSuscripcion()">
-            <i class="fa fa-crown"></i> Plan Destacado
+      </nav>
+
+    </aside>
+
+
+    <main class="pro-content">
+
+
+      <div class="tab-panel active" id="tab-pro-trabajos">
+
+
+        <details open class="pro-section-details">
+          <summary class="pro-section-header">
+            <div class="pro-section-title">
+              Solicitudes nuevas
+              <span class="pro-badge hidden" id="pro-sec-req-badge">0</span>
+            </div>
+            <i class="fa fa-chevron-down" id="pro-sec-req-chevron"></i>
+          </summary>
+
+          <div class="pro-section-content">
+            <div class="jobs-list" id="pro-jobs-new">
+              <div class="empty-state">
+                <i class="fa fa-envelope-open"></i>
+                <p>No tenés solicitudes nuevas.</p>
+              </div>
+            </div>
+          </div>
+        </details>
+
+
+        <details open class="pro-section-details">
+          <summary class="pro-section-header">
+            <div class="pro-section-title">
+              En proceso
+              <span class="pro-badge hidden" id="pro-sec-active-badge">0</span>
+            </div>
+            <i class="fa fa-chevron-down" id="pro-sec-active-chevron"></i>
+          </summary>
+
+          <div class="pro-section-content">
+            <div class="jobs-list" id="pro-jobs-active">
+              <div class="empty-state">
+                <i class="fa fa-spinner fa-spin"></i>
+                <p>No tenés trabajos en proceso.</p>
+              </div>
+            </div>
+          </div>
+        </details>
+
+
+        <details class="pro-section-details">
+          <summary class="pro-section-header">
+            Finalizados recientes
+            <span class="pro-badge hidden" id="pro-sec-done-badge">0</span>
+          </summary>
+          <div class="pro-section-content">
+            <div class="jobs-list" id="pro-jobs-done"></div>
+          </div>
+        </details>
+
+      </div>
+
+
+      <div class="tab-panel" id="tab-pro-herramientas">
+        <div class="pro-tabs-sub">
+          <button class="pro-htool-tab active" data-htool="presupuestos" onclick="window.switchProHtool('presupuestos')">
+            <i class="fa fa-file-invoice-dollar"></i> Presupuestos
+          </button>
+          <button class="pro-htool-tab" data-htool="fotos" onclick="window.switchProHtool('fotos')">
+            <i class="fa fa-images"></i> Fotos de trabajo
           </button>
         </div>
-      </aside>
-      <div class="dash-content">
-        <div class="dash-header">
-          <div>
-            <div class="dash-greeting">Panel Profesional</div>
-            <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;" id="pro-dash-specialty">Tu especialidad</p>
+
+
+        <div id="htool-presupuestos">
+          <div style="margin-bottom:20px;display:flex;justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="window.showModal('modal-new-budget')">
+              <i class="fa fa-plus"></i> Nuevo presupuesto
+            </button>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar Perfil</button>
+          <div class="jobs-list" id="pro-budgets-list">
+            <div class="empty-state">
+              <i class="fa fa-file-invoice"></i>
+              <p>No generaste presupuestos aún.</p>
+            </div>
           </div>
         </div>
 
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Pendientes</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">Activos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Hechos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div><div class="stat-label">Rating</div></div>
+
+        <div id="htool-fotos" style="display:none;">
+          <div style="margin-bottom:20px;display:flex;justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="document.getElementById('photo-upload-input').click()">
+              <i class="fa fa-upload"></i> Subir foto
+            </button>
+          </div>
+          <div class="photos-grid" id="pro-work-photos"></div>
         </div>
-        <div class="tab-panel active" id="tab-pro-trabajos">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <label style="font-size:0.85rem;color:var(--gray);">Filtrar por:</label>
-              <select class="form-select" id="pro-jobs-filter" style="width:160px;padding:6px 10px;font-size:0.85rem;" onchange="window.filterProJobs(this.value)">
-                <option value="all">Todos</option>
-                <option value="solicitado" selected>Nuevas solicitudes</option>
-                <option value="activo">En proceso</option>
-                <option value="para_revision">Para revisión</option>
-                <option value="finalizado">Finalizados</option>
-                <option value="cancelado">Cancelados / Rechazados</option>
-              </select>
-            </div>
-          </div>
-          <div class="jobs-list" id="pro-jobs-list">
-            <div class="empty-state"><i class="fa fa-briefcase"></i><p>No tenés trabajos en esta categoría.</p></div>
-          </div>
+
+      </div>
+
+
+      <div class="tab-panel" id="tab-pro-config">
+        <div class="pro-tabs-sub">
+          <button class="pro-cfg-tab active" data-cfg="disponibilidad" onclick="window.switchProConfig('disponibilidad')">
+            <i class="fa fa-clock"></i> Disponibilidad
+          </button>
+          <button class="pro-cfg-tab" data-cfg="perfil" onclick="window.switchProConfig('perfil')">
+            <i class="fa fa-user-pen"></i> Mi Perfil
+          </button>
+          <button class="pro-cfg-tab" data-cfg="plan" onclick="window.switchProConfig('plan')">
+            <i class="fa fa-crown"></i> Plan
+          </button>
         </div>
-        <div class="tab-panel" id="tab-pro-presupuestos">
-          <div style="margin-bottom:16px;"><button class="btn btn-primary btn-sm" id="btn-new-budget"><i class="fa fa-plus"></i>Nuevo Presupuesto</button></div>
-          <div class="jobs-list" id="pro-budgets-list">
-            <div class="empty-state"><i class="fa fa-file-invoice-dollar"></i><p>No enviaste presupuestos aún.</p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-pro-fotos">
-          <div style="margin-bottom:16px;">
-            <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
-            <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
-          </div>
-          <div class="photos-grid" id="pro-work-photos">
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-pro-config">
-          <div class="card" style="max-width:500px;">
-            <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
+
+
+        <div id="cfg-disponibilidad" class="pro-cfg-section">
+          <div class="card" style="max-width:500px;margin:auto;">
             <div class="form-group">
               <label class="form-label">Días laborales</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
+              <div class="pro-days-grid" id="dias-laborales">
+                <label><input type="checkbox" id="dia-lun" value="Lunes"> Lun</label>
+                <label><input type="checkbox" id="dia-mar" value="Martes"> Mar</label>
+                <label><input type="checkbox" id="dia-mie" value="Miércoles"> Mié</label>
+                <label><input type="checkbox" id="dia-jue" value="Jueves"> Jue</label>
+                <label><input type="checkbox" id="dia-vie" value="Viernes"> Vie</label>
+                <label><input type="checkbox" id="dia-sab" value="Sábado"> Sáb</label>
+                <label><input type="checkbox" id="dia-dom" value="Domingo"> Dom</label>
               </div>
             </div>
+
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Horario desde</label>
-                <input type="time" class="form-input" id="hora-desde" value="08:00">
+                <label class="form-label">Desde</label>
+                <input type="time" class="form-input" id="hora-desde">
               </div>
               <div class="form-group">
-                <label class="form-label">Horario hasta</label>
-                <input type="time" class="form-input" id="hora-hasta" value="18:00">
+                <label class="form-label">Hasta</label>
+                <input type="time" class="form-input" id="hora-hasta">
               </div>
             </div>
+
             <div class="form-group">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
-                <input type="checkbox" id="urgencias" style="accent-color:var(--orange);width:16px;height:16px;">
-                Acepto trabajos urgentes
+              <label class="pro-check-label">
+                <input type="checkbox" id="urgencias">
+                <span>Acepto trabajos urgentes</span>
               </label>
             </div>
-            <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
+
+            <button class="btn btn-primary btn-block" onclick="window.saveAvailability()">
+              Guardar disponibilidad
+            </button>
           </div>
         </div>
+
+
+        <div id="cfg-perfil" class="pro-cfg-section" style="display:none;">
+          <div id="pro-profile-edit-content">
+            <!-- El contenido de edición de perfil se cargará aquí si es necesario, 
+                 o se puede usar el mismo modal-edit-pro o un formulario in-place -->
+            <div class="card" style="max-width:600px;margin:auto;">
+               <div class="form-group">
+                 <label class="form-label">Tu nombre</label>
+                 <input type="text" class="form-input" id="pro-edit-name-dash">
+               </div>
+               <div class="form-group">
+                 <label class="form-label">Especialidades</label>
+                 <div id="specialty-chips-editor" class="specialty-chips-editor"></div>
+                 <div id="specialty-counter" class="specialty-counter"></div>
+               </div>
+               <button class="btn btn-primary btn-block" id="btn-save-pro-profile" onclick="window.saveProProfile()">
+                 Guardar cambios perfil
+               </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="cfg-plan" class="pro-cfg-section" style="display:none;">
+          <div class="card" style="text-align:center;padding:40px;">
+            <i class="fa fa-crown" style="font-size:3rem;color:var(--orange);margin-bottom:20px;"></i>
+            <h3>Plan Actual: <span id="pro-plan-name">Cargando...</span></h3>
+            <p id="pro-plan-desc" style="margin:15px 0;color:var(--gray);"></p>
+            <button class="btn btn-orange" onclick="window.showSuscripcion()">Ver planes y beneficios</button>
+          </div>
+        </div>
+
+
       </div>
-    </div>
+
+    </main>
+
   </div>
 </div>
 

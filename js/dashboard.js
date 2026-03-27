@@ -213,31 +213,27 @@ export async function loadProDashboard() {
 
   const sb = getSupabase();
 
-  setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
-
-  // Pre-llenar formulario de edición del pro
-  // Cargar datos desde profiles para tener full_name actualizado
+  // Cargar datos desde profiles para tener full_name/avatar actualizado
   const { data: profileData } = await sb.from('profiles').select('full_name, avatar_url, phone').eq('id', store.currentUser.id).maybeSingle();
-  
-  setVal('pro-edit-name',             profileData?.full_name || store.currentUser.user_metadata?.full_name || '');
-  setVal('pro-edit-specialty-single', store.currentPro.specialty || '');
-  setVal('pro-edit-desc',             store.currentPro.description || '');
-  setVal('pro-edit-city',             store.currentPro.city || '');
-  setVal('pro-edit-province',         store.currentPro.province || '');
-  setVal('pro-edit-zones',            (store.currentPro.zones || []).join(', '));
-  setVal('pro-edit-whatsapp',         store.currentPro.whatsapp || '');
-
-  // Cargar avatar en el formulario de edición profesional
-  if (profileData?.avatar_url) {
-    const avatarPreview = document.getElementById('pro-edit-avatar-preview');
-    if (avatarPreview) {
-      avatarPreview.style.backgroundImage = `url('${profileData.avatar_url}')`;
-      avatarPreview.innerHTML = '';
-    }
-  }
 
   try {
-    // Jobs donde professional_id = profiles.id del usuario actual
+    // Sidebar Pro
+    const proName = profileData?.full_name || store.currentUser.user_metadata?.full_name || 'Profesional';
+    setEl('pro-sidebar-name', proName);
+    setEl('pro-sidebar-specialty', store.currentPro.specialty || 'Especialidad');
+    
+    if (profileData?.avatar_url) {
+      const sbAvatar = document.getElementById('pro-sidebar-avatar');
+      if (sbAvatar) {
+        sbAvatar.style.backgroundImage = `url('${profileData.avatar_url}')`;
+        sbAvatar.innerHTML = '';
+      }
+    }
+
+    // Toggle Urgencias
+    updateUrgenciasToggle(store.currentPro.availability?.urgencias);
+
+    // Jobs
     const { data: jobs } = await sb
       .from('jobs')
       .select('*')
@@ -250,27 +246,23 @@ export async function loadProDashboard() {
     const activeJ = store.proJobs.filter(j => ['aceptado','en_proceso','para_revision'].includes(j.status));
     const doneJ   = store.proJobs.filter(j => j.status === 'finalizado');
 
-    setEl('pro-stat-new',    newJ.length);
-    setEl('pro-stat-active', activeJ.length);
-    setEl('pro-stat-done',   doneJ.length);
-
-    // Actualizar badges del sidebar y navegación
+    // Badges
     updateSidebarBadge('pro-sidebar-requests-badge', newJ.length);
+    updateSidebarBadge('pro-sec-req-badge', newJ.length);
+    updateSidebarBadge('pro-sec-active-badge', activeJ.length);
+    updateSidebarBadge('pro-sec-done-badge', doneJ.length);
 
-    // Renderizar según el filtro actual
-    const currentFilter = document.getElementById('pro-jobs-filter')?.value || 'solicitado';
-    window.filterProJobs(currentFilter);
+    // Listas por sección
+    renderJobList('pro-jobs-new',    newJ,    'pro');
+    renderJobList('pro-jobs-active', activeJ, 'pro');
+    renderJobList('pro-jobs-done',   doneJ.slice(0,5), 'pro');
 
-    // Rating promedio
-    const { data: reviews } = await sb
-      .from('reviews')
-      .select('rating')
-      .eq('professional_id', store.currentUser.id);
-
-    if (reviews?.length) {
-      const avg = reviews.reduce((s, r) => s + parseFloat(r.rating), 0) / reviews.length;
-      setEl('pro-stat-rating', avg.toFixed(1));
-    }
+    // Plan info
+    const isFeatured = store.currentPro?.is_featured;
+    setEl('pro-plan-name', isFeatured ? 'Plan Destacado' : 'Plan Base');
+    setEl('pro-plan-desc', isFeatured 
+      ? 'Disfrutás de especialidades ilimitadas, presupuestos y mayor visibilidad.' 
+      : 'Especialidades limitadas a 3. ¡Pasate a Destacado para más beneficios!');
 
   } catch (e) {
     console.error('loadProDashboard:', e);
@@ -633,6 +625,60 @@ export function sendBudgetWhatsApp() {
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
+export function switchProHtool(id) {
+  document.querySelectorAll('#tab-pro-herramientas > div[id^="htool-"]').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.pro-htool-tab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(`htool-${id}`);
+  if (el) el.style.display = 'block';
+  document.querySelector(`.pro-htool-tab[data-htool="${id}"]`)?.classList.add('active');
+}
+
+export function switchProConfig(id) {
+  document.querySelectorAll('.pro-cfg-section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.pro-cfg-tab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(`cfg-${id}`);
+  if (el) el.style.display = 'block';
+  document.querySelector(`.pro-cfg-tab[data-cfg="${id}"]`)?.classList.add('active');
+  
+  if (id === 'perfil') {
+    const sps = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
+    renderSpecialtyEditor(sps);
+    updateSpecialtyCounter();
+    const nameInput = document.getElementById('pro-edit-name-dash');
+    if (nameInput) nameInput.value = store.currentUser?.user_metadata?.full_name || '';
+  }
+}
+
+export async function saveAvailabilityQuick(isUrgent) {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  const avail = store.currentPro.availability || {};
+  avail.urgencias = isUrgent;
+  
+  updateUrgenciasToggle(isUrgent);
+
+  const { error } = await sb.from('professionals').update({
+    availability: avail,
+    is_online: isUrgent
+  }).eq('user_id', store.currentUser.id);
+
+  if (error) {
+    showToast('Error al actualizar urgencias', 'error');
+    updateUrgenciasToggle(!isUrgent);
+  } else {
+    store.currentPro.availability = avail;
+    store.currentPro.is_online = isUrgent;
+    showToast(isUrgent ? 'Modo Urgencias ONLINE' : 'Modo Urgencias Offline', 'info');
+  }
+}
+
+function updateUrgenciasToggle(active) {
+  const input = document.getElementById('pro-toggle-urgencias');
+  const track = document.getElementById('pro-urgencias-track');
+  if (input) input.checked = !!active;
+  if (track) track.classList.toggle('active', !!active);
+}
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function setEl(id, val) {
@@ -645,20 +691,6 @@ function setVal(id, val) {
   if (el) el.value = val;
 }
 
-window.filterProJobs = function(status) {
-  if (!store.proJobs) return;
-  let filtered = [];
-  if (status === 'all') {
-    filtered = store.proJobs;
-  } else if (status === 'cancelado') {
-    filtered = store.proJobs.filter(j => ['cancelado', 'rechazado'].includes(j.status));
-  } else if (status === 'activo') {
-    filtered = store.proJobs.filter(j => ['aceptado', 'en_proceso'].includes(j.status));
-  } else {
-    filtered = store.proJobs.filter(j => j.status === status);
-  }
-  renderJobList('pro-jobs-list', filtered, 'pro');
-};
 
 function renderJobList(id, jobs, viewAs) {
   const el = document.getElementById(id);

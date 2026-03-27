@@ -27,7 +27,8 @@ import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, lo
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF,
          editAvatarSelected, proEditAvatarSelected,
-         openAddAddressModal, editAddress, saveAddress, deleteAddress } from './dashboard.js';
+         openAddAddressModal, editAddress, saveAddress, deleteAddress,
+         switchProHtool, switchProConfig, saveAvailabilityQuick } from './dashboard.js';
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
@@ -139,6 +140,9 @@ window.proEditAvatarSelected = proEditAvatarSelected;
 window.renderSpecialtyEditor = renderSpecialtyEditor;
 window.toggleSpecialtyChip = toggleSpecialtyChip;
 window.getSelectedSpecialties = getSelectedSpecialties;
+window.switchProHtool = switchProHtool;
+window.switchProConfig = switchProConfig;
+window.saveAvailabilityQuick = saveAvailabilityQuick;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;
@@ -460,19 +464,8 @@ async function initApp() {
   });
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
-  on('btn-edit-pro-profile',  'click', async () => {
-    const { showModal } = await import('./ui.js');
-    const { loadProDashboard } = await import('./dashboard.js');
-    await loadProDashboard();
-    showModal('modal-edit-pro');
-  });
-  on('btn-featured-pro',      'click', showSuscripcion);
-  on('btn-save-availability', 'click', saveAvailability);
-  on('btn-save-pro-profile',  'click', saveProProfile);
-  on('btn-new-budget',        'click', () => showModal('modal-new-budget'));
   on('btn-save-budget',       'click', saveBudget);
   on('btn-pdf-budget',        'click', generateBudgetPDF);
-  on('btn-upload-photo',      'click', () => document.getElementById('photo-upload-input')?.click());
   on('photo-upload-input',    'change', async e => {
     const file = e.target.files[0];
     if (!file) return;
