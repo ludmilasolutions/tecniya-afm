@@ -152,15 +152,31 @@ window.activateProProfile = activateProProfile;
 window.goBack = () => showPage(store.previousPage || 'home');
 
 window.switchDashTab = function(tabId, type = 'user') {
-  const prefix = type === 'pro' ? 'pro-' : '';
-  document.querySelectorAll(`#${type}-dashboard .tab-panel`).forEach(p => p.classList.remove('active'));
-  document.querySelectorAll(`#${type}-dashboard .dash-sidebar-item`).forEach(i => i.classList.remove('active'));
-  document.getElementById(tabId)?.classList.add('active');
-  const sidebarItem = document.querySelector(`#${type}-dashboard .dash-sidebar-item[data-tab="${tabId}"]`);
-  if (sidebarItem) sidebarItem.classList.add('active');
-  const sidebar = document.querySelector(`#${type}-dashboard .dash-sidebar`);
-  if (sidebar && window.innerWidth <= 768) {
-    sidebar.classList.remove('open');
+  const pageId = type === 'pro' ? '#page-pro-dashboard' : '#page-user-dashboard';
+  const itemClass = type === 'pro' ? '.pro-sidebar-item' : '.dash-sidebar-item';
+  
+  // Ocultar todas las pestañas activas
+  document.querySelectorAll(`${pageId} .tab-panel`).forEach(p => p.classList.remove('active'));
+  
+  // Remover la clase active de todos los ítems de navegación
+  document.querySelectorAll(`${pageId} ${itemClass}`).forEach(i => i.classList.remove('active'));
+  
+  // Mostrar el panel de destino
+  const targetPanel = document.getElementById(tabId);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+  }
+  
+  // Marcar como activo el ítem en la navegación
+  const sidebarItem = document.querySelector(`${pageId} ${itemClass}[data-tab="${tabId}"]`);
+  if (sidebarItem) {
+    sidebarItem.classList.add('active');
+  }
+  
+  // Cerrar el menú principal de usuario si estaba en móvil
+  const mobileSidebar = document.querySelector(`${pageId} .dash-sidebar`);
+  if (mobileSidebar && window.innerWidth <= 768) {
+    mobileSidebar.classList.remove('open');
   }
 };
 
