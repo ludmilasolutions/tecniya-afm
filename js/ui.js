@@ -325,24 +325,6 @@ function hideContextualNav() {
   if (bottomNav) bottomNav.classList.add('hidden');
 }
 
-export function updateBottomNav() {
-  const bottomNav = document.getElementById('bottom-nav');
-  if (!bottomNav) return;
-  
-  const isLogged = !!store.currentUser;
-  if (!isLogged) {
-    bottomNav.classList.add('hidden');
-    return;
-  }
-  
-  bottomNav.classList.remove('hidden');
-}
-
-export function hideBottomNav() {
-  const bottomNav = document.getElementById('bottom-nav');
-  if (bottomNav) bottomNav.classList.add('hidden');
-}
-
 export function updateNavBadges({ messages = 0, notifications = 0, requests = 0 } = {}) {
   const badges = {
     'nav-client-chat-badge': messages,
@@ -366,40 +348,6 @@ export function updateNavBadges({ messages = 0, notifications = 0, requests = 0 
       badge.classList.add('hidden');
     }
   });
-}
-
-export function setActiveNavItem(pageId) {
-  const selectors = [
-    `.nav-contextual a[data-page="${pageId}"]`,
-    `.nav-contextual a[id*="${pageId}"]`,
-    `#bottom-nav a[data-page="${pageId}"]`
-  ];
-
-  document.querySelectorAll('.nav-contextual a, #bottom-nav a').forEach(a => {
-    a.classList.remove('active');
-  });
-
-  for (const selector of selectors) {
-    const activeLink = document.querySelector(selector);
-    if (activeLink) {
-      activeLink.classList.add('active');
-      break;
-    }
-  }
-
-  const pageToNavMap = {
-    'home': 'home',
-    'professionals-list': 'search',
-    'pro-dashboard': 'home',
-    'user-dashboard': 'home'
-  };
-
-  const navPage = pageToNavMap[pageId] || pageId;
-  document.querySelectorAll('.nav-contextual a').forEach(a => a.classList.remove('active'));
-  const targetNav = document.getElementById(`nav-client-${navPage}`) || 
-                    document.getElementById(`nav-pro-${navPage}`) ||
-                    document.getElementById(`bnav-${navPage}`);
-  if (targetNav) targetNav.classList.add('active');
 }
 
 export function initSidebar() {
@@ -441,22 +389,41 @@ export function updateBottomNav() {
   }
 }
 
-export function setActiveNavItem(page) {
-  const bnavItems = document.querySelectorAll('.bottom-nav-item');
-  if (bnavItems.length === 0) return;
+export function hideBottomNav() {
+  ['bnav-guest', 'bnav-client', 'bnav-pro'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
 
-  bnavItems.forEach(el => el.classList.remove('active'));
+export function setActiveNavItem(pageId) {
+  // Desktop contextual nav
+  document.querySelectorAll('.nav-contextual a').forEach(a => a.classList.remove('active'));
   
-  // Mapeo dinámico de página a ID de navegación
-  let targetId = '';
-  if (page === 'home' || page === 'pro-dashboard' || page === 'user-dashboard') {
-    targetId = store.activePanel === 'pro' ? 'bnav-pro-home' : (store.currentUser ? 'bnav-client-home' : 'bnav-guest-home');
-  } else if (page === 'professionals-list') {
-    targetId = store.activePanel === 'pro' ? 'bnav-pro-search' : (store.currentUser ? 'bnav-client-search' : 'bnav-guest-search');
-  } else if (page === 'user-dashboard' && !store.isPro) {
-    targetId = 'bnav-client-profile';
+  const pageToNavMap = {
+    'home': 'home',
+    'professionals-list': 'search',
+    'pro-dashboard': 'home',
+    'user-dashboard': 'home'
+  };
+
+  const navPage = pageToNavMap[pageId] || pageId;
+  const targetNav = document.getElementById(`nav-client-${navPage}`) || 
+                    document.getElementById(`nav-pro-${navPage}`);
+  if (targetNav) targetNav.classList.add('active');
+
+  // Bottom Nav system
+  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+  
+  let bnavId = '';
+  if (pageId === 'home' || pageId === 'pro-dashboard' || pageId === 'user-dashboard') {
+    bnavId = store.activePanel === 'pro' ? 'bnav-pro-home' : (store.currentUser ? 'bnav-client-home' : 'bnav-guest-home');
+  } else if (pageId === 'professionals-list') {
+    bnavId = store.activePanel === 'pro' ? 'bnav-pro-search' : (store.currentUser ? 'bnav-client-search' : 'bnav-guest-search');
+  } else if (pageId === 'user-dashboard' && !store.isPro) {
+    bnavId = 'bnav-client-profile';
   }
 
-  const activeBtn = document.getElementById(targetId);
-  if (activeBtn) activeBtn.classList.add('active');
+  const activeBnav = document.getElementById(bnavId);
+  if (activeBnav) activeBnav.classList.add('active');
 }
