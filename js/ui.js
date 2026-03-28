@@ -366,9 +366,6 @@ export function initSidebar() {
 }
 
 export function updateBottomNav() {
-  const isMobile = window.innerWidth <= 768;
-  if (!isMobile) return;
-
   const guestNav = document.getElementById('bnav-guest');
   const clientNav = document.getElementById('bnav-client');
   const proNav = document.getElementById('bnav-pro');
@@ -379,6 +376,9 @@ export function updateBottomNav() {
   guestNav.style.display = 'none';
   clientNav.style.display = 'none';
   proNav.style.display = 'none';
+
+  // Solo mostrar en móvil
+  if (window.innerWidth > 768) return;
 
   if (!store.currentUser) {
     guestNav.style.display = 'grid';
