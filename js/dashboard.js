@@ -5,26 +5,13 @@ import { jobItem } from './jobs.js';
 
 function updateSidebarBadge(badgeId, count) {
   const badge = document.getElementById(badgeId);
-  if (badge) {
-    if (count > 0) {
-      badge.textContent = count > 99 ? '99+' : count;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
   }
-
-  // Sincronizar con badges del Bottom Nav (mismo sufijo)
-  const suffix = badgeId.split('-').pop(); // e.g. 'messages', 'notifs', 'requests'
-  const bnavBadges = document.querySelectorAll(`[id^="bnav-"][id$="-${suffix}-badge"]`);
-  bnavBadges.forEach(bn => {
-    if (count > 0) {
-      bn.textContent = count > 99 ? '99+' : count;
-      bn.classList.remove('hidden');
-    } else {
-      bn.classList.add('hidden');
-    }
-  });
 }
 
 // ─── DASHBOARD CLIENTE ────────────────────────────────────────────────────────

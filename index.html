@@ -658,11 +658,6 @@
     <div class="admin-sidebar-item" id="admin-back"><i class="fa fa-arrow-left"></i>Volver al sitio</div>
   </div>
   <div class="admin-content">
-    <!-- Aviso Mobile para Admin -->
-    <div id="admin-mobile-warning" style="display:none;">
-      <i class="fa fa-circle-exclamation"></i>
-      <strong>Modo Administración Limitado:</strong> Para una gestión completa de usuarios, seguridad y auditoría, recomendamos usar una computadora de escritorio.
-    </div>
     <div id="admin-overview" class="admin-tab" style="display:block;">
       <h2 style="font-size:1.5rem;margin-bottom:24px;font-family:'Inter',sans-serif;">Dashboard Administración</h2>
       <div class="stats-row">
@@ -2188,66 +2183,6 @@
     </div>
   </div>
 </div>
-
-  <!-- BOTTOM NAVIGATION CONTEXTUAL (Móvil) -->
-  
-  <!-- 1. Guest View -->
-  <nav class="bottom-nav" id="bnav-guest" style="display:none;">
-    <a href="#" class="bottom-nav-item active" data-page="home" id="bnav-guest-home">
-      <i class="fa fa-home"></i><span>Inicio</span>
-    </a>
-    <a href="#" class="bottom-nav-item" data-page="professionals-list" id="bnav-guest-search">
-      <i class="fa fa-search"></i><span>Buscar</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.showHelp?.()">
-      <i class="fa fa-circle-question"></i><span>Ayuda</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.showLogin?.()">
-      <i class="fa fa-user"></i><span>Ingresar</span>
-    </a>
-  </nav>
-
-  <!-- 2. Client View -->
-  <nav class="bottom-nav" id="bnav-client" style="display:none;">
-    <a href="#" class="bottom-nav-item active" data-page="home" id="bnav-client-home">
-      <i class="fa fa-home"></i><span>Inicio</span>
-    </a>
-    <a href="#" class="bottom-nav-item" data-page="professionals-list" id="bnav-client-search">
-      <i class="fa fa-search"></i><span>Buscar</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.toggleFloatChat?.()">
-      <i class="fa fa-comments"></i><span>Mensajes</span>
-      <span class="bnav-badge hidden" id="bnav-client-messages-badge">0</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.showNotifications?.()">
-      <i class="fa fa-bell"></i><span>Avisos</span>
-      <span class="bnav-badge hidden" id="bnav-client-notifs-badge">0</span>
-    </a>
-    <a href="#" class="bottom-nav-item" data-page="user-dashboard" id="bnav-client-profile">
-      <i class="fa fa-user-circle"></i><span>Perfil</span>
-    </a>
-  </nav>
-
-  <!-- 3. Professional View -->
-  <nav class="bottom-nav nav-5-items" id="bnav-pro" style="display:none;">
-    <a href="#" class="bottom-nav-item active" data-page="pro-dashboard" id="bnav-pro-home">
-      <i class="fa fa-gauge-high"></i><span>Panel</span>
-    </a>
-    <a href="#" class="bottom-nav-item" data-page="professionals-list" id="bnav-pro-search">
-      <i class="fa fa-search"></i><span>Buscar</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.toggleFloatChat?.()">
-      <i class="fa fa-comments"></i><span>Mensajes</span>
-      <span class="bnav-badge hidden" id="bnav-pro-messages-badge">0</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.showNotifications?.()">
-      <i class="fa fa-bell"></i><span>Avisos</span>
-      <span class="bnav-badge hidden" id="bnav-pro-notifs-badge">0</span>
-    </a>
-    <a href="#" class="bottom-nav-item" onclick="window.toggleMobileMenu?.()">
-      <i class="fa fa-bars"></i><span>Más</span>
-    </a>
-  </nav>
 
 </body>
 </html>

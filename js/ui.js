@@ -325,6 +325,31 @@ function hideContextualNav() {
   if (bottomNav) bottomNav.classList.add('hidden');
 }
 
+export function updateBottomNav() {
+  const bottomNav = document.getElementById('bottom-nav');
+  if (!bottomNav) return;
+
+  const isLogged = !!store.currentUser;
+  
+  // En móviles, mostrar solo si está logueado y no es Admin
+  if (isLogged && !store.isAdmin) {
+    bottomNav.classList.remove('hidden');
+    
+    // Sincronizar item activo basado en la página actual
+    const activePage = getCurrentPage();
+    document.querySelectorAll('.bottom-nav-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === activePage);
+    });
+  } else {
+    bottomNav.classList.add('hidden');
+  }
+}
+
+export function hideBottomNav() {
+  const bottomNav = document.getElementById('bottom-nav');
+  if (bottomNav) bottomNav.classList.add('hidden');
+}
+
 export function updateNavBadges({ messages = 0, notifications = 0, requests = 0 } = {}) {
   const badges = {
     'nav-client-chat-badge': messages,
@@ -350,52 +375,6 @@ export function updateNavBadges({ messages = 0, notifications = 0, requests = 0 
   });
 }
 
-export function initSidebar() {
-  const sidebar = document.querySelector('.dash-sidebar');
-  const toggleBtn = document.querySelector('.dash-sidebar-toggle');
-  
-  if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      const isOpen = sidebar.classList.contains('open');
-      toggleBtn.innerHTML = isOpen 
-        ? '<i class="fa fa-chevron-up"></i> Ocultar menú'
-        : '<i class="fa fa-chevron-down"></i> Mostrar menú';
-    });
-  }
-}
-
-export function updateBottomNav() {
-  const guestNav = document.getElementById('bnav-guest');
-  const clientNav = document.getElementById('bnav-client');
-  const proNav = document.getElementById('bnav-pro');
-
-  if (!guestNav || !clientNav || !proNav) return;
-
-  // Reset visibility
-  guestNav.style.display = 'none';
-  clientNav.style.display = 'none';
-  proNav.style.display = 'none';
-
-  // Solo mostrar en móvil
-  if (window.innerWidth > 768) return;
-
-  if (!store.currentUser) {
-    guestNav.style.display = 'grid';
-  } else if (store.activePanel === 'pro') {
-    proNav.style.display = 'grid';
-  } else {
-    clientNav.style.display = 'grid';
-  }
-}
-
-export function hideBottomNav() {
-  ['bnav-guest', 'bnav-client', 'bnav-pro'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-}
-
 export function setActiveNavItem(pageId) {
   // Desktop contextual nav
   document.querySelectorAll('.nav-contextual a').forEach(a => a.classList.remove('active'));
@@ -412,18 +391,23 @@ export function setActiveNavItem(pageId) {
                     document.getElementById(`nav-pro-${navPage}`);
   if (targetNav) targetNav.classList.add('active');
 
-  // Bottom Nav system
-  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
-  
-  let bnavId = '';
-  if (pageId === 'home' || pageId === 'pro-dashboard' || pageId === 'user-dashboard') {
-    bnavId = store.activePanel === 'pro' ? 'bnav-pro-home' : (store.currentUser ? 'bnav-client-home' : 'bnav-guest-home');
-  } else if (pageId === 'professionals-list') {
-    bnavId = store.activePanel === 'pro' ? 'bnav-pro-search' : (store.currentUser ? 'bnav-client-search' : 'bnav-guest-search');
-  } else if (pageId === 'user-dashboard' && !store.isPro) {
-    bnavId = 'bnav-client-profile';
-  }
+  // Sync Bottom Nav highlights
+  document.querySelectorAll('.bottom-nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === pageId);
+  });
+}
 
-  const activeBnav = document.getElementById(bnavId);
-  if (activeBnav) activeBnav.classList.add('active');
+export function initSidebar() {
+  const sidebar = document.querySelector('.dash-sidebar');
+  const toggleBtn = document.querySelector('.dash-sidebar-toggle');
+  
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      const isOpen = sidebar.classList.contains('open');
+      toggleBtn.innerHTML = isOpen 
+        ? '<i class="fa fa-chevron-up"></i> Ocultar menú'
+        : '<i class="fa fa-chevron-down"></i> Mostrar menú';
+    });
+  }
 }
