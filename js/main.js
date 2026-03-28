@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { store } from './store.js';
 import { initFloatChat, toggleFloatChat, fchatGoList, fchatSearch, fchatOpenConv, fchatSend, fchatKeydown, fchatSendImage, openFloatChatWith, updateFChatBadge } from './floatChat.js';
 window.__store = store;
