@@ -416,3 +416,47 @@ export function initSidebar() {
     });
   }
 }
+
+export function updateBottomNav() {
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) return;
+
+  const guestNav = document.getElementById('bnav-guest');
+  const clientNav = document.getElementById('bnav-client');
+  const proNav = document.getElementById('bnav-pro');
+
+  if (!guestNav || !clientNav || !proNav) return;
+
+  // Reset visibility
+  guestNav.style.display = 'none';
+  clientNav.style.display = 'none';
+  proNav.style.display = 'none';
+
+  if (!store.currentUser) {
+    guestNav.style.display = 'grid';
+  } else if (store.activePanel === 'pro') {
+    proNav.style.display = 'grid';
+  } else {
+    clientNav.style.display = 'grid';
+  }
+}
+
+export function setActiveNavItem(page) {
+  const bnavItems = document.querySelectorAll('.bottom-nav-item');
+  if (bnavItems.length === 0) return;
+
+  bnavItems.forEach(el => el.classList.remove('active'));
+  
+  // Mapeo dinámico de página a ID de navegación
+  let targetId = '';
+  if (page === 'home' || page === 'pro-dashboard' || page === 'user-dashboard') {
+    targetId = store.activePanel === 'pro' ? 'bnav-pro-home' : (store.currentUser ? 'bnav-client-home' : 'bnav-guest-home');
+  } else if (page === 'professionals-list') {
+    targetId = store.activePanel === 'pro' ? 'bnav-pro-search' : (store.currentUser ? 'bnav-client-search' : 'bnav-guest-search');
+  } else if (page === 'user-dashboard' && !store.isPro) {
+    targetId = 'bnav-client-profile';
+  }
+
+  const activeBtn = document.getElementById(targetId);
+  if (activeBtn) activeBtn.classList.add('active');
+}

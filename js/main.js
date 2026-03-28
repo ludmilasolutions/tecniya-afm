@@ -242,7 +242,28 @@ async function initApp() {
 
   // ── HEADER / NAV ────────────────────────────────────────────────────────
   on('logo-wrap',       'click', () => showPage('home'));
-  on('hamburger-btn',   'click', toggleMobileMenu);
+  on('hamburger-btn', 'click', toggleMobileMenu);
+
+  // Bottom Nav - Navegación entre vistas
+  document.addEventListener('click', e => {
+    const bnavItem = e.target.closest('.bottom-nav-item[data-page]');
+    if (bnavItem) {
+      e.preventDefault();
+      const page = bnavItem.getAttribute('data-page');
+      
+      // Manejo especial de paneles pro/user
+      if (page === 'pro-dashboard') store.setActivePanel('pro');
+      if (page === 'user-dashboard') store.setActivePanel('user');
+      
+      showPage(page);
+      if (page === 'pro-dashboard') import('./dashboard.js').then(m => m.loadProDashboard());
+      if (page === 'user-dashboard') import('./dashboard.js').then(m => m.loadUserDashboard());
+      
+      // Sincronizar UI
+      updateBottomNav();
+      setActiveNavItem(page);
+    }
+  });
 
   on('nav-home',  'click', e => { e.preventDefault(); showPage('home'); });
   on('nav-pros',  'click', e => { e.preventDefault(); showPage('professionals-list'); });
