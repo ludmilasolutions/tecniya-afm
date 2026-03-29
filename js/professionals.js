@@ -194,58 +194,155 @@ export function showProProfile(proId) {
   const stars = generateStars(p.rating);
   const avatarHtml = p.avatar_url
     ? `<img src="${p.avatar_url}" alt="${escapeHtml(p.name || '')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-    : initial;
-  
+    : `<span class="pro-avatar-initial">${initial}</span>`;
+
+  const trust = p.trust_score ?? 100;
+  const trustColor = trust >= 80 ? 'var(--green)' : trust >= 50 ? 'var(--orange)' : '#f87171';
+  const ratingPct = p.rating ? (p.rating / 5 * 100).toFixed(0) : 0;
+
+  const badges = [
+    p.is_featured  ? `<span class="ppro-badge ppro-badge--featured"><i class="fa fa-crown"></i>Destacado</span>` : '',
+    p.is_certified ? `<span class="ppro-badge ppro-badge--certified"><i class="fa fa-certificate"></i>Certificado</span>` : '',
+    p.is_online    ? `<span class="ppro-badge ppro-badge--online"><i class="fa fa-circle"></i>Disponible</span>` : '',
+  ].filter(Boolean).join('');
+
+  const specialtyChips = (p.specialties?.length ? p.specialties : [p.specialty || 'Técnico'])
+    .map(s => `<span class="ppro-specialty">${escapeHtml(s)}</span>`).join('');
+
+  const zoneHtml = (p.zones || []).map(z => `<span class="ppro-zone">${escapeHtml(z)}</span>`).join('')
+    || `<span class="ppro-zone ppro-zone--empty">No especificado</span>`;
+
   document.getElementById('pro-profile-content').innerHTML = `
-    <div class="pro-profile-header">
-      <div class="pro-avatar-lg">${avatarHtml}</div>
-      <div class="pro-profile-info">
-        <div class="pro-name">${escapeHtml(p.name || 'Profesional')}</div>
-        <div class="pro-specialties">${
-          (p.specialties?.length ? p.specialties : [p.specialty||'Técnico'])
-            .map(s => `<span class="specialty-chip">${escapeHtml(s)}</span>`).join('')
-        }</div>
-        <div class="pro-location"><i class="fa fa-location-dot"></i> ${escapeHtml(p.city || '')}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">${p.is_featured ? '<span class="badge badge-destacado"><i class="fa fa-crown"></i>Destacado</span>' : ''}${p.is_certified ? '<span class="badge badge-certificado"><i class="fa fa-certificate"></i>Certificado</span>' : ''}${p.is_online ? '<span class="badge badge-disponible"><i class="fa fa-circle" style="font-size:0.5rem;"></i>Disponible</span>' : ''}</div>
-        <div class="pro-rating"><div class="stars">${stars}</div><span class="rating-num" style="font-size:1.1rem;">${p.rating ? p.rating.toFixed(1) : 'Nuevo'}</span><span class="rating-count">(${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos)</span></div>
-      </div>
-      <div class="pro-profile-security">
-          ${renderProWarnings(p)}
-          ${renderProStats(p)}
+    <div class="ppro-wrap">
+
+      <!-- HERO CARD -->
+      <div class="ppro-hero">
+        <div class="ppro-hero-bg" aria-hidden="true"></div>
+        <div class="ppro-hero-inner">
+          <div class="ppro-avatar-ring">
+            <div class="ppro-avatar-lg">${avatarHtml}</div>
+            ${p.is_online ? '<span class="ppro-online-dot" title="Disponible ahora"></span>' : ''}
+          </div>
+          <div class="ppro-hero-info">
+            <div class="ppro-badges-row">${badges}</div>
+            <h1 class="ppro-name">${escapeHtml(p.name || 'Profesional')}</h1>
+            <div class="ppro-specialties-row">${specialtyChips}</div>
+            <div class="ppro-location"><i class="fa fa-location-dot"></i> ${escapeHtml(p.city || '')}${p.province ? ', ' + escapeHtml(p.province) : ''}</div>
+            <div class="ppro-rating-row">
+              <div class="stars">${stars}</div>
+              <span class="ppro-rating-num">${p.rating ? p.rating.toFixed(1) : '—'}</span>
+              <span class="ppro-rating-meta">${p.reviews_count || 0} reseñas · ${p.jobs_count || 0} trabajos</span>
+            </div>
+          </div>
+          <div class="ppro-hero-actions">
+            <button class="btn btn-primary ppro-btn-main" onclick="window.openJobRequest('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${p.user_id || ''}')">
+              <i class="fa fa-paper-plane"></i>Solicitar trabajo
+            </button>
+            <div class="ppro-btn-row">
+              <button class="btn btn-ghost" onclick="window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
+              <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>
+            </div>
+          </div>
         </div>
-        <div class="pro-profile-actions">
-        <button class="btn btn-primary" onclick="window.openJobRequest('${p.id}','${(p.name||'').replace(/'/g,"\\'")}','${p.user_id || ''}')"><i class="fa fa-paper-plane"></i>Solicitar trabajo</button>
-        <button class="btn btn-ghost" onclick="window.openChatWith('${p.user_id || p.id}')"><i class="fa fa-comments"></i>Chat</button>
-        <button class="btn btn-ghost" onclick="window.addFavorite('${p.id}')"><i class="fa fa-heart"></i>Favorito</button>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;">
-      <div>
-        <div class="card" style="margin-bottom:20px;">
-          <h3 style="font-size:1rem;margin-bottom:12px;"><i class="fa fa-user" style="color:var(--accent);margin-right:8px;"></i>Sobre el profesional</h3>
-          <p style="font-size:0.9rem;color:var(--gray);line-height:1.7;">${escapeHtml(p.description) || 'Profesional técnico con experiencia en el rubro.'}</p>
-          <div style="margin-top:14px;"><strong style="font-size:0.82rem;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;">Zonas de cobertura</strong><div class="pro-zones" style="margin-top:8px;">${(p.zones || []).map(z => `<span class="zone-tag">${escapeHtml(z)}</span>`).join('') || '<span style="color:var(--gray);font-size:0.85rem;">No especificado</span>'}</div></div>
-        </div>
-        <div class="card">
-          <h3 style="font-size:1rem;margin-bottom:16px;"><i class="fa fa-star" style="color:var(--orange);margin-right:8px;"></i>Reseñas</h3>
-          <div class="reviews-list" id="pro-profile-reviews-${p.id}">
-            <div class="empty-state" style="padding:24px;"><i class="fa fa-star"></i><p style="font-size:0.85rem;">Aún no tiene reseñas.</p></div>
+
+        <!-- KPI strip -->
+        <div class="ppro-kpi-strip">
+          <div class="ppro-kpi">
+            <span class="ppro-kpi-val ppro-kpi-val--green">${p.completed_jobs || 0}</span>
+            <span class="ppro-kpi-label"><i class="fa fa-check-circle"></i>Completados</span>
+          </div>
+          <div class="ppro-kpi-divider"></div>
+          <div class="ppro-kpi">
+            <span class="ppro-kpi-val ppro-kpi-val--red">${p.cancel_count || 0}</span>
+            <span class="ppro-kpi-label"><i class="fa fa-xmark"></i>Cancelaciones</span>
+          </div>
+          <div class="ppro-kpi-divider"></div>
+          <div class="ppro-kpi">
+            <span class="ppro-kpi-val ppro-kpi-val--orange">${p.avg_rating ? p.avg_rating.toFixed(1) : '—'}</span>
+            <span class="ppro-kpi-label"><i class="fa fa-star"></i>Puntuación</span>
+          </div>
+          <div class="ppro-kpi-divider"></div>
+          <div class="ppro-kpi">
+            <span class="ppro-kpi-val" style="color:${trustColor};">${trust}%</span>
+            <span class="ppro-kpi-label"><i class="fa fa-shield-halved"></i>Confiabilidad</span>
           </div>
         </div>
       </div>
-      <div>
-        <div class="card" style="margin-bottom:16px;">
-          <h3 style="font-size:0.95rem;margin-bottom:14px;"><i class="fa fa-chart-bar" style="color:var(--primary);margin-right:8px;"></i>Estadísticas</h3>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div><div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;"><span style="color:var(--gray);">Puntuación</span><span style="color:var(--orange);font-weight:700;">${p.rating ? p.rating.toFixed(1) : '-'}/5</span></div><div style="background:var(--glass);height:6px;border-radius:3px;"><div style="background:linear-gradient(90deg,var(--orange),#dc2626);height:100%;border-radius:3px;width:${p.rating ? p.rating / 5 * 100 : 0}%;"></div></div></div>
-            <div style="font-size:0.85rem;"><span style="color:var(--gray);">Trabajos: </span><strong>${p.jobs_count || 0}</strong></div>
-            <div style="font-size:0.85rem;"><span style="color:var(--gray);">Reseñas: </span><strong>${p.reviews_count || 0}</strong></div>
+
+      ${renderProWarnings(p) ? `<div class="ppro-warnings">${renderProWarnings(p)}</div>` : ''}
+
+      <!-- BODY GRID -->
+      <div class="ppro-body">
+
+        <!-- LEFT COLUMN -->
+        <div class="ppro-col-main">
+
+          <!-- Sobre el profesional -->
+          <div class="ppro-card">
+            <div class="ppro-card-header">
+              <span class="ppro-card-icon ppro-card-icon--accent"><i class="fa fa-user"></i></span>
+              <h2 class="ppro-card-title">Sobre el profesional</h2>
+            </div>
+            <p class="ppro-desc">${escapeHtml(p.description) || 'Profesional técnico con experiencia en el rubro.'}</p>
+            <div class="ppro-zones-section">
+              <span class="ppro-zones-label"><i class="fa fa-map-marked-alt"></i>Zonas de cobertura</span>
+              <div class="ppro-zones-list">${zoneHtml}</div>
+            </div>
+          </div>
+
+          <!-- Reseñas -->
+          <div class="ppro-card">
+            <div class="ppro-card-header">
+              <span class="ppro-card-icon ppro-card-icon--orange"><i class="fa fa-star"></i></span>
+              <h2 class="ppro-card-title">Reseñas</h2>
+            </div>
+            <div class="reviews-list" id="pro-profile-reviews-${p.id}">
+              <div class="empty-state" style="padding:28px;"><i class="fa fa-star"></i><p style="font-size:0.85rem;">Aún no tiene reseñas.</p></div>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <h3 style="font-size:0.95rem;margin-bottom:14px;"><i class="fa fa-images" style="color:var(--accent);margin-right:8px;"></i>Fotos de trabajos</h3>
-          <div class="photos-grid" id="pro-profile-photos-${p.id}" style="grid-template-columns:1fr 1fr;">
-            <div class="empty-state" style="grid-column:1/-1;padding:16px;"><i class="fa fa-images"></i><p style="font-size:0.8rem;">Cargando...</p></div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="ppro-col-side">
+
+          <!-- Estadísticas -->
+          <div class="ppro-card">
+            <div class="ppro-card-header">
+              <span class="ppro-card-icon ppro-card-icon--primary"><i class="fa fa-chart-bar"></i></span>
+              <h2 class="ppro-card-title">Estadísticas</h2>
+            </div>
+            <div class="ppro-stats-list">
+              <div class="ppro-stat-row">
+                <span class="ppro-stat-name">Puntuación</span>
+                <span class="ppro-stat-val ppro-stat-val--orange">${p.rating ? p.rating.toFixed(1) : '—'}<span class="ppro-stat-max">/5</span></span>
+              </div>
+              <div class="ppro-progress-bar"><div class="ppro-progress-fill ppro-progress-fill--orange" style="width:${ratingPct}%;"></div></div>
+
+              <div class="ppro-stat-row" style="margin-top:14px;">
+                <span class="ppro-stat-name">Trabajos</span>
+                <strong class="ppro-stat-val">${p.jobs_count || 0}</strong>
+              </div>
+              <div class="ppro-stat-row">
+                <span class="ppro-stat-name">Reseñas</span>
+                <strong class="ppro-stat-val">${p.reviews_count || 0}</strong>
+              </div>
+              <div class="ppro-stat-row">
+                <span class="ppro-stat-name">Confiabilidad</span>
+                <strong class="ppro-stat-val" style="color:${trustColor};">${trust}%</strong>
+              </div>
+              <div class="ppro-progress-bar" style="margin-top:6px;"><div class="ppro-progress-fill" style="width:${trust}%;background:${trustColor};"></div></div>
+            </div>
+          </div>
+
+          <!-- Fotos de trabajos -->
+          <div class="ppro-card">
+            <div class="ppro-card-header">
+              <span class="ppro-card-icon ppro-card-icon--cyan"><i class="fa fa-images"></i></span>
+              <h2 class="ppro-card-title">Fotos de trabajos</h2>
+            </div>
+            <div class="photos-grid ppro-photos" id="pro-profile-photos-${p.id}">
+              <div class="empty-state" style="grid-column:1/-1;padding:20px;"><i class="fa fa-images"></i><p style="font-size:0.8rem;">Cargando...</p></div>
+            </div>
           </div>
         </div>
       </div>
