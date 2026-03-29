@@ -243,11 +243,18 @@ export async function loadProDashboard() {
     // Jobs donde professional_id = profiles.id del usuario actual
     const { data: jobs } = await sb
       .from('jobs')
-      .select('*, user:profiles!jobs_user_id_fkey(full_name)')
+      .select('*')
       .eq('professional_id', store.currentUser.id)
       .order('created_at', { ascending: false });
-    // Aplanar nombre del cliente en cada job
-    (jobs || []).forEach(j => { j.user_name = j.user?.full_name || null; });
+
+    // Cargar nombres de clientes por separado (más seguro que join)
+    const userIds = [...new Set((jobs || []).filter(j => j.user_id).map(j => j.user_id))];
+    let clientNames = {};
+    if (userIds.length) {
+      const { data: profiles } = await sb.from('profiles').select('id, full_name').in('id', userIds);
+      (profiles || []).forEach(p => { clientNames[p.id] = p.full_name; });
+    }
+    (jobs || []).forEach(j => { j.user_name = clientNames[j.user_id] || null; });
 
     const newJ    = (jobs || []).filter(j => j.status === 'solicitado');
     const activeJ = (jobs || []).filter(j => ['aceptado','en_proceso'].includes(j.status));
