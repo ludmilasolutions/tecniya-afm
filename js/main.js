@@ -37,6 +37,7 @@ import { showSuscripcion, subscribePro } from './subscriptions.js';
 import { deleteWorkPhoto } from './upload.js';
 import { initPWA, installPWA, generateManifest, initPWAEvents } from './pwa.js';
 import { initStorage, initUploadEvents } from './upload.js';
+import { openRateUserModal, setUserRating, submitUserRating, initRatingEvents } from './userRatings.js';
 
 // ─── Exponer globalmente (para onclick en HTML generado dinámicamente) ───────
 window.showPage         = showPage;
@@ -150,6 +151,9 @@ window.openAddAddressModal = openAddAddressModal;
 window.editAddress      = editAddress;
 window.saveAddress      = saveAddress;
 window.deleteAddress    = deleteAddress;
+window.openRateUserModal  = openRateUserModal;
+window.setUserRating      = setUserRating;
+window.submitUserRating   = submitUserRating;
 window.editAvatarSelected = editAvatarSelected;
 window.proEditAvatarSelected = proEditAvatarSelected;
 window.renderSpecialtyEditor = renderSpecialtyEditor;
