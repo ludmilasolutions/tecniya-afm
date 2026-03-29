@@ -243,13 +243,27 @@ export async function loadProDashboard() {
     // Jobs donde professional_id = profiles.id del usuario actual
     const { data: jobs } = await sb
       .from('jobs')
-      .select('*')
+      .select('*, user:profiles!jobs_user_id_fkey(full_name)')
       .eq('professional_id', store.currentUser.id)
       .order('created_at', { ascending: false });
+    // Aplanar nombre del cliente en cada job
+    (jobs || []).forEach(j => { j.user_name = j.user?.full_name || null; });
 
     const newJ    = (jobs || []).filter(j => j.status === 'solicitado');
     const activeJ = (jobs || []).filter(j => ['aceptado','en_proceso'].includes(j.status));
     const doneJ   = (jobs || []).filter(j => j.status === 'finalizado');
+
+    // Marcar cuáles ya fueron calificados por el pro
+    if (doneJ.length) {
+      const doneIds = doneJ.map(j => j.id);
+      const { data: proReviews } = await sb
+        .from('reviews')
+        .select('job_id')
+        .in('job_id', doneIds)
+        .eq('reviewer_type', 'professional');
+      const ratedJobIds = new Set((proReviews || []).map(r => r.job_id));
+      doneJ.forEach(j => { j.pro_already_rated = ratedJobIds.has(j.id); });
+    }
 
     setEl('pro-stat-new',    newJ.length);
     setEl('pro-stat-active', activeJ.length);
