@@ -10,14 +10,12 @@ export async function loadUserDashboard() {
 
   const sb = getSupabase();
 
-  // Nombre de bienvenida
   const name = store.currentUser.user_metadata?.full_name
     || store.currentUser.email?.split('@')[0]
     || 'Usuario';
   const dashName = document.getElementById('dash-user-name');
   if (dashName) dashName.textContent = name.split(' ')[0];
 
-  // Pre-llenar formulario de perfil
   const editName  = document.getElementById('edit-name');
   const editEmail = document.getElementById('edit-email');
   const editPhone = document.getElementById('edit-phone');
@@ -26,14 +24,11 @@ export async function loadUserDashboard() {
   if (editEmail) editEmail.value = store.currentUser.email || '';
 
   try {
-    // Datos del perfil
     const { data: profile } = await sb.from('profiles')
       .select('*').eq('id', store.currentUser.id).maybeSingle();
     if (profile) {
       if (editPhone) editPhone.value = profile.phone || '';
       if (editCity)  editCity.value  = profile.city  || '';
-      
-      // Mostrar avatar en el formulario de edición
       const avatarPreview = document.getElementById('edit-avatar-preview');
       if (avatarPreview && profile.avatar_url) {
         avatarPreview.style.backgroundImage = `url('${profile.avatar_url}')`;
@@ -41,7 +36,6 @@ export async function loadUserDashboard() {
       }
     }
 
-    // Trabajos
     const { data: jobs } = await sb.from('jobs')
       .select('*')
       .eq('user_id', store.currentUser.id)
@@ -148,7 +142,6 @@ export async function loadUserHistory() {
   } catch (e) { console.error('loadUserHistory:', e); }
 }
 
-
 export async function loadUserBudgets() {
   if (!store.currentUser) return;
   const sb = getSupabase();
@@ -194,7 +187,6 @@ export async function loadProDashboard() {
 
   const sb = getSupabase();
 
-  // Poblar hero del pdash — mostrar todas las especialidades
   const _allSpecialties = store.currentPro?.specialties?.length
     ? store.currentPro.specialties
     : (store.currentPro?.specialty ? [store.currentPro.specialty] : ['Tu especialidad']);
@@ -211,8 +203,6 @@ export async function loadProDashboard() {
   const _pdashAvEl = document.getElementById('pdash-avatar-initials');
   if (_pdashAvEl) _pdashAvEl.textContent = (store.currentUser.user_metadata?.full_name || 'P').charAt(0).toUpperCase();
 
-  // Pre-llenar formulario de edición del pro
-  // Cargar datos desde profiles para tener full_name actualizado
   const { data: profileData } = await sb.from('profiles').select('full_name, avatar_url, phone').eq('id', store.currentUser.id).maybeSingle();
   
   setVal('pro-edit-name',      profileData?.full_name || store.currentUser.user_metadata?.full_name || '');
@@ -223,14 +213,11 @@ export async function loadProDashboard() {
   setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
   setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
 
-  // Actualizar contador de especialidades
   updateSpecialtyCounter();
   
-  // Renderizar editor de chips con las especialidades actuales
   const currentSpecialties = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
   renderSpecialtyEditor(currentSpecialties);
 
-  // Cargar avatar en el formulario de edición profesional
   if (profileData?.avatar_url) {
     const avatarPreview = document.getElementById('pro-edit-avatar-preview');
     if (avatarPreview) {
@@ -240,19 +227,19 @@ export async function loadProDashboard() {
   }
 
   try {
-    // Jobs donde professional_id = profiles.id del usuario actual
+    // Jobs del profesional
     const { data: jobs } = await sb
       .from('jobs')
       .select('*')
       .eq('professional_id', store.currentUser.id)
       .order('created_at', { ascending: false });
 
-    // Cargar nombres de clientes por separado (más seguro que join)
+    // Cargar nombres de clientes por separado (evita problemas con FK naming)
     const userIds = [...new Set((jobs || []).filter(j => j.user_id).map(j => j.user_id))];
     let clientNames = {};
     if (userIds.length) {
-      const { data: profiles } = await sb.from('profiles').select('id, full_name').in('id', userIds);
-      (profiles || []).forEach(p => { clientNames[p.id] = p.full_name; });
+      const { data: clientProfiles } = await sb.from('profiles').select('id, full_name').in('id', userIds);
+      (clientProfiles || []).forEach(p => { clientNames[p.id] = p.full_name; });
     }
     (jobs || []).forEach(j => { j.user_name = clientNames[j.user_id] || null; });
 
@@ -276,7 +263,6 @@ export async function loadProDashboard() {
     setEl('pro-stat-active', activeJ.length);
     setEl('pro-stat-done',   doneJ.length);
 
-    // Section titles
     const titleNew = document.getElementById('pdash-section-title-new');
     if (titleNew) titleNew.textContent = newJ.length
       ? `${newJ.length} solicitud${newJ.length !== 1 ? 'es' : ''} pendiente${newJ.length !== 1 ? 's' : ''}`
@@ -286,7 +272,6 @@ export async function loadProDashboard() {
       ? `${activeJ.length} trabajo${activeJ.length !== 1 ? 's' : ''} en proceso`
       : 'En proceso';
 
-    // Tab counts
     const tabCountNew = document.getElementById('pdash-tab-count-new');
     if (tabCountNew) {
       if (newJ.length) { tabCountNew.textContent = newJ.length; tabCountNew.style.display = 'inline-flex'; }
@@ -298,11 +283,10 @@ export async function loadProDashboard() {
       else tabCountActive.style.display = 'none';
     }
 
-    renderJobList('pro-jobs-new',     newJ,    'pro');
-    renderJobList('pro-jobs-active',  activeJ, 'pro');
-    renderJobList('pro-jobs-done',    doneJ,   'pro');
+    renderJobList('pro-jobs-new',    newJ,    'pro');
+    renderJobList('pro-jobs-active', activeJ, 'pro');
+    renderJobList('pro-jobs-done',   doneJ,   'pro');
 
-    // Rating promedio
     const { data: reviews } = await sb
       .from('reviews')
       .select('rating')
@@ -317,7 +301,6 @@ export async function loadProDashboard() {
     console.error('loadProDashboard:', e);
   }
 
-  // Presupuestos — solo para destacados
   const featuredBtn = document.getElementById('btn-new-budget');
   if (featuredBtn) featuredBtn.style.display = store.currentPro?.is_featured ? 'inline-flex' : 'none';
 
@@ -426,27 +409,14 @@ let editAvatarFile = null;
 export async function editAvatarSelected(input) {
   const file = input.files[0];
   if (!file) return;
-  
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('La imagen no puede superar 5MB', 'error');
-    return;
-  }
-  
+  if (!validTypes.includes(file.type)) { showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('La imagen no puede superar 5MB', 'error'); return; }
   editAvatarFile = file;
-  
   const preview = document.getElementById('edit-avatar-preview');
   if (preview) {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.style.backgroundImage = `url('${e.target.result}')`;
-      preview.innerHTML = '';
-    };
+    reader.onload = (e) => { preview.style.backgroundImage = `url('${e.target.result}')`; preview.innerHTML = ''; };
     reader.readAsDataURL(file);
   }
 }
@@ -461,7 +431,6 @@ export async function saveProfile() {
   if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
 
   let avatarUrl = null;
-  
   if (editAvatarFile) {
     showToast('Subiendo foto...', 'info');
     const { uploadAvatar } = await import('./upload.js');
@@ -481,8 +450,6 @@ export async function saveProfile() {
   else {
     showToast('Perfil actualizado', 'success');
     if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
-    
-    // Recargar datos del usuario para actualizar avatar en UI
     const { data: { user } } = await sb.auth.getUser();
     if (user) {
       store.setCurrentUser(user);
@@ -497,27 +464,14 @@ let proEditAvatarFile = null;
 export async function proEditAvatarSelected(input) {
   const file = input.files[0];
   if (!file) return;
-  
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!validTypes.includes(file.type)) {
-    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
-    return;
-  }
-  
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('La imagen no puede superar 5MB', 'error');
-    return;
-  }
-  
+  if (!validTypes.includes(file.type)) { showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('La imagen no puede superar 5MB', 'error'); return; }
   proEditAvatarFile = file;
-  
   const preview = document.getElementById('pro-edit-avatar-preview');
   if (preview) {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.style.backgroundImage = `url('${e.target.result}')`;
-      preview.innerHTML = '';
-    };
+    reader.onload = (e) => { preview.style.backgroundImage = `url('${e.target.result}')`; preview.innerHTML = ''; };
     reader.readAsDataURL(file);
   }
 }
@@ -526,7 +480,6 @@ export async function saveProProfile() {
   if (!store.currentUser || !store.currentPro) return;
   const sb = getSupabase();
   const name      = document.getElementById('pro-edit-name')?.value.trim();
-  // Leer especialidades del multi-selector
   const specialty = getSelectedSpecialties()[0] || '';
   const specialties = getSelectedSpecialties();
   const desc      = document.getElementById('pro-edit-desc')?.value.trim();
@@ -538,7 +491,6 @@ export async function saveProProfile() {
   if (!specialties.length) { showToast('Seleccioná al menos una especialidad', 'error'); return; }
 
   let avatarUrl = null;
-  
   if (proEditAvatarFile) {
     showToast('Subiendo foto...', 'info');
     const { uploadAvatar } = await import('./upload.js');
@@ -550,7 +502,6 @@ export async function saveProProfile() {
   const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
   if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
 
-  // Geocodificar ciudad/provincia para guardar coordenadas
   let latitude = store.currentPro.latitude || null;
   let longitude = store.currentPro.longitude || null;
   if (city || province) {
@@ -558,36 +509,28 @@ export async function saveProProfile() {
       const query = encodeURIComponent(`${city}, ${province}, Argentina`);
       const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
       const geoData = await geo.json();
-      if (geoData?.[0]) {
-        latitude = parseFloat(geoData[0].lat);
-        longitude = parseFloat(geoData[0].lon);
-      }
+      if (geoData?.[0]) { latitude = parseFloat(geoData[0].lat); longitude = parseFloat(geoData[0].lon); }
     } catch(e) { console.warn('Geocoding error:', e); }
   }
 
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     sb.from('professionals').update({
       specialty: specialties[0] || specialty, specialties, description: desc, city, province, zones,
-      latitude, longitude,
-      updated_at: new Date().toISOString()
+      latitude, longitude, updated_at: new Date().toISOString()
     }).eq('user_id', store.currentUser.id),
     sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
   ]);
 
   if (e1 || e2) { showToast('Error al guardar', 'error'); }
   else {
-    // Actualizar store local
     Object.assign(store.currentPro, { specialty: specialties[0]||specialty, specialties, description: desc, city, province, zones });
     showToast('Perfil actualizado', 'success');
-    
-    // Recargar datos del usuario para actualizar avatar en UI
     const { data: { user } } = await sb.auth.getUser();
     if (user) {
       store.setCurrentUser(user);
       const { updateAuthUI } = await import('./ui.js');
       updateAuthUI();
     }
-    
     showPage('pro-dashboard');
   }
 }
@@ -713,15 +656,10 @@ function statusLabel(status) {
 export function renderSpecialtyEditor(selected = []) {
   const container = document.getElementById('specialty-chips-editor');
   if (!container) return;
-  
-  // Cargar especialidades del store o de window
   let allSpecs = store.allSpecialties?.length ? store.allSpecialties : (window._allSpecialties || []);
-  
-  // Si está vacío, usar las default
   if (!allSpecs.length) {
     allSpecs = ['Electricista', 'Plomero', 'Carpintero', 'Pintor', 'Gasista', 'Albañil', 'Técnico HVAC', 'Cerrajero', 'Jardinero', 'Limpieza', 'Fumigador', 'Técnico PC', 'Técnico CEL', 'Otro'];
   }
-  
   container.innerHTML = allSpecs.map(s => {
     const active = selected.includes(s) ? 'active' : '';
     return `<span class="specialty-chip specialty-chip--toggle ${active}" onclick="window.toggleSpecialtyChip(this,'${s}')">${s}</span>`;
@@ -734,39 +672,20 @@ export function canSelectUnlimitedSpecialties() {
 
 export function toggleSpecialtyChip(el, specialty) {
   const isUnlimited = canSelectUnlimitedSpecialties();
-  
-  if (isUnlimited) {
-    el.classList.toggle('active');
-    updateSpecialtyCounter();
-    return;
-  }
-  
+  if (isUnlimited) { el.classList.toggle('active'); updateSpecialtyCounter(); return; }
   const selected = getSelectedSpecialties();
-  if (el.classList.contains('active')) {
-    el.classList.remove('active');
-    updateSpecialtyCounter();
-  } else if (selected.length < 3) {
-    el.classList.add('active');
-    updateSpecialtyCounter();
-  } else {
-    import('./ui.js').then(m => m.showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info'));
-  }
+  if (el.classList.contains('active')) { el.classList.remove('active'); updateSpecialtyCounter(); }
+  else if (selected.length < 3) { el.classList.add('active'); updateSpecialtyCounter(); }
+  else { import('./ui.js').then(m => m.showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info')); }
 }
 
 export function updateSpecialtyCounter() {
   const counter = document.getElementById('specialty-counter');
   if (!counter) return;
-  
   const selected = getSelectedSpecialties();
   const isUnlimited = canSelectUnlimitedSpecialties();
-  
-  if (isUnlimited) {
-    counter.innerHTML = '<i class="fa fa-infinity"></i> Ilimitadas';
-    counter.style.color = 'var(--green)';
-  } else {
-    counter.textContent = `${selected.length}/3 seleccionadas`;
-    counter.style.color = selected.length >= 3 ? 'var(--orange)' : 'var(--gray)';
-  }
+  if (isUnlimited) { counter.innerHTML = '<i class="fa fa-infinity"></i> Ilimitadas'; counter.style.color = 'var(--green)'; }
+  else { counter.textContent = `${selected.length}/3 seleccionadas`; counter.style.color = selected.length >= 3 ? 'var(--orange)' : 'var(--gray)'; }
 }
 
 export function getSelectedSpecialties() {
@@ -814,9 +733,7 @@ export async function loadAddresses() {
         </div>
       </div>
     `).join('');
-  } catch(e) {
-    console.error('loadAddresses:', e);
-  }
+  } catch(e) { console.error('loadAddresses:', e); }
 }
 
 export function openAddAddressModal() {
@@ -863,7 +780,6 @@ export async function saveAddress() {
   }
 
   const payload = { user_id: store.currentUser.id, label, street, city, province, notes };
-
   const { error } = id
     ? await sb.from('addresses').update(payload).eq('id', id)
     : await sb.from('addresses').insert(payload);
@@ -882,10 +798,7 @@ export async function deleteAddress(id) {
   if (!confirm('¿Eliminar esta dirección?')) return;
   const sb = getSupabase();
   const { error } = await sb.from('addresses').delete().eq('id', id);
-  if (!error) {
-    showToast('Dirección eliminada', 'info');
-    await loadAddresses();
-  }
+  if (!error) { showToast('Dirección eliminada', 'info'); await loadAddresses(); }
 }
 
 function escapeHtml(text) {
