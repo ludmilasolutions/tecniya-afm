@@ -703,7 +703,7 @@ export async function submitRating() {
 
   if (!professionalProfileId) {
     // Intentar obtener directamente de la tabla professionals
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
     if (proData?.user_id) {
       professionalProfileId = proData.user_id;
     }
