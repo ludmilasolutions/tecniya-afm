@@ -58,21 +58,12 @@ export async function loadUserDashboard() {
       .eq('user_id', store.currentUser.id)
       .order('created_at', { ascending: false });
 
-    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa','para_revision'].includes(j.status));
+    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa'].includes(j.status));
     const done    = (jobs || []).filter(j => j.status === 'finalizado');
     const history = (jobs || []).filter(j => ['finalizado','cancelado','rechazado'].includes(j.status));
 
-    // Mensaje de contexto en lugar de stats de números
-    const ctxEl = document.getElementById('user-dash-context-text');
-    if (ctxEl) {
-      if (active.length === 0 && done.length === 0) {
-        ctxEl.innerHTML = '¿Necesitás un técnico? <a href="#" onclick="window.showPage(\'professionals-list\')" style="color:var(--accent);text-decoration:none;">Buscá uno acá</a>';
-      } else if (active.length > 0) {
-        ctxEl.textContent = `Tenés ${active.length} trabajo${active.length > 1 ? 's' : ''} activo${active.length > 1 ? 's' : ''}`;
-      } else {
-        ctxEl.textContent = `${done.length} trabajo${done.length > 1 ? 's' : ''} completado${done.length > 1 ? 's' : ''}`;
-      }
-    }
+    setEl('user-stat-active', active.length);
+    setEl('user-stat-done',   done.length);
 
     // Actualizar badges del sidebar
     updateSidebarBadge('user-sidebar-active-badge', active.length);
@@ -81,17 +72,17 @@ export async function loadUserDashboard() {
     if (jobsEl) {
       jobsEl.innerHTML = active.length
         ? active.map(j => jobItem(j, 'user')).join('')
-        : `<div class="empty-state" style="padding:40px;"><i class="fa fa-briefcase"></i>
+        : `<div class="empty-state"><i class="fa fa-briefcase"></i>
            <p>No tenés trabajos activos.<br>
-           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);text-decoration:none;">
-           Buscar un técnico</a></p></div>`;
+           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);">
+           Buscar un profesional</a></p></div>`;
     }
 
     const histEl = document.getElementById('user-history-list');
     if (histEl) {
       histEl.innerHTML = history.length
         ? history.map(j => jobItem(j, 'user')).join('')
-        : `<div class="empty-state" style="padding:40px;"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+        : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
     }
   } catch (e) {
     console.error('loadUserDashboard jobs:', e);
@@ -213,56 +204,70 @@ export async function loadProDashboard() {
 
   const sb = getSupabase();
 
-  // Cargar datos desde profiles para tener full_name/avatar actualizado
+  setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
+
+  // Pre-llenar formulario de edición del pro
+  // Cargar datos desde profiles para tener full_name actualizado
   const { data: profileData } = await sb.from('profiles').select('full_name, avatar_url, phone').eq('id', store.currentUser.id).maybeSingle();
+  
+  setVal('pro-edit-name',      profileData?.full_name || store.currentUser.user_metadata?.full_name || '');
+  setVal('pro-edit-specialty', store.currentPro.specialty || '');
+  setVal('pro-edit-desc',      store.currentPro.description || '');
+  setVal('pro-edit-city',      store.currentPro.city || '');
+  setVal('pro-edit-province',  store.currentPro.province || '');
+  setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
+  setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
+
+  // Actualizar contador de especialidades
+  updateSpecialtyCounter();
+  
+  // Renderizar editor de chips con las especialidades actuales
+  const currentSpecialties = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
+  renderSpecialtyEditor(currentSpecialties);
+
+  // Cargar avatar en el formulario de edición profesional
+  if (profileData?.avatar_url) {
+    const avatarPreview = document.getElementById('pro-edit-avatar-preview');
+    if (avatarPreview) {
+      avatarPreview.style.backgroundImage = `url('${profileData.avatar_url}')`;
+      avatarPreview.innerHTML = '';
+    }
+  }
 
   try {
-    // Sidebar Pro
-    const proName = profileData?.full_name || store.currentUser.user_metadata?.full_name || 'Profesional';
-    setEl('pro-sidebar-name', proName);
-    setEl('pro-sidebar-specialty', store.currentPro.specialty || 'Especialidad');
-    
-    if (profileData?.avatar_url) {
-      const sbAvatar = document.getElementById('pro-sidebar-avatar');
-      if (sbAvatar) {
-        sbAvatar.style.backgroundImage = `url('${profileData.avatar_url}')`;
-        sbAvatar.innerHTML = '';
-      }
-    }
-
-    // Toggle Urgencias
-    updateUrgenciasToggle(store.currentPro.availability?.urgencias);
-
-    // Jobs
+    // Jobs donde professional_id = profiles.id del usuario actual
     const { data: jobs } = await sb
       .from('jobs')
       .select('*')
       .eq('professional_id', store.currentUser.id)
       .order('created_at', { ascending: false });
 
-    store.proJobs = jobs || [];
+    const newJ    = (jobs || []).filter(j => j.status === 'solicitado');
+    const activeJ = (jobs || []).filter(j => ['aceptado','en_proceso'].includes(j.status));
+    const doneJ   = (jobs || []).filter(j => j.status === 'finalizado');
 
-    const newJ    = store.proJobs.filter(j => j.status === 'solicitado');
-    const activeJ = store.proJobs.filter(j => ['aceptado','en_proceso','para_revision'].includes(j.status));
-    const doneJ   = store.proJobs.filter(j => j.status === 'finalizado');
+    setEl('pro-stat-new',    newJ.length);
+    setEl('pro-stat-active', activeJ.length);
+    setEl('pro-stat-done',   doneJ.length);
 
-    // Badges
+    // Actualizar badges del sidebar y navegación
     updateSidebarBadge('pro-sidebar-requests-badge', newJ.length);
-    updateSidebarBadge('pro-sec-req-badge', newJ.length);
-    updateSidebarBadge('pro-sec-active-badge', activeJ.length);
-    updateSidebarBadge('pro-sec-done-badge', doneJ.length);
+    updateSidebarBadge('pro-sidebar-requests-badge', newJ.length);
 
-    // Listas por sección
-    renderJobList('pro-jobs-new',    newJ,    'pro');
-    renderJobList('pro-jobs-active', activeJ, 'pro');
-    renderJobList('pro-jobs-done',   doneJ.slice(0,5), 'pro');
+    renderJobList('pro-jobs-new',     newJ,    'pro');
+    renderJobList('pro-jobs-active',  activeJ, 'pro');
+    renderJobList('pro-jobs-done',    doneJ,   'pro');
 
-    // Plan info
-    const isFeatured = store.currentPro?.is_featured;
-    setEl('pro-plan-name', isFeatured ? 'Plan Destacado' : 'Plan Base');
-    setEl('pro-plan-desc', isFeatured 
-      ? 'Disfrutás de especialidades ilimitadas, presupuestos y mayor visibilidad.' 
-      : 'Especialidades limitadas a 3. ¡Pasate a Destacado para más beneficios!');
+    // Rating promedio
+    const { data: reviews } = await sb
+      .from('reviews')
+      .select('rating')
+      .eq('professional_id', store.currentUser.id);
+
+    if (reviews?.length) {
+      const avg = reviews.reduce((s, r) => s + parseFloat(r.rating), 0) / reviews.length;
+      setEl('pro-stat-rating', avg.toFixed(1));
+    }
 
   } catch (e) {
     console.error('loadProDashboard:', e);
@@ -477,8 +482,9 @@ export async function saveProProfile() {
   if (!store.currentUser || !store.currentPro) return;
   const sb = getSupabase();
   const name      = document.getElementById('pro-edit-name')?.value.trim();
-  const specialty = document.getElementById('pro-edit-specialty-single')?.value.trim() || '';
-  const specialties = specialty ? [specialty] : [];
+  // Leer especialidades del multi-selector
+  const specialty = getSelectedSpecialties()[0] || '';
+  const specialties = getSelectedSpecialties();
   const desc      = document.getElementById('pro-edit-desc')?.value.trim();
   const city      = document.getElementById('pro-edit-city')?.value.trim();
   const province  = document.getElementById('pro-edit-province')?.value.trim();
@@ -625,60 +631,6 @@ export function sendBudgetWhatsApp() {
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
-export function switchProHtool(id) {
-  document.querySelectorAll('#tab-pro-herramientas > div[id^="htool-"]').forEach(d => d.style.display = 'none');
-  document.querySelectorAll('.pro-htool-tab').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById(`htool-${id}`);
-  if (el) el.style.display = 'block';
-  document.querySelector(`.pro-htool-tab[data-htool="${id}"]`)?.classList.add('active');
-}
-
-export function switchProConfig(id) {
-  document.querySelectorAll('.pro-cfg-section').forEach(s => s.style.display = 'none');
-  document.querySelectorAll('.pro-cfg-tab').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById(`cfg-${id}`);
-  if (el) el.style.display = 'block';
-  document.querySelector(`.pro-cfg-tab[data-cfg="${id}"]`)?.classList.add('active');
-  
-  if (id === 'perfil') {
-    const sps = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
-    renderSpecialtyEditor(sps);
-    updateSpecialtyCounter();
-    const nameInput = document.getElementById('pro-edit-name-dash');
-    if (nameInput) nameInput.value = store.currentUser?.user_metadata?.full_name || '';
-  }
-}
-
-export async function saveAvailabilityQuick(isUrgent) {
-  if (!store.currentPro) return;
-  const sb = getSupabase();
-  const avail = store.currentPro.availability || {};
-  avail.urgencias = isUrgent;
-  
-  updateUrgenciasToggle(isUrgent);
-
-  const { error } = await sb.from('professionals').update({
-    availability: avail,
-    is_online: isUrgent
-  }).eq('user_id', store.currentUser.id);
-
-  if (error) {
-    showToast('Error al actualizar urgencias', 'error');
-    updateUrgenciasToggle(!isUrgent);
-  } else {
-    store.currentPro.availability = avail;
-    store.currentPro.is_online = isUrgent;
-    showToast(isUrgent ? 'Modo Urgencias ONLINE' : 'Modo Urgencias Offline', 'info');
-  }
-}
-
-function updateUrgenciasToggle(active) {
-  const input = document.getElementById('pro-toggle-urgencias');
-  const track = document.getElementById('pro-urgencias-track');
-  if (input) input.checked = !!active;
-  if (track) track.classList.toggle('active', !!active);
-}
-
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function setEl(id, val) {
@@ -690,7 +642,6 @@ function setVal(id, val) {
   const el = document.getElementById(id);
   if (el) el.value = val;
 }
-
 
 function renderJobList(id, jobs, viewAs) {
   const el = document.getElementById(id);

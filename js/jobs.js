@@ -96,6 +96,8 @@ export async function submitJobRequest() {
 
   const sb       = getSupabase();
   const desc     = document.getElementById('job-req-desc')?.value.trim();
+  const address  = document.getElementById('job-req-address')?.value.trim();
+  const isUrgent = document.getElementById('job-req-urgent')?.checked || false;
   const errorEl  = document.getElementById('job-req-error');
 
   if (!desc) {
@@ -113,6 +115,13 @@ export async function submitJobRequest() {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (professionalProfileId && !uuidRegex.test(professionalProfileId)) professionalProfileId = null;
 
+  // Recolectar slots de agenda
+  const slots = [1,2,3].map(i => {
+    const date = document.getElementById(`job-req-date-${i}`)?.value;
+    const period = document.getElementById(`job-req-period-${i}`)?.value;
+    return date ? { date, period } : null;
+  }).filter(Boolean);
+
   const btn = document.getElementById('btn-submit-job');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.7">Enviando...</span>'; }
 
@@ -129,19 +138,14 @@ export async function submitJobRequest() {
     }
   }
 
-  // Obtener especialidad del pro si es posible
-  let finalSpecialty = 'General';
-  if (professionalProfileId) {
-    const proData = store.allProfessionals?.find(p => p.user_id === professionalProfileId);
-    if (proData?.specialty) finalSpecialty = proData.specialty;
-    else if (proData?.categories && proData.categories.length > 0) finalSpecialty = proData.categories[0];
-  }
-
   const jobPayload = {
     user_id:         store.currentUser.id,
     professional_id: professionalProfileId,
-    specialty:       finalSpecialty,
+    specialty:       document.getElementById('job-req-specialty')?.value || 'General',
     description:     desc,
+    address,
+    is_urgent:       isUrgent,
+    proposed_dates:  slots,
     photo_url:       photoUrl,
     status:          'solicitado',
     created_at:      new Date().toISOString()
@@ -187,15 +191,12 @@ export async function submitJobRequest() {
   }
 
   // Limpiar form
-  const descEl = document.getElementById('job-req-desc');
-  if (descEl) descEl.value = '';
-  
+  ['job-req-desc','job-req-address'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  [1,2,3].forEach(i => { const el = document.getElementById(`job-req-date-${i}`); if(el) el.value=''; });
   const prev = document.getElementById('job-req-photo-preview');
   if (prev) { prev.src=''; prev.style.display='none'; }
   const pname = document.getElementById('job-req-photo-name');
   if (pname) pname.textContent = '';
-  const pfile = document.getElementById('job-req-photo');
-  if (pfile) pfile.value = '';
 
   store.selectedPros = [];
   updateMultiProBadge();
@@ -203,7 +204,7 @@ export async function submitJobRequest() {
   closeModal('modal-request-job');
   const msg = sent > 1
     ? `¡Solicitud enviada a ${sent} profesionales! El primero que acepte queda asignado.`
-    : '¡Solicitud enviada! El profesional te responderá pronto.';
+    : '¡Solicitud enviada! El profesional elegirá una fecha.';
   showToast(msg, 'success');
 }
 
@@ -262,7 +263,7 @@ const STATUS_CSS = {
   solicitado:             'status-solicitado',
   aceptado:               'status-aceptado',
   en_proceso:             'status-en-proceso',
-  para_revision:          'status-aceptado',
+  pendiente_confirmacion: 'status-aceptado',
   finalizado:             'status-finalizado',
   cancelado:              'status-cancelado',
   rechazado:              'status-cancelado',
@@ -273,7 +274,7 @@ const STATUS_LABEL = {
   solicitado:             'Nuevo',
   aceptado:               'Aceptado',
   en_proceso:             'En proceso',
-  para_revision:          'Para revisión',
+  pendiente_confirmacion: 'Esperando confirmación',
   finalizado:             'Finalizado',
   cancelado:              'Cancelado',
   rechazado:              'Rechazado',
@@ -284,7 +285,7 @@ const STATUS_ICON = {
   solicitado:             'fa-clock',
   aceptado:               'fa-check',
   en_proceso:             'fa-gears',
-  para_revision:          'fa-hourglass-half',
+  pendiente_confirmacion: 'fa-hourglass-half',
   finalizado:             'fa-check-circle',
   cancelado:              'fa-times-circle',
   rechazado:              'fa-times-circle',
@@ -293,303 +294,151 @@ const STATUS_ICON = {
 };
 
 export function jobItem(j, viewAs) {
-  const dateStr = j.created_at ? formatDate(j.created_at) : '';
+  const statusCss   = STATUS_CSS[j.status]   || '';
+  const statusTxt   = STATUS_LABEL[j.status] || j.status;
+  const statusIcon  = STATUS_ICON[j.status]  || 'fa-briefcase';
+  const dateStr     = j.created_at ? formatDate(j.created_at) : '';
+  const specialty   = j.specialty ? `<span style="font-size:0.78rem;background:rgba(79,70,229,0.12);color:var(--primary);padding:2px 8px;border-radius:20px;">${j.specialty}</span>` : '';
+  const desc        = j.description ? `<div class="job-title">${escHtml(j.description)}</div>` : '';
+  const meta        = [j.address, dateStr].filter(Boolean).join(' · ');
+  const isUrgent    = j.is_urgent ? `<span style="font-size:0.75rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>` : '';
 
-  // ── Configuración por estado ─────────────────────────────────────────
-  // Cada estado tiene: color de acento, ícono, mensaje principal para cada rol
-  const STATE = {
-    solicitado: {
-      color: 'var(--accent)',
-      bg:    'rgba(6,182,212,0.08)',
-      icon:  'fa-hourglass-half',
-      msgUser: 'Esperando respuesta del técnico',
-      msgPro:  'Nueva solicitud de trabajo',
-    },
-    aceptado: {
-      color: 'var(--green)',
-      bg:    'rgba(16,185,129,0.08)',
-      icon:  'fa-calendar-check',
-      msgUser: 'Trabajo confirmado',
-      msgPro:  'Trabajo aceptado — inicialo cuando llegues',
-    },
-    en_proceso: {
-      color: 'var(--primary)',
-      bg:    'rgba(79,70,229,0.08)',
-      icon:  'fa-gears',
-      msgUser: 'El técnico está trabajando',
-      msgPro:  'En proceso — marcá como terminado cuando acabes',
-    },
-    pendiente_confirmacion: {
-      color: 'var(--orange)',
-      bg:    'rgba(249,115,22,0.10)',
-      icon:  'fa-check-circle',
-      msgUser: '¿Quedó listo? Confirmá el cierre del trabajo',
-      msgPro:  'Esperando que el cliente confirme',
-    },
-    para_revision: {
-      color: 'var(--orange)',
-      bg:    'rgba(249,115,22,0.10)',
-      icon:  'fa-check-circle',
-      msgUser: '¿Quedó listo? Confirmá el cierre del trabajo',
-      msgPro:  'Esperando que el cliente confirme',
-    },
-    fecha_propuesta_pro: {
-      color: '#a855f7',
-      bg:    'rgba(168,85,247,0.08)',
-      icon:  'fa-calendar-plus',
-      msgUser: 'El técnico propone otra fecha — respondé',
-      msgPro:  'Fecha propuesta — esperando respuesta del cliente',
-    },
-    finalizado: {
-      color: 'var(--green)',
-      bg:    'rgba(16,185,129,0.06)',
-      icon:  'fa-check-double',
-      msgUser: 'Trabajo finalizado',
-      msgPro:  'Trabajo finalizado',
-    },
-    cancelado: {
-      color: 'var(--gray)',
-      bg:    'rgba(148,163,184,0.06)',
-      icon:  'fa-times-circle',
-      msgUser: 'Solicitud cancelada',
-      msgPro:  'Solicitud cancelada',
-    },
-    rechazado: {
-      color: 'var(--gray)',
-      bg:    'rgba(148,163,184,0.06)',
-      icon:  'fa-times-circle',
-      msgUser: 'El técnico no estaba disponible',
-      msgPro:  'Solicitud rechazada',
-    },
-    en_disputa: {
-      color: '#ef4444',
-      bg:    'rgba(239,68,68,0.08)',
-      icon:  'fa-shield-halved',
-      msgUser: 'Disputa en revisión por el equipo de Tecniya',
-      msgPro:  'Disputa en revisión por el equipo de Tecniya',
-    },
-  };
-
-  const cfg = STATE[j.status] || {
-    color: 'var(--gray)', bg: 'rgba(148,163,184,0.06)',
-    icon: 'fa-briefcase', msgUser: j.status, msgPro: j.status,
-  };
-  const mainMsg = viewAs === 'pro' ? cfg.msgPro : cfg.msgUser;
-
-  // ── Info secundaria ──────────────────────────────────────────────────
-  const infoItems = [];
-  if (j.specialty)      infoItems.push(` ${escHtml(j.specialty)}`);
-  if (j.address)        infoItems.push(` ${escHtml(j.address)}`);
+  // Fecha confirmada
+  let confirmedDateBadge = '';
   if (j.confirmed_date) {
     try {
       const cd = new Date(j.confirmed_date);
       const fmt = cd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
-      infoItems.push(` ${fmt}${j.confirmed_period ? ' — ' + j.confirmed_period : ''}`);
-    } catch(e) {}
+      confirmedDateBadge = `<span style="font-size:0.78rem;background:rgba(6,182,212,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;"><i class="fa fa-calendar-check" style="margin-right:4px;"></i>${fmt} — ${j.confirmed_period||''}</span>`;
+    } catch (e) {
+      console.warn('Error formatting confirmed_date:', e?.message);
+    }
   }
-  if (dateStr) infoItems.push(` ${dateStr}`);
-  if (j.is_urgent) infoItems.push(` Urgente`);
 
-  const infoHtml = infoItems.length
-    ? `<div class="job-card-info" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-        ${infoItems.map(i => `<span style="font-size:0.75rem;color:var(--gray);background:var(--glass);padding:2px 10px;border-radius:20px;border:1px solid var(--border);">${i}</span>`).join('')}
-       </div>`
+  // Badge check-in
+  let checkinBadge = '';
+  if (j.checked_in_at) {
+    const fmt = new Date(j.checked_in_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    checkinBadge = `<span style="font-size:0.78rem;background:rgba(16,185,129,0.12);color:#10b981;padding:2px 8px;border-radius:20px;"><i class="fa fa-location-dot" style="margin-right:4px;"></i>Check-in ${fmt}</span>`;
+  }
+
+  // Foto adjunta
+  const photoBtn = j.photo_url
+    ? `<button class="btn btn-ghost btn-sm" onclick="window.open('${j.photo_url}','_blank')" title="Ver foto adjunta"><i class="fa fa-image"></i></button>`
     : '';
 
-  // ── Descripción del trabajo ──────────────────────────────────────────
-  const descHtml = j.description
-    ? `<div class="job-card-desc" style="margin-top:12px;font-size:0.9rem;color:var(--light);line-height:1.5;">
-        ${escHtml(j.description)}
-       </div>`
-    : '';
-
-  // ── Alerta de expiración ─────────────────────────────────────────────
+  // Acciones según rol y estado
+  let actions = '';
+  // ── Alerta de expiración (solicitado sin respuesta > EXPIRE_HRS horas) ──────
   const EXPIRE_HRS = 12;
-  let expiryHtml = '';
+  let expiryWarning = '';
   if (j.status === 'solicitado' && j.created_at) {
     const hoursOld = (Date.now() - new Date(j.created_at).getTime()) / 36e5;
     if (hoursOld >= EXPIRE_HRS) {
-      expiryHtml = `<div style="margin-top:12px;padding:8px 12px;background:rgba(245,158,11,0.1);border-radius:8px;color:#f59e0b;font-size:0.8rem;display:flex;align-items:center;gap:6px;">
-        <i class="fa fa-clock"></i> Sin respuesta hace más de ${Math.floor(hoursOld)}h
+      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#f59e0b;margin-bottom:6px;padding:6px 10px;background:rgba(245,158,11,0.08);border-radius:8px;width:100%;">
+        <i class="fa fa-clock"></i> Sin respuesta hace más de ${Math.floor(hoursOld)}h — podés cancelar y buscar otro profesional.
+      </div>`;
+    } else if (hoursOld >= EXPIRE_HRS / 2) {
+      const remaining = Math.max(1, Math.ceil(EXPIRE_HRS - hoursOld));
+      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--gray);margin-bottom:6px;width:100%;">
+        <i class="fa fa-hourglass-half"></i> Esperando respuesta — ${remaining}h para alerta.
       </div>`;
     }
   }
 
-  // ── Zona de fecha propuesta (solo fecha_propuesta_pro) ───────────────
-  let propFechaHtml = '';
-  if (j.status === 'fecha_propuesta_pro' && viewAs === 'user') {
-    const slot = j.pro_proposed_dates?.[0];
-    let slotStr = 'fecha a confirmar';
-    if (slot) try {
-      const d = new Date(slot.date);
-      slotStr = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})
-                + (slot.period ? ' — ' + slot.period : '');
-    } catch(e) {}
-    propFechaHtml = `<div style="margin-top:12px;padding:12px;background:rgba(168,85,247,0.1);border-radius:10px;border:1px solid rgba(168,85,247,0.2);color:#a855f7;font-size:0.85rem;">
-      <i class="fa fa-calendar-plus" style="margin-right:6px;"></i>
-      Propone: <strong>${slotStr}</strong>
-    </div>`;
-  }
-
-  // ── Acciones: botón primario + links secundarios ─────────────────────
-  let primaryBtn  = '';
-  let secondaryLinks = [];
-
   if (viewAs === 'pro') {
     if (j.status === 'solicitado') {
-      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.acceptJob('${j.id}')">
-                       <i class="fa fa-check"></i> Aceptar trabajo
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openProposeDateModal('${j.id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Proponer otra fecha</a>`,
-        `<a href="#" onclick="event.preventDefault(); window.openRejectModal('${j.id}')" style="color:var(--gray);font-size:0.85rem;text-decoration:none;">Rechazar</a>`,
-      ];
+      actions = `
+        ${expiryWarning}
+        ${j.proposed_dates?.length ? `<span style="font-size:0.75rem;color:var(--accent);"><i class="fa fa-calendar"></i> ${j.proposed_dates.length} fecha${j.proposed_dates.length>1?'s':''}</span>` : ''}
+        ${photoBtn}
+        <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openProposeDateModal('${j.id}')"><i class="fa fa-calendar-plus"></i>Otra fecha</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openRejectModal('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>`;
     } else if (j.status === 'aceptado') {
-      primaryBtn = `<button class="btn btn-primary job-card-primary-btn" onclick="window.startJob('${j.id}')">
-                       <i class="fa fa-play"></i> Iniciar trabajo
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openChatWith('${j.user_id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Chat con cliente</a>`,
-      ];
+      actions = `
+        <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'en_proceso') {
-      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.finishJob('${j.id}')">
-                       <i class="fa fa-flag-checkered"></i> Marcar como terminado
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openChatWith('${j.user_id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Chat con cliente</a>`,
-      ];
-    } else if (['pendiente_confirmacion', 'para_revision'].includes(j.status)) {
-      primaryBtn = `<div style="text-align:center;padding:10px;background:var(--glass);border-radius:10px;color:var(--gray);font-size:0.85rem;width:100%;">
-                       Esperando confirmación del cliente
-                    </div>`;
+      actions = `
+        <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Marcar terminado</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
+    } else if (j.status === 'pendiente_confirmacion') {
+      actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
     }
-  } else {
-    // viewAs === 'user'
+  } else if (viewAs === 'user') {
     if (j.status === 'fecha_propuesta_pro') {
-      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.approveProDate('${j.id}')">
-                       <i class="fa fa-check"></i> Aceptar esta fecha
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openProposeDateModal('${j.id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Proponer otra fecha</a>`,
-      ];
-    } else if (['pendiente_confirmacion', 'para_revision'].includes(j.status)) {
-      primaryBtn = `<button class="btn btn-success job-card-primary-btn" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','confirm')">
-                       <i class="fa fa-check-double"></i> Sí, el trabajo quedó listo
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openChatWith('${j.professional_id}')" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Hablar con el técnico</a>`,
-        `<a href="#" onclick="event.preventDefault(); window.openWarrantyReport('${j.id}')" style="color:var(--gray);font-size:0.85rem;text-decoration:none;">Reportar un problema</a>`,
-      ];
+      // El pro propuso una fecha alternativa
+      const slot = j.pro_proposed_dates?.[0];
+      let slotStr = '';
+      if (slot) try {
+        const d = new Date(slot.date);
+        slotStr = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}) + ' — ' + slot.period;
+      } catch (e) {
+        console.warn('Error formatting pro_proposed_dates:', e?.message);
+      }
+      actions = `
+        <div style="width:100%;font-size:0.82rem;color:var(--light);background:rgba(79,70,229,0.08);border-radius:8px;padding:8px 12px;margin-bottom:6px;">
+          <i class="fa fa-calendar-plus" style="color:var(--accent);margin-right:6px;"></i>
+          El profesional propone: <strong>${slotStr}</strong>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="window.approveProDate('${j.id}')"><i class="fa fa-check"></i>Aceptar fecha</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.rejectProDate('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>`;
     } else if (j.status === 'solicitado') {
-      primaryBtn = `<div style="text-align:center;padding:10px;background:var(--glass);border-radius:10px;color:var(--gray);font-size:0.85rem;width:100%;">
-                       Esperando respuesta...
-                    </div>`;
-      secondaryLinks = [
-        j.professional_id
-          ? `<a href="#" onclick="event.preventDefault(); window.openChatWith('${j.professional_id}','${j.id}',true)" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">Consultar al técnico</a>`
-          : '',
-        `<a href="#" onclick="event.preventDefault(); window.openCancelModal('${j.id}','solicitado')" style="color:var(--gray);font-size:0.85rem;text-decoration:none;">Cancelar solicitud</a>`,
-      ].filter(Boolean);
+      // Puede cancelar mientras espera respuesta — siempre disponible
+      actions = `
+        ${expiryWarning}
+        ${j.professional_id ? `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}','${j.id}',true)" style="font-size:0.78rem;"><i class="fa fa-comment-dots"></i>Consultar</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','solicitado')"><i class="fa fa-times"></i>Cancelar solicitud</button>`;
     } else if (['aceptado','en_proceso'].includes(j.status)) {
-      primaryBtn = `<button class="btn btn-primary job-card-primary-btn" onclick="window.openChatWith('${j.professional_id}')">
-                       <i class="fa fa-comments"></i> Chat con el técnico
-                    </button>`;
-      secondaryLinks = [
-        `<a href="#" onclick="event.preventDefault(); window.openCancelModal('${j.id}','activo')" style="color:var(--gray);font-size:0.85rem;text-decoration:none;">Cancelar trabajo</a>`,
-      ];
+      actions = `
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','activo')"><i class="fa fa-times"></i>Cancelar</button>`;
+    } else if (j.status === 'pendiente_confirmacion') {
+      actions = `
+        <button class="btn btn-success btn-sm" onclick="window.openConfirmFinish('${j.id}')"><i class="fa fa-check-double"></i>Confirmar cierre</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>`;
     } else if (j.status === 'finalizado') {
-      const alreadyReviewed = localStorage.getItem(`reviewed_${j.id}`) === '1';
-      const ratingPromptHtml = (j.client_confirmed && !alreadyReviewed)
-        ? `<div style="margin-top:12px;padding:12px;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-             <div style="font-size:0.82rem;color:var(--light);flex:1;">
-               <i class="fa fa-star" style="color:var(--orange);margin-right:6px;"></i> ¿Querés calificar a ${escHtml(j.pro_name || 'el técnico')}?
-             </div>
-             <button class="btn btn-orange btn-sm" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','rate-only')">Calificar</button>
-           </div>`
+      const ratingBtn = j.client_confirmed
+        ? `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`
         : '';
-
-      const ratingBtn = (j.client_confirmed && !alreadyReviewed)
-        ? `<button class="btn btn-orange job-card-primary-btn" onclick="window.openReviewFlow('${j.id}','${j.professional_id}','${escHtml(j.pro_name||'el técnico')}','rate-only')">
-                 <i class="fa fa-star"></i> Calificar al técnico
-              </button>`
-        : '';
-
+      // Garantía activa si warranty_until es futuro
       const warrantyActive = j.warranty_until && new Date(j.warranty_until) > new Date();
-      primaryBtn = ratingBtn || `<button class="btn btn-primary job-card-primary-btn" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')">
-                       <i class="fa fa-rotate-right"></i> Volver a contratar
-                    </button>`;
-      
-      // Inject banner before actions if needed
-      primaryBtn = ratingPromptHtml + primaryBtn;
-
-      if (warrantyActive) {
-        secondaryLinks = [
-          `<a href="#" onclick="event.preventDefault(); window.openWarrantyReport('${j.id}')" style="color:#f59e0b;font-size:0.85rem;text-decoration:none;"><i class="fa fa-shield-halved"></i> Reportar problema (garantía activa)</a>`,
-        ];
-      }
+      const warrantyBtn = warrantyActive
+        ? `<button class="btn btn-ghost btn-sm" onclick="window.openWarrantyReport('${j.id}')" title="Reportar problema dentro de garantía" style="color:#f59e0b;"><i class="fa fa-shield-halved"></i>Garantía</button>`
+        : '';
+      actions = `
+        ${ratingBtn}
+        ${warrantyBtn}
+        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Volver a contratar</button>`;
     } else if (['cancelado','rechazado'].includes(j.status)) {
-      primaryBtn = `<button class="btn btn-ghost job-card-primary-btn" onclick="window.showPage('professionals-list')">
-                       <i class="fa fa-search"></i> Buscar otro técnico
-                    </button>`;
-      if (j.status === 'cancelado' && j.cancel_reason) {
-        secondaryLinks = [`<span style="font-size:0.8rem;color:var(--gray);font-style:italic;">"${escHtml(j.cancel_reason)}"</span>`];
-      }
+      // Motivo: solo mostrar si fue cancelación del cliente (no rechazo del pro)
+      const mostrarMotivo = j.status === 'cancelado' && j.cancel_reason;
+      const motivo = mostrarMotivo
+        ? `<span style="font-size:0.78rem;color:var(--gray);font-style:italic;">"${escHtml(j.cancel_reason)}"</span>`
+        : '';
+      actions = `
+        ${motivo}
+        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Buscar otro</button>`;
     }
   }
 
-  const secondaryHtml = secondaryLinks.length
-    ? `<div class="job-card-secondary" style="display:flex;justify-content:center;gap:20px;margin-top:16px;flex-wrap:wrap;">
-        ${secondaryLinks.join('')}
-       </div>`
-    : '';
-
-  // ── Foto adjunta (link pequeño, no botón) ────────────────────────────
-  const photoLink = j.photo_url
-    ? `<div style="margin-top:10px;">
-         <a href="${j.photo_url}" target="_blank" style="font-size:0.75rem;color:var(--accent);text-decoration:none;"><i class="fa fa-image"></i> Ver foto adjunta</a>
-       </div>`
-    : '';
-
-  // ── Render final ─────────────────────────────────────────────────────
-  return `
-<div class="job-card" style="background:var(--glass-dark);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px;display:flex;flex-direction:column;transition:transform .2s, border-color .2s;">
-
-  <!-- ZONA SUPERIOR: Estado y mensaje -->
-  <div class="job-card-header" style="background:${cfg.bg};padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);">
-    <div style="width:36px;height:36px;background:${cfg.color};color:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 10px ${cfg.color}44;">
-      <i class="fa ${cfg.icon}"></i>
+  return `<div class="job-item" style="flex-wrap:wrap;gap:10px;padding:16px;">
+    <div class="job-icon" style="background:rgba(79,70,229,0.1);color:var(--primary);flex-shrink:0;">
+      <i class="fa ${statusIcon}"></i>
     </div>
-    <div style="font-weight:600;color:var(--light);font-size:0.95rem;">${mainMsg}</div>
-  </div>
-
-  <!-- ZONA MEDIA: Contenido -->
-  <div class="job-card-body" style="padding:16px;">
-
-    <!-- Descripción (Principal) -->
-    ${descHtml}
-
-    <!-- Fecha propuesta si existe -->
-    ${propFechaHtml}
-
-    <!-- Metadatos (Especialidad, Ciudad, etc) -->
-    ${infoHtml}
-
-    <!-- Alertas -->
-    ${expiryHtml}
-
-    <!-- Links extra -->
-    ${photoLink}
-
-    <!-- ZONA INFERIOR: Botón Grande + Links -->
-    <div class="job-card-actions" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      ${primaryBtn}
-      ${secondaryHtml}
+    <div class="job-info" style="flex:1;min-width:180px;">
+      ${desc}
+      <div class="job-meta" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;">
+        ${specialty}${isUrgent}${confirmedDateBadge}${checkinBadge}
+        <span style="font-size:0.8rem;color:var(--gray);">${meta}</span>
+      </div>
     </div>
-
-  </div>
-
-</div>
-`;
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span class="job-status ${statusCss}">${statusTxt}</span>
+      ${actions}
+    </div>
+  </div>`;
 }
 
 function escHtml(text) {
@@ -799,199 +648,93 @@ export async function addFavorite(proId) {
   }
 }
 
-// Estado interno del flujo de review
-let _rvfJobId = null;
-let _rvfProId = null;
-let _rvfMainRating = 0;
-let _rvfSubRatings = { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 };
+export function openRatingModal(proId, jobId) {
+  // Buscar el profesional en la lista o usar el ID directamente
+  let userProfileId = null;
+  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId);
+  if (pro?.user_id) {
+    userProfileId = pro.user_id;
+  }
+  
+  store.setCurrentProIdForAction({ proId, jobId, userProfileId });
+  showModal('modal-rating');
+}
 
-const RVF_STAR_LABELS = ['', 'Muy malo', 'Malo', 'Bueno', 'Muy bueno', 'Excelente'];
-
-export function openReviewFlow(jobId, proId, proName, mode = 'confirm') {
-  _rvfJobId = jobId;
-  _rvfProId = proId;
-  _rvfMainRating = 0;
-  _rvfSubRatings = { puntualidad: 0, calidad: 0, precio: 0, comunicacion: 0 };
-  store._confirmingJobId = jobId;
-
-  // Nombre del pro en el paso 1
-  const nameEl = document.getElementById('rvf-pro-name');
-  if (nameEl) nameEl.textContent = proName || 'el técnico';
-
-  // Limpiar estrellas
-  document.querySelectorAll('#rvf-stars-main .rvf-star').forEach(s => {
-    s.style.color = 'var(--gray2)';
+export function setRating(event, category) {
+  const container = document.getElementById('stars-' + category);
+  if (!container) return;
+  
+  const stars = container.querySelectorAll('.star');
+  const clickedVal = parseInt(event.target.dataset.v || event.target.closest('[data-v]')?.dataset.v || 0);
+  
+  if (!clickedVal) return;
+  
+  store.ratings[category] = clickedVal;
+  stars.forEach((s, i) => {
+    s.style.color = i < clickedVal ? 'var(--orange)' : 'var(--gray2)';
   });
-  document.querySelectorAll('.rvf-sub-stars i').forEach(s => {
-    s.style.color = 'var(--gray2)';
-  });
-  const labelEl = document.getElementById('rvf-star-label');
-  if (labelEl) labelEl.textContent = '';
-
-  // Limpiar textareas
-  const c1 = document.getElementById('rvf-comment');
-  const c2 = document.getElementById('rvf-review-text');
-  if (c1) c1.value = '';
-  if (c2) c2.value = '';
-
-  // Si mode === 'rate-only', ir directo al paso 2
-  if (mode === 'rate-only') {
-    rvfGoToStep(2);
-  } else {
-    rvfGoToStep(1);
-  }
-
-  showModal('modal-review-flow');
 }
 
-function rvfGoToStep(n) {
-  document.getElementById('rvf-step1').style.display = n === 1 ? 'block' : 'none';
-  document.getElementById('rvf-step2').style.display = n === 2 ? 'block' : 'none';
-  document.getElementById('rvf-step1-dot').style.background = 'var(--primary)';
-  document.getElementById('rvf-step2-dot').style.background = n === 2 ? 'var(--primary)' : 'var(--border)';
-}
-
-export async function rvfConfirm() {
-  if (!_rvfJobId) return;
+export async function submitRating() {
+  if (!store.currentUser || !store.currentProIdForAction) return;
+  
   const sb = getSupabase();
-  const comment = document.getElementById('rvf-comment')?.value.trim();
-
-  const btn = document.getElementById('btn-rvf-confirm');
-  if (btn) { btn.disabled = true; btn.innerHTML = ' Confirmando...'; }
-
-  const { error } = await sb.from('jobs').update({
-    status: 'finalizado',
-    client_confirmed: true,
-    client_comment: comment || null
-  }).eq('id', _rvfJobId);
-
-  if (btn) { btn.disabled = false; btn.innerHTML = ' Sí, quedó listo'; }
-
-  if (error) {
-    showToast('Error al confirmar. Intentá de nuevo.', 'error');
-    return;
-  }
-
-  // Avanzar al paso 2 sin cerrar el modal
-  rvfGoToStep(2);
-  // Recargar dashboard en background
-  import('./dashboard.js').then(m => m.loadUserDashboard());
-}
-
-export async function rvfSubmitRating() {
-  if (!_rvfJobId || !_rvfProId) return;
-  if (_rvfMainRating === 0) {
-    showToast('Seleccioná al menos una estrella', 'warning');
-    return;
-  }
-
-  const sb = getSupabase();
-  const comment = document.getElementById('rvf-review-text')?.value.trim();
-
-  // Si no completó las subcategorías, usar la calificación general para todas
-  const sub = _rvfSubRatings;
-  const puntualidad  = sub.puntualidad  || _rvfMainRating;
-  const calidad      = sub.calidad      || _rvfMainRating;
-  const precio       = sub.precio       || _rvfMainRating;
-  const comunicacion = sub.comunicacion || _rvfMainRating;
-
-  const btn = document.getElementById('btn-rvf-submit');
-  if (btn) { btn.disabled = true; btn.innerHTML = ' Enviando...'; }
-
-  // Resolver professional_id (UUID)
-  let professionalProfileId = _rvfProId;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(professionalProfileId)) {
-    const pro = store.allProfessionals?.find(x => String(x.id) === String(_rvfProId));
-    professionalProfileId = pro?.user_id || null;
-  }
+  const comment = document.getElementById('rate-comment')?.value.trim();
+  const avg = Object.values(store.ratings).reduce((a, b) => a + b, 0) / 4;
+  
+  const proId = store.currentProIdForAction.proId;
+  const jobId = store.currentProIdForAction.jobId;
+  let professionalProfileId = store.currentProIdForAction.userProfileId;
+  
+  // Si no hay userProfileId, intentar buscar en allProfessionals
   if (!professionalProfileId) {
-    const { data } = await sb.from('professionals').select('user_id').eq('id', _rvfProId).maybeSingle();
-    professionalProfileId = data?.user_id || null;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const pro = store.allProfessionals?.find(x => String(x.id) === String(proId) || x.id == proId);
+    if (pro?.user_id && uuidRegex.test(pro.user_id)) {
+      professionalProfileId = pro.user_id;
+    }
   }
 
   if (!professionalProfileId) {
-    showToast('No se pudo enviar la calificación', 'error');
-    closeModal('modal-review-flow');
+    // Intentar obtener directamente de la tabla professionals
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).single();
+    if (proData?.user_id) {
+      professionalProfileId = proData.user_id;
+    }
+  }
+
+  if (!professionalProfileId) {
+    showToast('No se puede calificar este profesional', 'info');
+    closeModal('modal-rating');
     return;
   }
 
-  const avg = parseFloat(((puntualidad + calidad + precio + comunicacion) / 4).toFixed(2));
+  if (!professionalProfileId) {
+    showToast('No se puede calificar este profesional', 'info');
+    closeModal('modal-rating');
+    return;
+  }
 
   const { error } = await sb.from('reviews').insert({
-    user_id:         store.currentUser.id,
+    user_id: store.currentUser.id,
     professional_id: professionalProfileId,
-    job_id:          _rvfJobId,
-    comment:         comment || null,
-    rating:          avg,
-    puntualidad,
-    calidad,
-    precio,
-    comunicacion,
-    created_at:      new Date().toISOString()
+    job_id: jobId,
+    comment,
+    rating: parseFloat(avg.toFixed(2)),
+    puntualidad: store.ratings.puntualidad,
+    calidad: store.ratings.calidad,
+    precio: store.ratings.precio,
+    comunicacion: store.ratings.comunicacion,
+    created_at: new Date().toISOString()
   });
-
-  if (btn) { btn.disabled = false; btn.innerHTML = ' Enviar calificación'; }
-  closeModal('modal-review-flow');
-
+  
+  closeModal('modal-rating');
+  
   if (error) {
     showToast('Error al enviar calificación', 'error');
   } else {
-    localStorage.setItem(`reviewed_${_rvfJobId}`, '1');
-    showToast('¡Gracias por calificar! Tu opinión ayuda a la comunidad.', 'success');
-    import('./dashboard.js').then(m => m.loadUserDashboard());
+    showToast('¡Gracias por tu calificación!', 'success');
   }
-}
-
-export function rvfSkipRating() {
-  closeModal('modal-review-flow');
-  showToast('Podés calificar desde tus trabajos finalizados cuando quieras.', 'info');
-}
-
-export function rvfOpenDispute() {
-  closeModal('modal-review-flow');
-  store._disputeJobId = _rvfJobId;
-  const disputeId = document.getElementById('dispute-job-id');
-  if (disputeId) disputeId.textContent = _rvfJobId;
-  showModal('modal-dispute');
-}
-
-// Inicializar eventos de estrellas del nuevo modal
-export function initReviewFlowEvents() {
-  // Estrellas principales
-  const mainStars = document.getElementById('rvf-stars-main');
-  if (mainStars) {
-    mainStars.addEventListener('click', e => {
-      const star = e.target.closest('.rvf-star');
-      if (!star) return;
-      _rvfMainRating = parseInt(star.dataset.v);
-      mainStars.querySelectorAll('.rvf-star').forEach((s, i) => {
-        s.style.color = i < _rvfMainRating ? 'var(--orange)' : 'var(--gray2)';
-      });
-      const labelEl = document.getElementById('rvf-star-label');
-      if (labelEl) labelEl.textContent = RVF_STAR_LABELS[_rvfMainRating] || '';
-    });
-  }
-
-  // Estrellas de subcategorías
-  document.querySelectorAll('.rvf-sub-stars').forEach(container => {
-    container.addEventListener('click', e => {
-      const star = e.target.closest('[data-v]');
-      if (!star) return;
-      const cat = container.dataset.cat;
-      const val = parseInt(star.dataset.v);
-      _rvfSubRatings[cat] = val;
-      container.querySelectorAll('i').forEach((s, i) => {
-        s.style.color = i < val ? 'var(--orange)' : 'var(--gray2)';
-      });
-    });
-  });
-
-  // Botones
-  document.getElementById('btn-rvf-confirm')?.addEventListener('click', rvfConfirm);
-  document.getElementById('btn-rvf-dispute')?.addEventListener('click', rvfOpenDispute);
-  document.getElementById('btn-rvf-submit')?.addEventListener('click', rvfSubmitRating);
-  document.getElementById('btn-rvf-skip')?.addEventListener('click', rvfSkipRating);
 }
 
 export async function initJobsEventListeners() {
@@ -1000,7 +743,6 @@ export async function initJobsEventListeners() {
     const { loadSpecialties } = await import('./professionals.js');
     await loadSpecialties();
   }
-  initReviewFlowEvents();
 }
 
 export async function rejectJob() {
@@ -1065,14 +807,14 @@ export async function startJob(jobId) {
 export async function finishJob(jobId) {
   const sb = getSupabase();
   // El pro marca "terminado" → espera confirmación del cliente
-  const { error } = await sb.from('jobs').update({ status: 'para_revision' }).eq('id', jobId);
+  const { error } = await sb.from('jobs').update({ status: 'pendiente_confirmacion' }).eq('id', jobId);
   if (!error) {
-    showToast('Marcaste el trabajo como terminado. El cliente debe revisarlo y finalizar.', 'success');
+    showToast('Marcaste el trabajo como terminado. Esperando confirmación del cliente.', 'success');
     const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
     if (job?.user_id) {
       import('./notifications.js').then(m => m.createNotification(
         job.user_id, 'job_finished', 'El profesional terminó el trabajo',
-        'Revisá el trabajo y confirmá el cierre desde tu panel para finalizar.'
+        'Revisá el trabajo y confirmá el cierre desde tu panel.'
       ));
     }
     const { loadProDashboard } = await import('./dashboard.js');
@@ -1080,6 +822,40 @@ export async function finishJob(jobId) {
   } else showToast('Error: ' + error.message, 'error');
 }
 
+export async function clientConfirmFinish(confirmed) {
+  const jobId = store._confirmingJobId;
+  if (!jobId) return;
+  const sb = getSupabase();
+  const comment = document.getElementById('confirm-finish-comment')?.value.trim();
+
+  if (confirmed) {
+    const { error } = await sb.from('jobs').update({
+      status: 'finalizado',
+      client_confirmed: true,
+      client_comment: comment || null
+    }).eq('id', jobId);
+
+    closeModal('modal-confirm-finish');
+    if (!error) {
+      showToast('¡Trabajo confirmado! Podés calificar al profesional.', 'success');
+      store._confirmingJobId = null;
+      const { loadUserDashboard } = await import('./dashboard.js');
+      await loadUserDashboard();
+      // Abrir modal de calificación automáticamente
+      const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
+      if (job?.professional_id) {
+        setTimeout(() => openRatingModal(job.professional_id, jobId), 600);
+      }
+    }
+  } else {
+    // Abrir modal de disputa
+    closeModal('modal-confirm-finish');
+    store._disputeJobId = jobId;
+    const disputeId = document.getElementById('dispute-job-id');
+    if (disputeId) disputeId.textContent = jobId;
+    showModal('modal-dispute');
+  }
+}
 
 export async function submitDispute() {
   const jobId = store._disputeJobId;
@@ -1270,53 +1046,4 @@ export async function submitWarrantyReport() {
     const { loadUserDashboard } = await import('./dashboard.js');
     loadUserDashboard();
   } else showToast('Error: ' + error.message, 'error');
-}
-
-// ─── RATINGS & REVIEWS ───────────────────────────────────────────────────────
-
-export function openRatingModal(proId, jobId) {
-  store.setCurrentProIdForAction({ proId, jobId });
-  showModal('modal-rating');
-}
-
-export function setRating(event, category) {
-  const container = document.getElementById('stars-' + category);
-  if (!container) return;
-  const stars = container.querySelectorAll('.star');
-  const clickedVal = parseInt(event.target.dataset.v || event.target.closest('[data-v]')?.dataset.v || 0);
-  if (!clickedVal) return;
-  
-  store.ratings[category] = clickedVal;
-  stars.forEach((s, i) => {
-    s.style.color = i < clickedVal ? 'var(--orange)' : 'var(--gray2)';
-  });
-}
-
-export async function submitRating() {
-  if (!store.currentUser || !store.currentProIdForAction) return;
-  
-  const comment = document.getElementById('rate-comment')?.value.trim() || '';
-  const r = store.ratings;
-  const avg = (r.puntualidad + r.calidad + r.precio + r.comunicacion) / 4;
-  
-  const sb = getSupabase();
-  const { error } = await sb.from('reviews').insert({
-    user_id: store.currentUser.id,
-    professional_id: store.currentProIdForAction.proId,
-    job_id: store.currentProIdForAction.jobId,
-    comment,
-    avg_rating: avg,
-    puntualidad: r.puntualidad,
-    calidad: r.calidad,
-    precio: r.precio,
-    comunicacion: r.comunicacion,
-    created_at: new Date().toISOString()
-  });
-
-  if (error) {
-    showToast('Error al enviar calificación: ' + error.message, 'error');
-  } else {
-    closeModal('modal-rating');
-    showToast('¡Gracias por tu calificación!', 'success');
-  }
 }

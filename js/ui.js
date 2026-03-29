@@ -328,21 +328,14 @@ function hideContextualNav() {
 export function updateBottomNav() {
   const bottomNav = document.getElementById('bottom-nav');
   if (!bottomNav) return;
-
-  const isLogged = !!store.currentUser;
   
-  // En móviles, mostrar solo si está logueado y no es Admin
-  if (isLogged && !store.isAdmin) {
-    bottomNav.classList.remove('hidden');
-    
-    // Sincronizar item activo basado en la página actual
-    const activePage = getCurrentPage();
-    document.querySelectorAll('.bottom-nav-item').forEach(el => {
-      el.classList.toggle('active', el.dataset.page === activePage);
-    });
-  } else {
+  const isLogged = !!store.currentUser;
+  if (!isLogged) {
     bottomNav.classList.add('hidden');
+    return;
   }
+  
+  bottomNav.classList.remove('hidden');
 }
 
 export function hideBottomNav() {
@@ -376,9 +369,24 @@ export function updateNavBadges({ messages = 0, notifications = 0, requests = 0 
 }
 
 export function setActiveNavItem(pageId) {
-  // Desktop contextual nav
-  document.querySelectorAll('.nav-contextual a').forEach(a => a.classList.remove('active'));
-  
+  const selectors = [
+    `.nav-contextual a[data-page="${pageId}"]`,
+    `.nav-contextual a[id*="${pageId}"]`,
+    `#bottom-nav a[data-page="${pageId}"]`
+  ];
+
+  document.querySelectorAll('.nav-contextual a, #bottom-nav a').forEach(a => {
+    a.classList.remove('active');
+  });
+
+  for (const selector of selectors) {
+    const activeLink = document.querySelector(selector);
+    if (activeLink) {
+      activeLink.classList.add('active');
+      break;
+    }
+  }
+
   const pageToNavMap = {
     'home': 'home',
     'professionals-list': 'search',
@@ -387,14 +395,11 @@ export function setActiveNavItem(pageId) {
   };
 
   const navPage = pageToNavMap[pageId] || pageId;
+  document.querySelectorAll('.nav-contextual a').forEach(a => a.classList.remove('active'));
   const targetNav = document.getElementById(`nav-client-${navPage}`) || 
-                    document.getElementById(`nav-pro-${navPage}`);
+                    document.getElementById(`nav-pro-${navPage}`) ||
+                    document.getElementById(`bnav-${navPage}`);
   if (targetNav) targetNav.classList.add('active');
-
-  // Sync Bottom Nav highlights
-  document.querySelectorAll('.bottom-nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.page === pageId);
-  });
 }
 
 export function initSidebar() {

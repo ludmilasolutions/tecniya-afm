@@ -366,11 +366,14 @@ export async function activateProProfile() {
   if (!store.currentUser) return;
   const sb = getSupabase();
   
-  // Obtener especialidad del input único
-  const singleSpec = document.getElementById('activate-specialty-single')?.value.trim() || '';
-  let specialties = singleSpec ? [singleSpec] : [];
+  // Obtener especialidades del editor de chips
+  const specialtyChips = document.querySelectorAll('#activate-specialty-chips .specialty-chip--toggle.active');
+  let specialties = [];
+  if (specialtyChips.length > 0) {
+    specialties = Array.from(specialtyChips).map(c => c.textContent.trim());
+  }
   
-  const mainSpecialty = singleSpec;
+  const mainSpecialty = specialties[0] || '';
   const city      = document.getElementById('activate-city')?.value.trim() || '';
   const province  = document.getElementById('activate-province')?.value.trim() || '';
   const whatsapp  = document.getElementById('activate-whatsapp')?.value.trim() || '';

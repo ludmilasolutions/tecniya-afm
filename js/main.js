@@ -14,22 +14,20 @@ import { checkAndShowTour } from './tour.js';
 import { openJobRequest, submitJobRequest, toggleProSelection, updateMultiProBadge,
          updateProCardSelection, openMultiRequest,
          showUrgentModal, sendUrgentRequest,
-         addFavorite, openReviewFlow,
+         addFavorite, openRatingModal, setRating, submitRating,
          acceptJob, rejectJob, openRejectModal, startJob, finishJob,
          cancelJob, openCancelModal,
-         confirmJobDate, submitDispute, reHireJob,
+         confirmJobDate, clientConfirmFinish, submitDispute, reHireJob,
          openProposeDateModal, submitProposedDate, approveProDate, rejectProDate,
          openWarrantyReport, submitWarrantyReport,
          previewJobPhoto,
-         openRatingModal, setRating, submitRating,
          initJobsEventListeners } from './jobs.js';
 import { loadUserDashboard, loadProDashboard, loadFavorites, loadUserBudgets, loadUserHistory,
          renderSpecialtyEditor, toggleSpecialtyChip, getSelectedSpecialties,
          saveAvailability, saveProfile,
          saveProProfile, saveBudget, generateBudgetPDF,
          editAvatarSelected, proEditAvatarSelected,
-         openAddAddressModal, editAddress, saveAddress, deleteAddress,
-         switchProHtool, switchProConfig, saveAvailabilityQuick } from './dashboard.js';
+         openAddAddressModal, editAddress, saveAddress, deleteAddress } from './dashboard.js';
 import { loadAdminSecurity } from './admin.js';
 import { openReportModal, submitProReport } from './security.js';
 import { loadAdminData, switchAdminTab, loadAdminPenalties, adminToggleBlock, adminToggleFeatured,
@@ -59,7 +57,6 @@ window.filterByType     = filterByType;
 window.toggleFilter     = toggleFilter;
 
 window.openJobRequest        = openJobRequest;
-window.openRatingModal       = openRatingModal;
 window.toggleProSelection    = toggleProSelection;
 window.handleNotifClick      = handleNotifClick;
 window.openMultiRequest      = openMultiRequest;
@@ -72,7 +69,18 @@ window.submitJobRequest = submitJobRequest;
 window.showUrgentModal  = showUrgentModal;
 window.sendUrgentRequest= sendUrgentRequest;
 window.addFavorite      = addFavorite;
-window.openReviewFlow   = openReviewFlow;
+window.openRatingModal  = openRatingModal;
+window.setRating        = setRating;
+window.submitRating     = submitRating;
+window.acceptJob        = acceptJob;
+window.rejectJob        = rejectJob;
+window.startJob         = startJob;
+window.finishJob        = finishJob;
+window.cancelJob        = cancelJob;
+window.openCancelModal  = openCancelModal;
+window.openRejectModal  = openRejectModal;
+window.confirmJobDate   = confirmJobDate;
+window.clientConfirmFinish = clientConfirmFinish;
 window.submitDispute    = submitDispute;
 window.reHireJob             = reHireJob;
 window.openProposeDateModal  = openProposeDateModal;
@@ -98,6 +106,12 @@ window.syncRejectReason = (val) => {
   else if (ta && val === 'Otro') ta.value = '';
 };
 
+window.openConfirmFinish = (jobId) => {
+  store._confirmingJobId = jobId;
+  const el = document.getElementById('confirm-finish-comment');
+  if (el) el.value = '';
+  showModal('modal-confirm-finish');
+};
 
 window.showSuscripcion  = showSuscripcion;
 window.subscribePro     = subscribePro;
@@ -142,9 +156,6 @@ window.proEditAvatarSelected = proEditAvatarSelected;
 window.renderSpecialtyEditor = renderSpecialtyEditor;
 window.toggleSpecialtyChip = toggleSpecialtyChip;
 window.getSelectedSpecialties = getSelectedSpecialties;
-window.switchProHtool = switchProHtool;
-window.switchProConfig = switchProConfig;
-window.saveAvailabilityQuick = saveAvailabilityQuick;
 
 window.chooseRole        = chooseRole;
 window.confirmChosenRole = confirmChosenRole;
@@ -275,9 +286,10 @@ async function initApp() {
 
   // Mobile nav cliente
   on('mobile-client-home',   'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); toggleMobileMenu(); });
+  on('mobile-client-search',  'click', e => { e.preventDefault(); showPage('professionals-list'); setActiveNavItem('search'); toggleMobileMenu(); });
   on('mobile-client-jobs',    'click', e => { e.preventDefault(); store.setActivePanel('user'); import('./dashboard.js').then(m => { showPage('user-dashboard'); m.loadUserDashboard(); }); toggleMobileMenu(); });
-  on('mobile-client-favs',    'click', e => { e.preventDefault(); store.setActivePanel('user'); import('./dashboard.js').then(m => { showPage('user-dashboard'); m.loadUserDashboard(); m.switchDashTab('tab-favoritos','user'); }); toggleMobileMenu(); });
-  on('mobile-client-config',  'click', e => { e.preventDefault(); store.setActivePanel('user'); import('./dashboard.js').then(m => { showPage('user-dashboard'); m.loadUserDashboard(); m.switchDashTab('tab-direcciones','user'); }); toggleMobileMenu(); });
+  on('mobile-client-chat',    'click', e => { e.preventDefault(); window.toggleFloatChat(); toggleMobileMenu(); });
+  on('mobile-client-urgent',  'click', e => { e.preventDefault(); showUrgentModal(); toggleMobileMenu(); });
 
   // Mobile nav profesional
   on('mobile-pro-home',      'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); toggleMobileMenu(); });
@@ -466,8 +478,19 @@ async function initApp() {
   });
 
   // ── DASHBOARD PROFESIONAL ────────────────────────────────────────────────
+  on('btn-edit-pro-profile',  'click', async () => {
+    const { showModal } = await import('./ui.js');
+    const { loadProDashboard } = await import('./dashboard.js');
+    await loadProDashboard();
+    showModal('modal-edit-pro');
+  });
+  on('btn-featured-pro',      'click', showSuscripcion);
+  on('btn-save-availability', 'click', saveAvailability);
+  on('btn-save-pro-profile',  'click', saveProProfile);
+  on('btn-new-budget',        'click', () => showModal('modal-new-budget'));
   on('btn-save-budget',       'click', saveBudget);
   on('btn-pdf-budget',        'click', generateBudgetPDF);
+  on('btn-upload-photo',      'click', () => document.getElementById('photo-upload-input')?.click());
   on('photo-upload-input',    'change', async e => {
     const file = e.target.files[0];
     if (!file) return;
