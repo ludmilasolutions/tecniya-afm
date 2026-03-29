@@ -657,9 +657,12 @@ export async function addFavorite(proId) {
 export function openRatingModal(proId, jobId) {
   // Buscar el profesional en la lista o usar el ID directamente
   let userProfileId = null;
-  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId);
+  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId || x.user_id === proId);
   if (pro?.user_id) {
     userProfileId = pro.user_id;
+  } else {
+    // proId puede ser directamente el profile id (cuando viene de clientConfirmFinish)
+    userProfileId = proId;
   }
   
   store.setCurrentProIdForAction({ proId, jobId, userProfileId });
@@ -702,10 +705,20 @@ export async function submitRating() {
   }
 
   if (!professionalProfileId) {
-    // Intentar obtener directamente de la tabla professionals
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
+    // proId puede ser el user_id (profiles.id) directamente
+    // Intentar buscar en professionals por user_id primero
+    const { data: proData } = await sb.from('professionals').select('user_id').eq('user_id', proId).maybeSingle();
     if (proData?.user_id) {
       professionalProfileId = proData.user_id;
+    } else {
+      // Fallback: intentar por id de la tabla professionals
+      const { data: proData2 } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
+      if (proData2?.user_id) {
+        professionalProfileId = proData2.user_id;
+      } else {
+        // proId ya es directamente el profile id
+        professionalProfileId = proId;
+      }
     }
   }
 
