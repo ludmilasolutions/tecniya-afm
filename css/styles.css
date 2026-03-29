@@ -573,6 +573,120 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 .dash-section { margin-bottom: 28px; }
 .dash-section-title { font-weight: 700; font-size: 0.98rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: var(--text); }
 
+/* ── PRO DASHBOARD (NEW) ─────────────────────────────────────────────── */
+.pdash-wrap { padding: calc(var(--header-h) + 20px) 0 52px; display: flex; flex-direction: column; gap: 16px; }
+
+/* hero band */
+.pdash-hero {
+  position: relative; overflow: hidden;
+  background: var(--bg-card); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); backdrop-filter: var(--glass-blur);
+}
+.pdash-hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 90% at 0% 0%, rgba(91,79,255,0.15), transparent 60%),
+    radial-gradient(ellipse 40% 60% at 100% 100%, rgba(0,212,245,0.10), transparent 55%);
+}
+.pdash-hero-inner {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 24px 0; gap: 16px; flex-wrap: wrap;
+}
+.pdash-identity { display: flex; align-items: center; gap: 16px; }
+.pdash-avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.4rem; color: #fff;
+  box-shadow: 0 0 0 3px rgba(91,79,255,0.25);
+}
+.pdash-name { font-weight: 800; font-size: 1.25rem; line-height: 1.2; margin-bottom: 5px; }
+.pdash-specialty-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pdash-specialty { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+.pdash-online-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+  color: var(--green); border-radius: 99px; letter-spacing: 0.3px;
+}
+.pdash-online-badge i { font-size: 0.45rem; }
+.pdash-hero-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* kpi row */
+.pdash-kpis {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 20px;
+}
+.pdash-kpi {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; cursor: default;
+  transition: background 0.18s ease;
+}
+.pdash-kpi[onclick] { cursor: pointer; }
+.pdash-kpi[onclick]:hover { background: rgba(255,255,255,0.04); }
+.pdash-kpi-div { width: 1px; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.pdash-kpi-icon {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+}
+.pdash-kpi--alert .pdash-kpi-icon  { background: rgba(255,107,43,0.12); color: var(--orange); }
+.pdash-kpi--active .pdash-kpi-icon { background: rgba(0,212,245,0.10);  color: var(--accent); }
+.pdash-kpi--done   .pdash-kpi-icon { background: rgba(16,185,129,0.10); color: var(--green);  }
+.pdash-kpi--rating .pdash-kpi-icon { background: rgba(251,191,36,0.10); color: #fbbf24;       }
+.pdash-kpi-num { font-size: 1.45rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--text); }
+.pdash-kpi--alert  .pdash-kpi-num { color: var(--orange); }
+.pdash-kpi--active .pdash-kpi-num { color: var(--accent); }
+.pdash-kpi--done   .pdash-kpi-num { color: var(--green);  }
+.pdash-kpi--rating .pdash-kpi-num { color: #fbbf24;       }
+.pdash-kpi-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-top: 3px; }
+
+/* nav tabs */
+.pdash-nav {
+  display: flex; gap: 2px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 5px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.pdash-nav::-webkit-scrollbar { display: none; }
+.pdash-navbtn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 8px;
+  font-size: 0.84rem; font-weight: 600; white-space: nowrap;
+  border: none; background: none; color: var(--text-muted);
+  cursor: pointer; transition: all 0.18s ease; position: relative;
+  flex-shrink: 0;
+}
+.pdash-navbtn i { font-size: 0.82rem; }
+.pdash-navbtn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.pdash-navbtn.active {
+  background: rgba(91,79,255,0.15);
+  color: var(--primary-light);
+  border: 1px solid rgba(91,79,255,0.25);
+}
+.pdash-navbtn.active i { color: var(--accent); }
+.pdash-badge {
+  position: absolute; top: 6px; right: 8px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: var(--orange); color: #fff;
+  font-size: 0.6rem; font-weight: 800;
+  border-radius: 99px; display: flex; align-items: center; justify-content: center;
+}
+
+/* mobile */
+@media (max-width: 700px) {
+  .pdash-kpis { grid-template-columns: repeat(2, 1fr); }
+  .pdash-kpi-div:nth-child(4) { display: none; }
+  .pdash-hero-inner { padding: 18px 16px 0; }
+  .pdash-kpi { padding: 14px 14px; gap: 10px; }
+  .pdash-navbtn span { display: none; }
+  .pdash-navbtn { padding: 10px 14px; }
+  .pdash-navbtn i { font-size: 1rem; }
+}
+
 /* ── JOBS ──────────────────────────────────────────────────────────────── */
 .jobs-list { display: flex; flex-direction: column; gap: 10px; }
 .job-item { background: var(--bg-card); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 16px 18px; display: flex; align-items: center; gap: 14px; transition: var(--transition); }

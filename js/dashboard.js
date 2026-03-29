@@ -190,6 +190,14 @@ export async function loadProDashboard() {
   const sb = getSupabase();
 
   setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
+  // Poblar hero del pdash
+  const _heroSpecialty = store.currentPro.specialty || 'Tu especialidad';
+  const _heroSpecEl = document.getElementById('pro-dash-specialty');
+  if (_heroSpecEl) _heroSpecEl.textContent = _heroSpecialty;
+  const _pdashNameEl = document.getElementById('pdash-hero-name');
+  if (_pdashNameEl) _pdashNameEl.textContent = store.currentUser.user_metadata?.full_name || 'Tu nombre';
+  const _pdashAvEl = document.getElementById('pdash-avatar-initials');
+  if (_pdashAvEl) _pdashAvEl.textContent = (store.currentUser.user_metadata?.full_name || 'P').charAt(0).toUpperCase();
 
   // Pre-llenar formulario de edición del pro
   // Cargar datos desde profiles para tener full_name actualizado

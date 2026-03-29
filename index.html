@@ -339,31 +339,88 @@
 </div>
 
 <div class="page" id="page-pro-dashboard">
-  <div class="container dash-wrap">
-    <div class="dash-header">
-      <div>
-        <div class="dash-greeting">Panel Profesional</div>
-        <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;" id="pro-dash-specialty">Tu especialidad</p>
+  <div class="container pdash-wrap">
+
+    <!-- HERO BAND -->
+    <div class="pdash-hero">
+      <div class="pdash-hero-bg" aria-hidden="true"></div>
+      <div class="pdash-hero-inner">
+        <div class="pdash-identity">
+          <div class="pdash-avatar" id="pdash-avatar-initials">S</div>
+          <div>
+            <div class="pdash-name" id="pdash-hero-name">Tu nombre</div>
+            <div class="pdash-specialty-row">
+              <span class="pdash-specialty" id="pro-dash-specialty">Tu especialidad</span>
+              <span class="pdash-online-badge"><i class="fa fa-circle"></i>Disponible</span>
+            </div>
+          </div>
+        </div>
+        <div class="pdash-hero-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar perfil</button>
+          <button class="btn btn-orange btn-sm" id="btn-featured-pro"><i class="fa fa-crown"></i>Ser Destacado</button>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar Perfil</button>
-        <button class="btn btn-orange btn-sm" id="btn-featured-pro"><i class="fa fa-crown"></i>Ser Destacado</button>
+
+      <!-- KPI row -->
+      <div class="pdash-kpis">
+        <div class="pdash-kpi pdash-kpi--alert" data-tab="tab-pro-solicitudes" onclick="document.querySelector('[data-tab=tab-pro-solicitudes]')?.click()">
+          <div class="pdash-kpi-icon"><i class="fa fa-inbox"></i></div>
+          <div class="pdash-kpi-body">
+            <div class="pdash-kpi-num" id="pro-stat-new">0</div>
+            <div class="pdash-kpi-label">Solicitudes nuevas</div>
+          </div>
+        </div>
+        <div class="pdash-kpi-div"></div>
+        <div class="pdash-kpi pdash-kpi--active" data-tab="tab-pro-activos" onclick="document.querySelector('[data-tab=tab-pro-activos]')?.click()">
+          <div class="pdash-kpi-icon"><i class="fa fa-gears"></i></div>
+          <div class="pdash-kpi-body">
+            <div class="pdash-kpi-num" id="pro-stat-active">0</div>
+            <div class="pdash-kpi-label">En proceso</div>
+          </div>
+        </div>
+        <div class="pdash-kpi-div"></div>
+        <div class="pdash-kpi pdash-kpi--done">
+          <div class="pdash-kpi-icon"><i class="fa fa-check-circle"></i></div>
+          <div class="pdash-kpi-body">
+            <div class="pdash-kpi-num" id="pro-stat-done">0</div>
+            <div class="pdash-kpi-label">Finalizados</div>
+          </div>
+        </div>
+        <div class="pdash-kpi-div"></div>
+        <div class="pdash-kpi pdash-kpi--rating">
+          <div class="pdash-kpi-icon"><i class="fa fa-star"></i></div>
+          <div class="pdash-kpi-body">
+            <div class="pdash-kpi-num" id="pro-stat-rating">—</div>
+            <div class="pdash-kpi-label">Puntuación</div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Solicitudes nuevas</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">Trabajos activos</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Finalizados</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div><div class="stat-label">Puntuación promedio</div></div>
+
+    <!-- NAV TABS -->
+    <div class="pdash-nav" id="pro-tabs">
+      <button class="pdash-navbtn active" data-tab="tab-pro-solicitudes">
+        <i class="fa fa-inbox"></i><span>Solicitudes</span>
+        <span class="pdash-badge" id="pdash-badge-new" style="display:none;"></span>
+      </button>
+      <button class="pdash-navbtn" data-tab="tab-pro-activos">
+        <i class="fa fa-gears"></i><span>En proceso</span>
+      </button>
+      <button class="pdash-navbtn" data-tab="tab-pro-finalizados">
+        <i class="fa fa-check-circle"></i><span>Finalizados</span>
+      </button>
+      <button class="pdash-navbtn" data-tab="tab-pro-presupuestos">
+        <i class="fa fa-file-invoice-dollar"></i><span>Presupuestos</span>
+      </button>
+      <button class="pdash-navbtn" data-tab="tab-pro-fotos">
+        <i class="fa fa-images"></i><span>Mis Fotos</span>
+      </button>
+      <button class="pdash-navbtn" data-tab="tab-pro-config">
+        <i class="fa fa-sliders"></i><span>Configuración</span>
+      </button>
     </div>
-    <div class="tabs" id="pro-tabs">
-      <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
-      <button class="tab" data-tab="tab-pro-activos">En proceso</button>
-      <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
-      <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
-      <button class="tab" data-tab="tab-pro-fotos">Mis Fotos</button>
-      <button class="tab" data-tab="tab-pro-config">Configuración</button>
-    </div>
+
+    <!-- PANELS -->
     <div class="tab-panel active" id="tab-pro-solicitudes">
       <div class="jobs-list" id="pro-jobs-new">
         <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas.</p></div>
@@ -430,6 +487,7 @@
         <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
       </div>
     </div>
+
   </div>
 </div>
 

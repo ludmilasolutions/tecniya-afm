@@ -446,7 +446,7 @@ async function initApp() {
   });
 
   // Tabs del dashboard profesional — data-tab
-  document.querySelectorAll('#pro-tabs .tab').forEach(tab => {
+  document.querySelectorAll('#pro-tabs .tab, #pro-tabs .pdash-navbtn').forEach(tab => {
     tab.addEventListener('click', e => {
       switchTab(e, tab.dataset.tab);
     });

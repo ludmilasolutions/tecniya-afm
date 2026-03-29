@@ -108,9 +108,9 @@ export function scrollToSearch() {
 }
 
 export function switchTab(event, tabId) {
-  const clickedTab = event.target.closest('.tab') || event.target;
+  const clickedTab = event.target.closest('.tab, .pdash-navbtn') || event.target;
   const container = clickedTab.closest('[id$="-tabs"]')?.parentElement || document;
-  container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.tab, .pdash-navbtn').forEach(t => t.classList.remove('active'));
   container.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   clickedTab.classList.add('active');
   const panel = document.getElementById(tabId);
