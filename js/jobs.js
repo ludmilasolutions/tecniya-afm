@@ -1,450 +1,692 @@
 import { store } from './store.js';
-import { onProCancelJob, onUserCancelJob } from './penalties.js';
-import { checkRequestLimit, isSpamMessage } from './security.js';
 import { getSupabase } from './supabase.js';
-import { showModal, closeModal, showToast } from './ui.js';
-import { formatDate } from './utils.js';
+import { showToast, closeModal, showPage } from './ui.js';
+import { jobItem } from './jobs.js';
 
-export function openJobRequest(proId, proName, proUserId) {
-  if (!store.currentUser) {
-    showModal('modal-login');
-    showToast('Iniciá sesión para solicitar trabajos', 'info');
-    return;
-  }
-  const resolvedUserId = proUserId || store.allProfessionals?.find(x => x.id == proId)?.user_id;
-  if (resolvedUserId && resolvedUserId === store.currentUser.id) {
-    showToast('No podés enviarte trabajos a vos mismo.', 'warning');
-    return;
-  }
-  // Resetear selección (solicitud simple a 1 pro)
-  store.selectedPros = [{ proId, name: proName, userProfileId: resolvedUserId || proId }];
-  store.setCurrentProIdForAction({ proId, userProfileId: resolvedUserId || proId });
-  const proNameEl = document.getElementById('job-req-pro-name');
-  if (proNameEl) proNameEl.textContent = proName;
-  // No mostrar barra — openJobRequest es solicitud directa a 1 pro
-  showModal('modal-request-job');
-}
+// ─── DASHBOARD CLIENTE ────────────────────────────────────────────────────────
 
-export function toggleProSelection(proId, proName, proUserId) {
-  if (!store.currentUser) { showModal('modal-login'); return; }
-  const resolvedUserId = proUserId || store.allProfessionals?.find(x => x.id == proId)?.user_id;
-  if (resolvedUserId === store.currentUser.id) {
-    showToast('No podés enviarte trabajos a vos mismo.', 'warning'); return;
-  }
-  const idx = store.selectedPros.findIndex(p => p.proId == proId);
-  if (idx >= 0) {
-    store.selectedPros.splice(idx, 1);
-    showToast(`${proName} quitado de la selección`, 'info');
-  } else {
-    if (store.selectedPros.length >= store.MAX_MULTI_REQUEST) {
-      showToast(`Máximo ${store.MAX_MULTI_REQUEST} profesionales por solicitud`, 'warning'); return;
-    }
-    store.selectedPros.push({ proId, name: proName, userProfileId: resolvedUserId || proId });
-    showToast(`${proName} agregado (${store.selectedPros.length}/${store.MAX_MULTI_REQUEST})`, 'success');
-  }
-  updateMultiProBadge();
-  updateProCardSelection();
-}
-
-export function updateMultiProBadge() {
-  const n = store.selectedPros.length;
-  const bar = document.getElementById('multi-request-bar');
-  if (!bar) return;
-  // La barra solo aparece cuando hay 2 o más pros seleccionados con el botón +
-  if (n < 2) { bar.style.display = 'none'; return; }
-  bar.style.display = 'flex'; bar.style.alignItems = 'center';
-  const names = store.selectedPros.map(p => p.name).join(', ');
-  const label = document.getElementById('multi-req-label');
-  const btn   = document.getElementById('multi-req-send-btn');
-  if (label) label.textContent = `${n} profesional${n > 1 ? 'es' : ''} seleccionado${n > 1 ? 's' : ''}: ${names}`;
-  if (btn)   btn.textContent   = n === 1 ? 'Enviar solicitud' : `Enviar a ${n} profesionales`;
-}
-
-export function updateProCardSelection() {
-  const selectedIds = new Set(store.selectedPros.map(p => String(p.proId)));
-  document.querySelectorAll('[data-pro-id]').forEach(card => {
-    const isSelected = selectedIds.has(card.dataset.proId);
-    card.style.outline = isSelected ? '2px solid var(--accent)' : '';
-    card.style.boxShadow = isSelected ? '0 0 0 3px rgba(6,182,212,0.2)' : '';
-  });
-}
-
-export function openMultiRequest() {
-  if (!store.selectedPros.length) return;
-  // Usar el primer pro como referencia para el form
-  const first = store.selectedPros[0];
-  store.setCurrentProIdForAction(first);
-  const proNameEl = document.getElementById('job-req-pro-name');
-  if (proNameEl) {
-    const n = store.selectedPros.length;
-    proNameEl.textContent = n === 1
-      ? first.name
-      : `${first.name} y ${n - 1} profesional${n > 2 ? 'es' : ''} más`;
-  }
-  showModal('modal-request-job');
-}
-
-export async function submitJobRequest() {
-  // Verificar límite diario
-  const limitCheck = await checkRequestLimit();
-  if (!limitCheck.allowed) {
-    showToast(limitCheck.reason || 'Límite diario alcanzado', 'warning');
-    return;
-  }
-
+export async function loadUserDashboard() {
   if (!store.currentUser) return;
 
-  const sb       = getSupabase();
-  const desc     = document.getElementById('job-req-desc')?.value.trim();
-  const address  = document.getElementById('job-req-address')?.value.trim();
-  const isUrgent = document.getElementById('job-req-urgent')?.checked || false;
-  const errorEl  = document.getElementById('job-req-error');
+  const sb = getSupabase();
 
-  if (!desc) {
-    if (errorEl) { errorEl.textContent = 'Describí el trabajo.'; errorEl.classList.remove('hidden'); }
-    return;
-  }
+  // Nombre de bienvenida
+  const name = store.currentUser.user_metadata?.full_name
+    || store.currentUser.email?.split('@')[0]
+    || 'Usuario';
+  const dashName = document.getElementById('dash-user-name');
+  if (dashName) dashName.textContent = name.split(' ')[0];
 
-  // Resolver professional_id
-  const proAction = store.currentProIdForAction;
-  let professionalProfileId = proAction?.userProfileId || null;
-  if (!professionalProfileId) {
-    const pro = store.allProfessionals?.find(x => x.id == proAction?.proId);
-    professionalProfileId = pro?.user_id || null;
-  }
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (professionalProfileId && !uuidRegex.test(professionalProfileId)) professionalProfileId = null;
+  // Pre-llenar formulario de perfil
+  const editName  = document.getElementById('edit-name');
+  const editEmail = document.getElementById('edit-email');
+  const editPhone = document.getElementById('edit-phone');
+  const editCity  = document.getElementById('edit-city');
+  if (editName)  editName.value  = store.currentUser.user_metadata?.full_name || '';
+  if (editEmail) editEmail.value = store.currentUser.email || '';
 
-  // Recolectar slots de agenda
-  const slots = [1,2,3].map(i => {
-    const date = document.getElementById(`job-req-date-${i}`)?.value;
-    const period = document.getElementById(`job-req-period-${i}`)?.value;
-    return date ? { date, period } : null;
-  }).filter(Boolean);
-
-  const btn = document.getElementById('btn-submit-job');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.7">Enviando...</span>'; }
-
-  // Subir foto si hay una adjunta
-  let photoUrl = null;
-  const photoFile = document.getElementById('job-req-photo')?.files?.[0];
-  if (photoFile && professionalProfileId) {
-    const ext  = photoFile.name.split('.').pop();
-    const path = `job-requests/${store.currentUser.id}/${Date.now()}.${ext}`;
-    const { data: up } = await sb.storage.from('work-photos').upload(path, photoFile, { upsert: true });
-    if (up) {
-      const { data: { publicUrl } } = sb.storage.from('work-photos').getPublicUrl(path);
-      photoUrl = publicUrl;
+  try {
+    // Datos del perfil
+    const { data: profile } = await sb.from('profiles')
+      .select('*').eq('id', store.currentUser.id).maybeSingle();
+    if (profile) {
+      if (editPhone) editPhone.value = profile.phone || '';
+      if (editCity)  editCity.value  = profile.city  || '';
+      
+      // Mostrar avatar en el formulario de edición
+      const avatarPreview = document.getElementById('edit-avatar-preview');
+      if (avatarPreview && profile.avatar_url) {
+        avatarPreview.style.backgroundImage = `url('${profile.avatar_url}')`;
+        avatarPreview.innerHTML = '';
+      }
     }
-  }
 
-  const jobPayload = {
-    user_id:         store.currentUser.id,
-    professional_id: professionalProfileId,
-    specialty:       document.getElementById('job-req-specialty')?.value || 'General',
-    description:     desc,
-    address,
-    is_urgent:       isUrgent,
-    proposed_dates:  slots,
-    photo_url:       photoUrl,
-    status:          'solicitado',
-    created_at:      new Date().toISOString()
-  };
+    // Trabajos
+    const { data: jobs } = await sb.from('jobs')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
 
-  // Determinar targets (multi o simple)
-  const targets = store.selectedPros.length > 1
-    ? store.selectedPros
-    : [{ userProfileId: professionalProfileId }];
+    const active  = (jobs || []).filter(j => ['solicitado','aceptado','en_proceso','fecha_propuesta_pro','pendiente_confirmacion','en_disputa'].includes(j.status));
+    const done    = (jobs || []).filter(j => j.status === 'finalizado');
+    const history = (jobs || []).filter(j => ['finalizado','cancelado','rechazado'].includes(j.status));
 
-  const isMulti = targets.length > 1;
-  const groupId = isMulti ? crypto.randomUUID() : null;
-  const uuidRegex2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    setEl('user-stat-active', active.length);
+    setEl('user-stat-done',   done.length);
 
-  let sent = 0;
-  let lastError = null;
-  for (const target of targets) {
-    const pid = target.userProfileId;
-    if (!pid || !uuidRegex2.test(pid)) continue;
-    const payload = { ...jobPayload,
-      professional_id:  pid,
-      multiple_request: isMulti,
-      group_id:         groupId
-    };
-    const { error: e } = await sb.from('jobs').insert(payload);
-    if (!e) {
-      sent++;
-      import('./notifications.js').then(m => m.createNotification(
-        pid, 'job_request', 'Nueva solicitud de trabajo',
-        `${desc.substring(0, 80)}${desc.length > 80 ? '...' : ''}`
-      ));
-    } else {
-      lastError = e;
-      console.error('job insert error:', e);
+    const labelActive = document.getElementById('dash-label-active');
+    if (labelActive) labelActive.textContent = active.length
+      ? `${active.length} trabajo${active.length !== 1 ? 's' : ''} activo${active.length !== 1 ? 's' : ''}`
+      : 'Trabajos activos';
+
+    const jobsEl = document.getElementById('user-jobs-list');
+    if (jobsEl) {
+      jobsEl.innerHTML = active.length
+        ? active.map(j => jobItem(j, 'user')).join('')
+        : `<div class="empty-state"><i class="fa fa-briefcase"></i>
+           <p>No tenés trabajos activos.<br>
+           <a href="#" onclick="window.showPage('professionals-list')" style="color:var(--accent);">
+           Buscar un profesional</a></p></div>`;
     }
+
+    const histEl = document.getElementById('user-history-list');
+    if (histEl) {
+      histEl.innerHTML = history.length
+        ? history.map(j => jobItem(j, 'user')).join('')
+        : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+    }
+  } catch (e) {
+    console.error('loadUserDashboard jobs:', e);
   }
 
-  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-paper-plane"></i>Enviar solicitud'; }
-
-  if (sent === 0) {
-    if (errorEl) { errorEl.textContent = lastError?.message || 'No se pudo enviar la solicitud.'; errorEl.classList.remove('hidden'); }
-    return;
-  }
-
-  // Limpiar form
-  ['job-req-desc','job-req-address'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-  [1,2,3].forEach(i => { const el = document.getElementById(`job-req-date-${i}`); if(el) el.value=''; });
-  const prev = document.getElementById('job-req-photo-preview');
-  if (prev) { prev.src=''; prev.style.display='none'; }
-  const pname = document.getElementById('job-req-photo-name');
-  if (pname) pname.textContent = '';
-
-  store.selectedPros = [];
-  updateMultiProBadge();
-
-  closeModal('modal-request-job');
-  const msg = sent > 1
-    ? `¡Solicitud enviada a ${sent} profesionales! El primero que acepte queda asignado.`
-    : '¡Solicitud enviada! El profesional elegirá una fecha.';
-  showToast(msg, 'success');
+  await loadFavorites();
+  await loadUserBudgets();
+  await loadAddresses();
 }
 
-// Preview foto adjunta
-let jobPhotoObjectURL = null;
+export async function loadFavorites() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  try {
+    const { data: favs, error } = await sb
+      .from('v_favorites_full')
+      .select('*')
+      .eq('user_id', store.currentUser.id);
 
-export function previewJobPhoto(input) {
-  const file = input.files?.[0];
-  const nameEl = document.getElementById('job-req-photo-name');
-  const prev   = document.getElementById('job-req-photo-preview');
+    if (error) console.error('loadFavorites:', error);
+
+    setEl('user-stat-favs', favs?.length || 0);
+
+    const favsEl = document.getElementById('user-favs-grid');
+    if (!favsEl) return;
+
+    if (!favs?.length) {
+      favsEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px;">
+        <i class="fa fa-heart"></i><p>No guardaste profesionales favoritos.</p></div>`;
+      return;
+    }
+
+    const { proCard } = await import('./professionals.js');
+    favsEl.innerHTML = favs.map(f => proCard({
+      id:            f.pro_id,
+      user_id:       f.pro_user_id,
+      name:          f.pro_name || 'Profesional',
+      specialty:     f.specialty,
+      city:          f.city,
+      province:      f.province,
+      description:   f.description,
+      rating:        parseFloat(f.avg_rating) || 0,
+      reviews_count: f.reviews_count || 0,
+      jobs_count:    f.jobs_count || 0,
+      is_featured:   f.is_featured,
+      is_certified:  f.is_certified,
+      is_online:     f.is_online,
+      zones:         f.zones || [],
+      whatsapp:      f.whatsapp,
+    })).join('');
+  } catch (e) {
+    console.error('loadFavorites:', e);
+  }
+}
+
+export async function loadUserHistory() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  try {
+    const { data: jobs } = await sb
+      .from('jobs')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .in('status', ['finalizado', 'cancelado', 'rechazado'])
+      .order('created_at', { ascending: false });
+
+    const histEl = document.getElementById('user-history-list');
+    if (!histEl) return;
+    histEl.innerHTML = jobs?.length
+      ? jobs.map(j => jobItem(j, 'user')).join('')
+      : `<div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>`;
+  } catch (e) { console.error('loadUserHistory:', e); }
+}
+
+
+export async function loadUserBudgets() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  try {
+    const { data: budgets } = await sb
+      .from('budgets')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    setEl('user-stat-budgets', budgets?.length || 0);
+
+    const budgetsEl = document.getElementById('user-budgets-list');
+    if (!budgetsEl) return;
+
+    if (!budgets?.length) {
+      budgetsEl.innerHTML = `<div class="empty-state">
+        <i class="fa fa-file-invoice"></i><p>No tenés presupuestos recibidos.</p></div>`;
+      return;
+    }
+
+    budgetsEl.innerHTML = budgets.map(b => `
+      <div class="job-item">
+        <div class="job-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);">
+          <i class="fa fa-file-invoice"></i>
+        </div>
+        <div class="job-info">
+          <div class="job-title">${escHtml(b.description || 'Presupuesto')}</div>
+          <div class="job-meta">$${b.price || 0} · ${escHtml(b.client_name || '')}</div>
+        </div>
+        <span class="job-status status-${b.status || 'pending'}">${statusLabel(b.status)}</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('loadUserBudgets:', e);
+  }
+}
+
+// ─── DASHBOARD PROFESIONAL ────────────────────────────────────────────────────
+
+export async function loadProDashboard() {
+  if (!store.currentUser || !store.currentPro) return;
+
+  const sb = getSupabase();
+
+  // Poblar hero del pdash — mostrar todas las especialidades
+  const _allSpecialties = store.currentPro?.specialties?.length
+    ? store.currentPro.specialties
+    : (store.currentPro?.specialty ? [store.currentPro.specialty] : ['Tu especialidad']);
+  const _heroSpecEl = document.getElementById('pro-dash-specialty');
+  if (_heroSpecEl) {
+    if (_allSpecialties.length > 1) {
+      _heroSpecEl.innerHTML = _allSpecialties.map(s => '<span class="pdash-specialty-tag">'+s+'</span>').join('');
+    } else {
+      _heroSpecEl.textContent = _allSpecialties[0];
+    }
+  }
+  const _pdashNameEl = document.getElementById('pdash-hero-name');
+  if (_pdashNameEl) _pdashNameEl.textContent = store.currentUser.user_metadata?.full_name || 'Tu nombre';
+  const _pdashAvEl = document.getElementById('pdash-avatar-initials');
+  if (_pdashAvEl) _pdashAvEl.textContent = (store.currentUser.user_metadata?.full_name || 'P').charAt(0).toUpperCase();
+
+  // Pre-llenar formulario de edición del pro
+  // Cargar datos desde profiles para tener full_name actualizado
+  const { data: profileData } = await sb.from('profiles').select('full_name, avatar_url, phone').eq('id', store.currentUser.id).maybeSingle();
+  
+  setVal('pro-edit-name',      profileData?.full_name || store.currentUser.user_metadata?.full_name || '');
+  setVal('pro-edit-specialty', store.currentPro.specialty || '');
+  setVal('pro-edit-desc',      store.currentPro.description || '');
+  setVal('pro-edit-city',      store.currentPro.city || '');
+  setVal('pro-edit-province',  store.currentPro.province || '');
+  setVal('pro-edit-zones',     (store.currentPro.zones || []).join(', '));
+  setVal('pro-edit-whatsapp',  store.currentPro.whatsapp || '');
+
+  // Actualizar contador de especialidades
+  updateSpecialtyCounter();
+  
+  // Renderizar editor de chips con las especialidades actuales
+  const currentSpecialties = store.currentPro?.specialties || (store.currentPro?.specialty ? [store.currentPro.specialty] : []);
+  renderSpecialtyEditor(currentSpecialties);
+
+  // Cargar avatar en el formulario de edición profesional
+  if (profileData?.avatar_url) {
+    const avatarPreview = document.getElementById('pro-edit-avatar-preview');
+    if (avatarPreview) {
+      avatarPreview.style.backgroundImage = `url('${profileData.avatar_url}')`;
+      avatarPreview.innerHTML = '';
+    }
+  }
+
+  try {
+    // Jobs donde professional_id = profiles.id del usuario actual
+    const { data: jobs } = await sb
+      .from('jobs')
+      .select('*, user:profiles!jobs_user_id_fkey(full_name)')
+      .eq('professional_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
+    // Aplanar nombre del cliente en cada job
+    (jobs || []).forEach(j => { j.user_name = j.user?.full_name || null; });
+
+    const newJ    = (jobs || []).filter(j => j.status === 'solicitado');
+    const activeJ = (jobs || []).filter(j => ['aceptado','en_proceso'].includes(j.status));
+    const doneJ   = (jobs || []).filter(j => j.status === 'finalizado');
+
+    // Marcar cuáles ya fueron calificados por el pro
+    if (doneJ.length) {
+      const doneIds = doneJ.map(j => j.id);
+      const { data: proReviews } = await sb
+        .from('reviews')
+        .select('job_id')
+        .in('job_id', doneIds)
+        .eq('reviewer_type', 'professional');
+      const ratedJobIds = new Set((proReviews || []).map(r => r.job_id));
+      doneJ.forEach(j => { j.pro_already_rated = ratedJobIds.has(j.id); });
+    }
+
+    setEl('pro-stat-new',    newJ.length);
+    setEl('pro-stat-active', activeJ.length);
+    setEl('pro-stat-done',   doneJ.length);
+
+    // Section titles
+    const titleNew = document.getElementById('pdash-section-title-new');
+    if (titleNew) titleNew.textContent = newJ.length
+      ? `${newJ.length} solicitud${newJ.length !== 1 ? 'es' : ''} pendiente${newJ.length !== 1 ? 's' : ''}`
+      : 'Solicitudes nuevas';
+    const titleActive = document.getElementById('pdash-section-title-active');
+    if (titleActive) titleActive.textContent = activeJ.length
+      ? `${activeJ.length} trabajo${activeJ.length !== 1 ? 's' : ''} en proceso`
+      : 'En proceso';
+
+    // Tab counts
+    const tabCountNew = document.getElementById('pdash-tab-count-new');
+    if (tabCountNew) {
+      if (newJ.length) { tabCountNew.textContent = newJ.length; tabCountNew.style.display = 'inline-flex'; }
+      else tabCountNew.style.display = 'none';
+    }
+    const tabCountActive = document.getElementById('pdash-tab-count-active');
+    if (tabCountActive) {
+      if (activeJ.length) { tabCountActive.textContent = activeJ.length; tabCountActive.style.display = 'inline-flex'; }
+      else tabCountActive.style.display = 'none';
+    }
+
+    renderJobList('pro-jobs-new',     newJ,    'pro');
+    renderJobList('pro-jobs-active',  activeJ, 'pro');
+    renderJobList('pro-jobs-done',    doneJ,   'pro');
+
+    // Rating promedio
+    const { data: reviews } = await sb
+      .from('reviews')
+      .select('rating')
+      .eq('professional_id', store.currentUser.id);
+
+    if (reviews?.length) {
+      const avg = reviews.reduce((s, r) => s + parseFloat(r.rating), 0) / reviews.length;
+      setEl('pro-stat-rating', avg.toFixed(1));
+    }
+
+  } catch (e) {
+    console.error('loadProDashboard:', e);
+  }
+
+  // Presupuestos — solo para destacados
+  const featuredBtn = document.getElementById('btn-new-budget');
+  if (featuredBtn) featuredBtn.style.display = store.currentPro?.is_featured ? 'inline-flex' : 'none';
+
+  if (!store.currentPro?.is_featured) {
+    const tab = document.getElementById('tab-pro-presupuestos');
+    if (tab) tab.innerHTML = `
+      <div class="card" style="text-align:center;padding:40px;">
+        <i class="fa fa-lock" style="font-size:2.5rem;color:var(--orange);margin-bottom:16px;display:block;"></i>
+        <h3 style="font-size:1rem;margin-bottom:10px;">Función Destacados</h3>
+        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">
+          Los presupuestos están disponibles para profesionales con Plan Destacado.</p>
+        <button class="btn btn-orange" onclick="window.showSuscripcion()">
+          <i class="fa fa-crown"></i>Activar Plan Destacado</button>
+      </div>`;
+  } else {
+    await loadProBudgets();
+  }
+
+  await loadProWorkPhotos();
+  loadProAvailability();
+}
+
+function loadProAvailability() {
+  const avail = store.currentPro?.availability || {};
+  const dias = avail.dias || [];
+  ['lun','mar','mie','jue','vie','sab','dom'].forEach(d => {
+    const labels = { lun:'Lunes', mar:'Martes', mie:'Miércoles', jue:'Jueves', vie:'Viernes', sab:'Sábado', dom:'Domingo' };
+    const el = document.getElementById(`dia-${d}`);
+    if (el) el.checked = dias.includes(labels[d]);
+  });
+  const desde = document.getElementById('hora-desde');
+  const hasta  = document.getElementById('hora-hasta');
+  const urg    = document.getElementById('urgencias');
+  if (desde && avail.desde) desde.value = avail.desde;
+  if (hasta && avail.hasta) hasta.value = avail.hasta;
+  if (urg)   urg.checked = !!avail.urgencias;
+}
+
+async function loadProBudgets() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  try {
+    const { data: budgets } = await sb
+      .from('budgets')
+      .select('*')
+      .eq('professional_id', store.currentPro.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('pro-budgets-list');
+    if (!el) return;
+
+    if (!budgets?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-file-invoice"></i>
+        <p>No generaste presupuestos aún.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = budgets.map(b => `
+      <div class="job-item">
+        <div class="job-icon" style="background:rgba(6,182,212,0.1);color:var(--accent);">
+          <i class="fa fa-file-invoice"></i></div>
+        <div class="job-info">
+          <div class="job-title">${escHtml(b.client_name || 'Cliente')}</div>
+          <div class="job-meta">${escHtml(b.description || '')} · $${b.price || 0}</div>
+        </div>
+        <span class="job-status">${b.date || ''}</span>
+      </div>
+    `).join('');
+  } catch (e) { console.error('loadProBudgets:', e); }
+}
+
+async function loadProWorkPhotos() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  try {
+    const { data: photos } = await sb
+      .from('work_photos')
+      .select('*')
+      .eq('professional_id', store.currentPro.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('pro-work-photos');
+    if (!el) return;
+
+    if (!photos?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-images"></i>
+        <p>No subiste fotos de trabajos aún.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = photos.map(p => `
+      <div class="photo-thumb" style="position:relative;background-image:url('${p.photo_url}');background-size:cover;background-position:center;">
+        <button onclick="window.deleteWorkPhoto('${p.id}')" title="Eliminar"
+          style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center;">
+          <i class="fa fa-times"></i></button>
+        ${p.title ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:#fff;font-size:0.7rem;padding:4px 6px;">${p.title}</div>` : ''}
+      </div>
+    `).join('')
+  } catch (e) { console.error('loadProWorkPhotos:', e); }
+}
+
+// ─── ACCIONES ────────────────────────────────────────────────────────────────
+
+let editAvatarFile = null;
+
+export async function editAvatarSelected(input) {
+  const file = input.files[0];
   if (!file) return;
   
-  // Liberar URL anterior para evitar memory leak
-  if (jobPhotoObjectURL) {
-    URL.revokeObjectURL(jobPhotoObjectURL);
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!validTypes.includes(file.type)) {
+    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
+    return;
   }
   
-  jobPhotoObjectURL = URL.createObjectURL(file);
-  if (nameEl) nameEl.textContent = file.name;
-  if (prev) {
-    prev.src = jobPhotoObjectURL;
-    prev.style.display = 'block';
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('La imagen no puede superar 5MB', 'error');
+    return;
+  }
+  
+  editAvatarFile = file;
+  
+  const preview = document.getElementById('edit-avatar-preview');
+  if (preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.style.backgroundImage = `url('${e.target.result}')`;
+      preview.innerHTML = '';
+    };
+    reader.readAsDataURL(file);
   }
 }
 
-export async function loadUserJobs() {
-  if (!store.currentUser) return [];
-  
+export async function saveProfile() {
+  if (!store.currentUser) return;
   const sb = getSupabase();
-  try {
-    const thirtyDaysAgo = new Date(Date.now() - 30*24*3600*1000).toISOString();
-    const { data } = await sb.from('jobs').select('*')
-      .eq('user_id', store.currentUser.id)
-      .or(`status.not.in.(cancelado,rechazado),created_at.gt.${thirtyDaysAgo}`);
-    return data || [];
-  } catch (e) {
-    console.warn('loadUserJobs:', e?.message);
-    return [];
-  }
-}
+  const name  = document.getElementById('edit-name')?.value.trim();
+  const phone = document.getElementById('edit-phone')?.value.trim();
+  const city  = document.getElementById('edit-city')?.value.trim();
 
-export async function loadProJobs() {
-  if (!store.currentPro) return [];
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+
+  let avatarUrl = null;
   
-  const sb = getSupabase();
-  try {
-    const { data } = await sb.from('jobs').select('*').eq('professional_id', store.currentPro.id);
-    return data || [];
-  } catch (e) {
-    console.warn('loadProJobs:', e?.message);
-    return [];
+  if (editAvatarFile) {
+    showToast('Subiendo foto...', 'info');
+    const { uploadAvatar } = await import('./upload.js');
+    avatarUrl = await uploadAvatar(editAvatarFile, store.currentUser.id);
+    if (!avatarUrl) return;
+    editAvatarFile = null;
+  }
+
+  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
+  if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
+
+  const { error } = await sb.from('profiles').update({
+    full_name: name, phone, city, updated_at: new Date().toISOString()
+  }).eq('id', store.currentUser.id);
+
+  if (error) { showToast('Error al guardar', 'error'); }
+  else {
+    showToast('Perfil actualizado', 'success');
+    if (store.currentUser.user_metadata) store.currentUser.user_metadata.full_name = name;
+    
+    // Recargar datos del usuario para actualizar avatar en UI
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      store.setCurrentUser(user);
+      const { updateAuthUI } = await import('./ui.js');
+      updateAuthUI();
+    }
   }
 }
 
-const STATUS_CSS = {
-  solicitado:             'status-solicitado',
-  aceptado:               'status-aceptado',
-  en_proceso:             'status-en-proceso',
-  pendiente_confirmacion: 'status-aceptado',
-  finalizado:             'status-finalizado',
-  cancelado:              'status-cancelado',
-  rechazado:              'status-cancelado',
-  en_disputa:             'status-solicitado',
-  fecha_propuesta_pro:    'status-aceptado'
-};
-const STATUS_LABEL = {
-  solicitado:             'Nuevo',
-  aceptado:               'Aceptado',
-  en_proceso:             'En proceso',
-  pendiente_confirmacion: 'Esperando confirmación',
-  finalizado:             'Finalizado',
-  cancelado:              'Cancelado',
-  rechazado:              'Rechazado',
-  en_disputa:             'En disputa',
-  fecha_propuesta_pro:    'Fecha propuesta'
-};
-const STATUS_ICON = {
-  solicitado:             'fa-clock',
-  aceptado:               'fa-check',
-  en_proceso:             'fa-gears',
-  pendiente_confirmacion: 'fa-hourglass-half',
-  finalizado:             'fa-check-circle',
-  cancelado:              'fa-times-circle',
-  rechazado:              'fa-times-circle',
-  en_disputa:             'fa-triangle-exclamation',
-  fecha_propuesta_pro:    'fa-calendar-plus'
-};
+let proEditAvatarFile = null;
 
-export function jobItem(j, viewAs) {
-  const statusCss   = STATUS_CSS[j.status]   || '';
-  const statusTxt   = STATUS_LABEL[j.status] || j.status;
-  const statusIcon  = STATUS_ICON[j.status]  || 'fa-briefcase';
-  const dateStr     = j.created_at ? formatDate(j.created_at) : '';
-  const specialty   = j.specialty ? `<span style="font-size:0.78rem;background:rgba(79,70,229,0.12);color:var(--primary);padding:2px 8px;border-radius:20px;">${j.specialty}</span>` : '';
-  const desc        = j.description ? `<div class="job-title">${escHtml(j.description)}</div>` : '';
-  const meta        = [j.address, dateStr].filter(Boolean).join(' · ');
-  const isUrgent    = j.is_urgent ? `<span style="font-size:0.75rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>` : '';
+export async function proEditAvatarSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!validTypes.includes(file.type)) {
+    showToast('Tipo de archivo no válido. Usá JPG, PNG o WebP', 'error');
+    return;
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('La imagen no puede superar 5MB', 'error');
+    return;
+  }
+  
+  proEditAvatarFile = file;
+  
+  const preview = document.getElementById('pro-edit-avatar-preview');
+  if (preview) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.style.backgroundImage = `url('${e.target.result}')`;
+      preview.innerHTML = '';
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
-  // Fecha confirmada
-  let confirmedDateBadge = '';
-  if (j.confirmed_date) {
+export async function saveProProfile() {
+  if (!store.currentUser || !store.currentPro) return;
+  const sb = getSupabase();
+  const name      = document.getElementById('pro-edit-name')?.value.trim();
+  // Leer especialidades del multi-selector
+  const specialty = getSelectedSpecialties()[0] || '';
+  const specialties = getSelectedSpecialties();
+  const desc      = document.getElementById('pro-edit-desc')?.value.trim();
+  const city      = document.getElementById('pro-edit-city')?.value.trim();
+  const province  = document.getElementById('pro-edit-province')?.value.trim();
+  const zones     = document.getElementById('pro-edit-zones')?.value.split(',').map(z => z.trim()).filter(Boolean);
+
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+  if (!specialties.length) { showToast('Seleccioná al menos una especialidad', 'error'); return; }
+
+  let avatarUrl = null;
+  
+  if (proEditAvatarFile) {
+    showToast('Subiendo foto...', 'info');
+    const { uploadAvatar } = await import('./upload.js');
+    avatarUrl = await uploadAvatar(proEditAvatarFile, store.currentUser.id);
+    if (!avatarUrl) return;
+    proEditAvatarFile = null;
+  }
+
+  const { data: profile } = await sb.from('profiles').select('avatar_url').eq('id', store.currentUser.id).single();
+  if (!profile?.avatar_url && !avatarUrl) { showToast('La foto de perfil es obligatoria', 'error'); return; }
+
+  // Geocodificar ciudad/provincia para guardar coordenadas
+  let latitude = store.currentPro.latitude || null;
+  let longitude = store.currentPro.longitude || null;
+  if (city || province) {
     try {
-      const cd = new Date(j.confirmed_date);
-      const fmt = cd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
-      confirmedDateBadge = `<span style="font-size:0.78rem;background:rgba(6,182,212,0.12);color:var(--accent);padding:2px 8px;border-radius:20px;"><i class="fa fa-calendar-check" style="margin-right:4px;"></i>${fmt} — ${j.confirmed_period||''}</span>`;
-    } catch (e) {
-      console.warn('Error formatting confirmed_date:', e?.message);
-    }
-  }
-
-  // Badge check-in
-  let checkinBadge = '';
-  if (j.checked_in_at) {
-    const fmt = new Date(j.checked_in_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    checkinBadge = `<span style="font-size:0.78rem;background:rgba(16,185,129,0.12);color:#10b981;padding:2px 8px;border-radius:20px;"><i class="fa fa-location-dot" style="margin-right:4px;"></i>Check-in ${fmt}</span>`;
-  }
-
-  // Foto adjunta
-  const photoBtn = j.photo_url
-    ? `<button class="btn btn-ghost btn-sm" onclick="window.open('${j.photo_url}','_blank')" title="Ver foto adjunta"><i class="fa fa-image"></i></button>`
-    : '';
-
-  // Acciones según rol y estado
-  let actions = '';
-  // ── Alerta de expiración (solicitado sin respuesta > EXPIRE_HRS horas) ──────
-  const EXPIRE_HRS = 12;
-  let expiryWarning = '';
-  if (j.status === 'solicitado' && j.created_at) {
-    const hoursOld = (Date.now() - new Date(j.created_at).getTime()) / 36e5;
-    if (hoursOld >= EXPIRE_HRS) {
-      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:#f59e0b;margin-bottom:6px;padding:6px 10px;background:rgba(245,158,11,0.08);border-radius:8px;width:100%;">
-        <i class="fa fa-clock"></i> Sin respuesta hace más de ${Math.floor(hoursOld)}h — podés cancelar y buscar otro profesional.
-      </div>`;
-    } else if (hoursOld >= EXPIRE_HRS / 2) {
-      const remaining = Math.max(1, Math.ceil(EXPIRE_HRS - hoursOld));
-      expiryWarning = `<div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--gray);margin-bottom:6px;width:100%;">
-        <i class="fa fa-hourglass-half"></i> Esperando respuesta — ${remaining}h para alerta.
-      </div>`;
-    }
-  }
-
-  if (viewAs === 'pro') {
-    if (j.status === 'solicitado') {
-      actions = `
-        ${expiryWarning}
-        ${j.proposed_dates?.length ? `<span style="font-size:0.75rem;color:var(--accent);"><i class="fa fa-calendar"></i> ${j.proposed_dates.length} fecha${j.proposed_dates.length>1?'s':''}</span>` : ''}
-        ${photoBtn}
-        <button class="btn btn-success btn-sm" onclick="window.acceptJob('${j.id}')"><i class="fa fa-check"></i>Aceptar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openProposeDateModal('${j.id}')"><i class="fa fa-calendar-plus"></i>Otra fecha</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openRejectModal('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>`;
-    } else if (j.status === 'aceptado') {
-      actions = `
-        <button class="btn btn-primary btn-sm" onclick="window.startJob('${j.id}')"><i class="fa fa-play"></i>Iniciar</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
-    } else if (j.status === 'en_proceso') {
-      actions = `
-        <button class="btn btn-success btn-sm" onclick="window.finishJob('${j.id}')"><i class="fa fa-flag-checkered"></i>Marcar terminado</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.user_id}')"><i class="fa fa-comments"></i>Chat</button>`;
-    } else if (j.status === 'pendiente_confirmacion') {
-      actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
-    }
-  } else if (viewAs === 'user') {
-    if (j.status === 'fecha_propuesta_pro') {
-      // El pro propuso una fecha alternativa
-      const slot = j.pro_proposed_dates?.[0];
-      let slotStr = '';
-      if (slot) try {
-        const d = new Date(slot.date);
-        slotStr = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}) + ' — ' + slot.period;
-      } catch (e) {
-        console.warn('Error formatting pro_proposed_dates:', e?.message);
+      const query = encodeURIComponent(`${city}, ${province}, Argentina`);
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+      const geoData = await geo.json();
+      if (geoData?.[0]) {
+        latitude = parseFloat(geoData[0].lat);
+        longitude = parseFloat(geoData[0].lon);
       }
-      actions = `
-        <div style="width:100%;font-size:0.82rem;color:var(--light);background:rgba(79,70,229,0.08);border-radius:8px;padding:8px 12px;margin-bottom:6px;">
-          <i class="fa fa-calendar-plus" style="color:var(--accent);margin-right:6px;"></i>
-          El profesional propone: <strong>${slotStr}</strong>
-        </div>
-        <button class="btn btn-success btn-sm" onclick="window.approveProDate('${j.id}')"><i class="fa fa-check"></i>Aceptar fecha</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.rejectProDate('${j.id}')"><i class="fa fa-times"></i>Rechazar</button>`;
-    } else if (j.status === 'solicitado') {
-      // Puede cancelar mientras espera respuesta — siempre disponible
-      actions = `
-        ${expiryWarning}
-        ${j.professional_id ? `<button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}','${j.id}',true)" style="font-size:0.78rem;"><i class="fa fa-comment-dots"></i>Consultar</button>` : ''}
-        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','solicitado')"><i class="fa fa-times"></i>Cancelar solicitud</button>`;
-    } else if (['aceptado','en_proceso'].includes(j.status)) {
-      actions = `
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openCancelModal('${j.id}','activo')"><i class="fa fa-times"></i>Cancelar</button>`;
-    } else if (j.status === 'pendiente_confirmacion') {
-      actions = `
-        <button class="btn btn-success btn-sm" onclick="window.openConfirmFinish('${j.id}')"><i class="fa fa-check-double"></i>Confirmar cierre</button>
-        <button class="btn btn-ghost btn-sm" onclick="window.openChatWith('${j.professional_id}')"><i class="fa fa-comments"></i>Chat</button>`;
-    } else if (j.status === 'finalizado') {
-      const ratingBtn = j.client_confirmed
-        ? `<button class="btn btn-orange btn-sm" onclick="window.openRatingModal('${j.professional_id}','${j.id}')"><i class="fa fa-star"></i>Calificar</button>`
-        : '';
-      // Garantía activa si warranty_until es futuro
-      const warrantyActive = j.warranty_until && new Date(j.warranty_until) > new Date();
-      const warrantyBtn = warrantyActive
-        ? `<button class="btn btn-ghost btn-sm" onclick="window.openWarrantyReport('${j.id}')" title="Reportar problema dentro de garantía" style="color:#f59e0b;"><i class="fa fa-shield-halved"></i>Garantía</button>`
-        : '';
-      actions = `
-        ${ratingBtn}
-        ${warrantyBtn}
-        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','${j.pro_name||'Profesional'}','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Volver a contratar</button>`;
-    } else if (['cancelado','rechazado'].includes(j.status)) {
-      // Motivo: solo mostrar si fue cancelación del cliente (no rechazo del pro)
-      const mostrarMotivo = j.status === 'cancelado' && j.cancel_reason;
-      const motivo = mostrarMotivo
-        ? `<span style="font-size:0.78rem;color:var(--gray);font-style:italic;">"${escHtml(j.cancel_reason)}"</span>`
-        : '';
-      actions = `
-        ${motivo}
-        <button class="btn btn-ghost btn-sm" onclick="window.reHireJob('${j.professional_id}','','${j.professional_id}')"><i class="fa fa-rotate-right"></i>Buscar otro</button>`;
-    }
+    } catch(e) { console.warn('Geocoding error:', e); }
   }
 
-  const categoryLabel = j.specialty
-    ? `<span class="job-cat">${escHtml(j.specialty)}</span><span class="job-meta-dot"></span>`
-    : '';
-  const urgentBadge = j.is_urgent
-    ? `<span style="font-size:0.72rem;background:rgba(239,68,68,0.13);color:#ef4444;padding:2px 7px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>`
-    : '';
+  const [{ error: e1 }, { error: e2 }] = await Promise.all([
+    sb.from('professionals').update({
+      specialty: specialties[0] || specialty, specialties, description: desc, city, province, zones,
+      latitude, longitude,
+      updated_at: new Date().toISOString()
+    }).eq('user_id', store.currentUser.id),
+    sb.from('profiles').update({ full_name: name }).eq('id', store.currentUser.id)
+  ]);
 
-  return `<div class="job-item">
-    <div class="job-item-top">
-      <div class="job-title">${escHtml(j.description || 'Trabajo sin título')}</div>
-      <span class="job-status ${statusCss}">${statusTxt}</span>
-    </div>
-    <div class="job-meta">
-      ${categoryLabel}
-      ${urgentBadge}
-      <span class="job-date-str">${dateStr}</span>
-      ${confirmedDateBadge}${checkinBadge}
-    </div>
-    <div class="job-actions">
-      ${actions}
-    </div>
-  </div>`;
+  if (e1 || e2) { showToast('Error al guardar', 'error'); }
+  else {
+    // Actualizar store local
+    Object.assign(store.currentPro, { specialty: specialties[0]||specialty, specialties, description: desc, city, province, zones });
+    showToast('Perfil actualizado', 'success');
+    
+    // Recargar datos del usuario para actualizar avatar en UI
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      store.setCurrentUser(user);
+      const { updateAuthUI } = await import('./ui.js');
+      updateAuthUI();
+    }
+    
+    showPage('pro-dashboard');
+  }
+}
+
+export async function saveAvailability() {
+  if (!store.currentPro) return;
+  const sb = getSupabase();
+  const dias      = Array.from(document.querySelectorAll('#dias-laborales input:checked')).map(c => c.value);
+  const desde     = document.getElementById('hora-desde')?.value;
+  const hasta     = document.getElementById('hora-hasta')?.value;
+  const urgencias = document.getElementById('urgencias')?.checked;
+
+  const { error } = await sb.from('professionals').update({
+    availability: { dias, desde, hasta, urgencias },
+    is_online: urgencias
+  }).eq('user_id', store.currentUser.id);
+
+  if (error) { console.error('saveAvailability:', error); showToast('Error al guardar: ' + error.message, 'error'); }
+  else {
+    if (store.currentPro) Object.assign(store.currentPro, { availability: { dias, desde, hasta, urgencias } });
+    showToast('Disponibilidad actualizada', 'success');
+  }
+}
+
+export async function saveBudget() {
+  if (!store.currentUser || !store.currentPro) return;
+  const sb = getSupabase();
+  const client = document.getElementById('budget-client')?.value.trim();
+  const desc   = document.getElementById('budget-desc')?.value.trim();
+  const price  = document.getElementById('budget-price')?.value;
+  const date   = document.getElementById('budget-date')?.value;
+
+  if (!client || !desc || !price) { showToast('Completá todos los campos', 'error'); return; }
+
+  const { error } = await sb.from('budgets').insert({
+    professional_id: store.currentPro.id,
+    user_id: store.currentUser.id,
+    client_name: client,
+    description: desc,
+    price: parseFloat(price),
+    date: date || new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  });
+
+  closeModal('modal-new-budget');
+  if (error) { showToast('Error al guardar presupuesto', 'error'); }
+  else { showToast('Presupuesto guardado', 'success'); await loadProBudgets(); }
+}
+
+export function generateBudgetPDF() {
+  const client  = document.getElementById('budget-client')?.value;
+  const desc    = document.getElementById('budget-desc')?.value;
+  const price   = document.getElementById('budget-price')?.value;
+  const date    = document.getElementById('budget-date')?.value;
+  const proName = store.currentUser?.user_metadata?.full_name || 'Profesional';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}
+    h1{color:#4f46e5;}table{width:100%;border-collapse:collapse;margin-top:20px;}
+    td{padding:10px;border:1px solid #ddd;}.total{font-weight:bold;font-size:1.2rem;color:#4f46e5;}
+    </style></head><body>
+    <h1>PRESUPUESTO - TECNIYA</h1>
+    <p><strong>Profesional:</strong> ${proName}</p>
+    <p><strong>Cliente:</strong> ${client}</p>
+    <p><strong>Fecha:</strong> ${date}</p><hr>
+    <h3>Descripción del trabajo</h3><p>${desc}</p>
+    <table><tr><td>Total</td><td class="total">$${price}</td></tr></table>
+    <br><p style="font-size:0.8rem;color:#999;">Generado por TECNIYA · AFM Solutions</p>
+    </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
+export function sendBudgetWhatsApp() {
+  const client  = document.getElementById('budget-client')?.value;
+  const desc    = document.getElementById('budget-desc')?.value;
+  const price   = document.getElementById('budget-price')?.value;
+  const proName = store.currentUser?.user_metadata?.full_name || 'Profesional';
+  const msg = encodeURIComponent(
+    `Hola ${client}! Soy ${proName} de TECNIYA.\n\nPresupuesto para: ${desc}\nPrecio: $${price}\n\n¿Te parece bien? Podemos coordinar fecha y hora.`
+  );
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+function renderJobList(id, jobs, viewAs) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = jobs.length
+    ? jobs.map(j => jobItem(j, viewAs)).join('')
+    : `<div class="empty-state" style="padding:30px;">
+        <i class="fa fa-briefcase"></i><p>Sin trabajos en esta categoría.</p></div>`;
 }
 
 function escHtml(text) {
@@ -454,615 +696,196 @@ function escHtml(text) {
   return d.innerHTML;
 }
 
-export async function acceptJob(jobId) {
-  const sb = getSupabase();
-  const { data: job } = await sb.from('jobs').select('proposed_dates').eq('id', jobId).maybeSingle();
-
-  if (job?.proposed_dates?.length) {
-    store._acceptingJobId = jobId;
-    renderDatePickerModal(job.proposed_dates, jobId);
-    return;
-  }
-  // Sin slots: aceptar directo
-  const { error } = await sb.from('jobs').update({ status: 'aceptado' }).eq('id', jobId);
-  if (!error) {
-    showToast('Trabajo aceptado', 'success');
-    // Notificar a los pros del grupo que el trabajo ya fue asignado
-    try {
-      const sbLocal = getSupabase();
-      const { data: jb } = await sbLocal.from('jobs').select('group_id').eq('id', jobId).maybeSingle();
-      if (jb?.group_id) {
-        const { data: siblings } = await sbLocal.from('jobs')
-          .select('professional_id').eq('group_id', jb.group_id).neq('id', jobId);
-        for (const s of siblings || []) {
-          if (s.professional_id) {
-            import('./notifications.js').then(m => m.createNotification(
-              s.professional_id, 'job_rejected',
-              'Trabajo ya asignado a otro profesional',
-              'Otro profesional aceptó esta solicitud antes. La solicitud fue cancelada automáticamente.'
-            ));
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Error sending rejection notifications:', e?.message);
-    }
-    // Desbloquear chat: pre_acceptance = false
-    try {
-      const sbLocal = getSupabase();
-      await sbLocal.from('conversations').update({ pre_acceptance: false })
-        .eq('job_id', jobId);
-    } catch (e) {
-      console.warn('Error updating conversation:', e?.message);
-    }
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
+function statusLabel(status) {
+  const map = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado', expired: 'Vencido' };
+  return map[status] || status || '';
 }
 
-function renderDatePickerModal(slots, jobId) {
-  let modal = document.getElementById('modal-pick-date');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-pick-date';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-  }
-  const fmtSlot = s => {
-    try {
-      const d = new Date(s.date);
-      return `${d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})} — ${s.period}`;
-    } catch (e) {
-      console.warn('Error formatting slot date:', e?.message);
-      return s.date + ' — ' + s.period;
-    }
-  };
-  modal.innerHTML = `
-    <div class="modal" style="max-width:420px;">
-      <div class="modal-header">
-        <div class="modal-title"><i class="fa fa-calendar-check" style="color:var(--accent);margin-right:8px;"></i>Elegí una fecha</div>
-      </div>
-      <div class="modal-body">
-        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:16px;">El cliente propuso estas opciones:</p>
-        <div style="display:grid;gap:10px;margin-bottom:20px;">
-          ${slots.map(s => `
-            <button onclick="window.confirmJobDate('${jobId}','${s.date}','${s.period}')"
-              style="background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:14px 18px;text-align:left;cursor:pointer;color:var(--light);transition:border-color .2s;"
-              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-              <i class="fa fa-clock" style="color:var(--accent);margin-right:8px;"></i>${fmtSlot(s)}
-            </button>`).join('')}
-        </div>
-        <button class="btn btn-ghost btn-block" onclick="document.getElementById('modal-pick-date').style.display='none'">Cancelar</button>
-      </div>
-    </div>`;
-  modal.style.display = 'flex';
-}
+// ─── HELPERS MULTI-ESPECIALIDADES ────────────────────────────────────────────
 
-export async function confirmJobDate(jobId, date, period) {
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({
-    status:           'aceptado',
-    confirmed_date:   date,
-    confirmed_period: period
-  }).eq('id', jobId);
-  const modal = document.getElementById('modal-pick-date');
-  if (modal) modal.style.display = 'none';
-  if (!error) {
-    try {
-      const d = new Date(date);
-      const fmt = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-      showToast(`Trabajo aceptado para el ${fmt} — ${period}`, 'success');
-      // Notificar al cliente
-      const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
-      if (job?.user_id) {
-        import('./notifications.js').then(m => m.createNotification(
-          job.user_id, 'job_accepted',
-          '¡Tu solicitud fue aceptada!',
-          `El profesional confirmó para el ${fmt} — ${period}`
-        ));
-      }
-    } catch (e) { 
-      console.warn('Error sending job_accepted notification:', e?.message);
-      showToast('Trabajo aceptado', 'success'); 
-    }
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function updateJobStatus(jobId, status) {
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({ status }).eq('id', jobId);
-  
-  if (!error) {
-    showToast('Estado actualizado', 'success');
-  }
-}
-
-export async function showUrgentModal() {
-  if (!store.currentUser) {
-    showModal('modal-login');
-    showToast('Iniciá sesión para solicitar urgencias', 'info');
-    return;
-  }
-  
-  showModal('modal-urgent');
-  
-  const { detectLocation } = await import('./geolocation.js');
-  detectLocation();
-}
-
-export async function sendUrgentRequest() {
-  const sb = getSupabase();
-  const specialty = document.getElementById('urgent-specialty')?.value;
-  const desc = document.getElementById('urgent-desc')?.value.trim();
-  const radius = document.getElementById('urgent-radius')?.value;
-  
-  if (!specialty || !desc) {
-    showToast('Completá especialidad y descripción', 'error');
-    return;
-  }
-  
-  const { error } = await sb.from('urgent_requests').insert({
-    user_id: store.currentUser.id,
-    specialty,
-    description: desc,
-    radius,
-    latitude: store.userLocation?.lat,
-    longitude: store.userLocation?.lng,
-    status: 'solicitado',
-    created_at: new Date().toISOString()
-  });
-  
-  closeModal('modal-urgent');
-  
-  if (error) {
-    showToast('Error al enviar. Intente de nuevo.', 'error');
-  } else {
-    showToast('🚨 Solicitud urgente enviada. Notificando profesionales cercanos...', 'success');
-  }
-}
-
-
-export async function addFavorite(proId) {
-  if (!store.currentUser) {
-    showModal('modal-login');
-    return;
-  }
-  
-  // proId es el id de la tabla professionals, necesitamos el user_id que referencia profiles
-  const pro = store.allProfessionals?.find(x => x.id == proId);
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const profileId = (pro?.user_id && uuidRegex.test(pro.user_id)) ? pro.user_id : null;
-
-  if (!profileId) {
-    showToast('Este profesional es de demo, no se puede guardar en favoritos', 'info');
-    return;
-  }
-
-  const sb = getSupabase();
-  const { error } = await sb.from('favorites').insert({
-    user_id: store.currentUser.id,
-    professional_id: profileId,
-    created_at: new Date().toISOString()
-  });
-  
-  if (!error) {
-    showToast('Añadido a favoritos', 'success');
-  } else {
-    showToast('Ya está en tus favoritos', 'info');
-  }
-}
-
-export function openRatingModal(proId, jobId) {
-  // Buscar el profesional en la lista o usar el ID directamente
-  let userProfileId = null;
-  const pro = store.allProfessionals?.find(x => x.id == proId || x.id === proId || x.user_id === proId);
-  if (pro?.user_id) {
-    userProfileId = pro.user_id;
-  } else {
-    // proId puede ser directamente el profile id (cuando viene de clientConfirmFinish)
-    userProfileId = proId;
-  }
-  
-  store.setCurrentProIdForAction({ proId, jobId, userProfileId });
-  showModal('modal-rating');
-}
-
-export function setRating(event, category) {
-  const container = document.getElementById('stars-' + category);
+export function renderSpecialtyEditor(selected = []) {
+  const container = document.getElementById('specialty-chips-editor');
   if (!container) return;
   
-  const stars = container.querySelectorAll('.star');
-  const clickedVal = parseInt(event.target.dataset.v || event.target.closest('[data-v]')?.dataset.v || 0);
+  // Cargar especialidades del store o de window
+  let allSpecs = store.allSpecialties?.length ? store.allSpecialties : (window._allSpecialties || []);
   
-  if (!clickedVal) return;
+  // Si está vacío, usar las default
+  if (!allSpecs.length) {
+    allSpecs = ['Electricista', 'Plomero', 'Carpintero', 'Pintor', 'Gasista', 'Albañil', 'Técnico HVAC', 'Cerrajero', 'Jardinero', 'Limpieza', 'Fumigador', 'Técnico PC', 'Técnico CEL', 'Otro'];
+  }
   
-  store.ratings[category] = clickedVal;
-  stars.forEach((s, i) => {
-    s.style.color = i < clickedVal ? 'var(--orange)' : 'var(--gray2)';
-  });
+  container.innerHTML = allSpecs.map(s => {
+    const active = selected.includes(s) ? 'active' : '';
+    return `<span class="specialty-chip specialty-chip--toggle ${active}" onclick="window.toggleSpecialtyChip(this,'${s}')">${s}</span>`;
+  }).join('');
 }
 
-export async function submitRating() {
-  if (!store.currentUser || !store.currentProIdForAction) return;
+export function canSelectUnlimitedSpecialties() {
+  return store.currentPro?.is_featured === true;
+}
+
+export function toggleSpecialtyChip(el, specialty) {
+  const isUnlimited = canSelectUnlimitedSpecialties();
   
+  if (isUnlimited) {
+    el.classList.toggle('active');
+    updateSpecialtyCounter();
+    return;
+  }
+  
+  const selected = getSelectedSpecialties();
+  if (el.classList.contains('active')) {
+    el.classList.remove('active');
+    updateSpecialtyCounter();
+  } else if (selected.length < 3) {
+    el.classList.add('active');
+    updateSpecialtyCounter();
+  } else {
+    import('./ui.js').then(m => m.showToast('Máximo 3 especialidades. ¡Contratá Plan Destacado para ilimitadas!', 'info'));
+  }
+}
+
+export function updateSpecialtyCounter() {
+  const counter = document.getElementById('specialty-counter');
+  if (!counter) return;
+  
+  const selected = getSelectedSpecialties();
+  const isUnlimited = canSelectUnlimitedSpecialties();
+  
+  if (isUnlimited) {
+    counter.innerHTML = '<i class="fa fa-infinity"></i> Ilimitadas';
+    counter.style.color = 'var(--green)';
+  } else {
+    counter.textContent = `${selected.length}/3 seleccionadas`;
+    counter.style.color = selected.length >= 3 ? 'var(--orange)' : 'var(--gray)';
+  }
+}
+
+export function getSelectedSpecialties() {
+  const chips = document.querySelectorAll('#specialty-chips-editor .specialty-chip--toggle.active');
+  return Array.from(chips).map(c => c.textContent.trim());
+}
+
+// ─── DIRECCIONES GUARDADAS ─────────────────────────────────────────────────────
+
+export async function loadAddresses() {
+  if (!store.currentUser) return;
   const sb = getSupabase();
-  const comment = document.getElementById('rate-comment')?.value.trim();
-  const avg = Object.values(store.ratings).reduce((a, b) => a + b, 0) / 4;
-  
-  const proId = store.currentProIdForAction.proId;
-  const jobId = store.currentProIdForAction.jobId;
-  let professionalProfileId = store.currentProIdForAction.userProfileId;
-  
-  // Si no hay userProfileId, intentar buscar en allProfessionals
-  if (!professionalProfileId) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const pro = store.allProfessionals?.find(x => String(x.id) === String(proId) || x.id == proId);
-    if (pro?.user_id && uuidRegex.test(pro.user_id)) {
-      professionalProfileId = pro.user_id;
-    }
-  }
+  const el = document.getElementById('user-addresses-list');
+  if (!el) return;
 
-  if (!professionalProfileId) {
-    // proId puede ser el user_id (profiles.id) directamente
-    // Intentar buscar en professionals por user_id primero
-    const { data: proData } = await sb.from('professionals').select('user_id').eq('user_id', proId).maybeSingle();
-    if (proData?.user_id) {
-      professionalProfileId = proData.user_id;
-    } else {
-      // Fallback: intentar por id de la tabla professionals
-      const { data: proData2 } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
-      if (proData2?.user_id) {
-        professionalProfileId = proData2.user_id;
-      } else {
-        // proId ya es directamente el profile id
-        professionalProfileId = proId;
-      }
-    }
-  }
+  try {
+    const { data: addresses, error } = await sb
+      .from('addresses')
+      .select('*')
+      .eq('user_id', store.currentUser.id)
+      .order('created_at', { ascending: false });
 
-  if (!professionalProfileId) {
-    showToast('No se puede calificar este profesional', 'info');
-    closeModal('modal-rating');
+    if (error) { console.warn('loadAddresses:', error); return; }
+
+    if (!addresses?.length) {
+      el.innerHTML = `<div class="empty-state"><i class="fa fa-location-dot"></i><p>No tenés direcciones guardadas.</p></div>`;
+      return;
+    }
+
+    el.innerHTML = addresses.map(a => `
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--glass);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1rem;">
+            <i class="fa fa-location-dot"></i>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:0.95rem;">${escapeHtml(a.label || 'Dirección')}</div>
+            <div style="font-size:0.82rem;color:var(--gray);">${escapeHtml(a.street || '')}${a.city ? ', ' + escapeHtml(a.city) : ''}${a.province ? ', ' + escapeHtml(a.province) : ''}</div>
+            ${a.notes ? `<div style="font-size:0.78rem;color:var(--gray2);margin-top:2px;">${escapeHtml(a.notes)}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="window.editAddress('${a.id}')" title="Editar"><i class="fa fa-pencil"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="window.deleteAddress('${a.id}')" title="Eliminar" style="color:#f87171;"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error('loadAddresses:', e);
+  }
+}
+
+export function openAddAddressModal() {
+  document.getElementById('address-form-id').value = '';
+  document.getElementById('address-label').value = '';
+  document.getElementById('address-street').value = '';
+  document.getElementById('address-city').value = '';
+  document.getElementById('address-province').value = '';
+  document.getElementById('address-notes').value = '';
+  document.getElementById('address-modal-title').textContent = 'Agregar dirección';
+  document.getElementById('address-form-error')?.classList.add('hidden');
+  showModal('modal-address-form');
+}
+
+export async function editAddress(id) {
+  const sb = getSupabase();
+  const { data: a } = await sb.from('addresses').select('*').eq('id', id).maybeSingle();
+  if (!a) return;
+  document.getElementById('address-form-id').value = a.id;
+  document.getElementById('address-label').value = a.label || '';
+  document.getElementById('address-street').value = a.street || '';
+  document.getElementById('address-city').value = a.city || '';
+  document.getElementById('address-province').value = a.province || '';
+  document.getElementById('address-notes').value = a.notes || '';
+  document.getElementById('address-modal-title').textContent = 'Editar dirección';
+  document.getElementById('address-form-error')?.classList.add('hidden');
+  showModal('modal-address-form');
+}
+
+export async function saveAddress() {
+  if (!store.currentUser) return;
+  const sb = getSupabase();
+  const id       = document.getElementById('address-form-id')?.value;
+  const label    = document.getElementById('address-label')?.value.trim();
+  const street   = document.getElementById('address-street')?.value.trim();
+  const city     = document.getElementById('address-city')?.value.trim();
+  const province = document.getElementById('address-province')?.value.trim();
+  const notes    = document.getElementById('address-notes')?.value.trim();
+  const errEl    = document.getElementById('address-form-error');
+
+  if (!label || !street) {
+    if (errEl) { errEl.textContent = 'La etiqueta y la dirección son obligatorias.'; errEl.classList.remove('hidden'); }
     return;
   }
 
-  if (!professionalProfileId) {
-    showToast('No se puede calificar este profesional', 'info');
-    closeModal('modal-rating');
-    return;
-  }
+  const payload = { user_id: store.currentUser.id, label, street, city, province, notes };
 
-  const { error } = await sb.from('reviews').insert({
-    user_id: store.currentUser.id,
-    professional_id: professionalProfileId,
-    job_id: jobId,
-    comment,
-    rating: parseFloat(avg.toFixed(2)),
-    puntualidad: store.ratings.puntualidad,
-    calidad: store.ratings.calidad,
-    precio: store.ratings.precio,
-    comunicacion: store.ratings.comunicacion,
-    created_at: new Date().toISOString()
-  });
-  
-  closeModal('modal-rating');
-  
+  const { error } = id
+    ? await sb.from('addresses').update(payload).eq('id', id)
+    : await sb.from('addresses').insert(payload);
+
   if (error) {
-    showToast('Error al enviar calificación', 'error');
-  } else {
-    showToast('¡Gracias por tu calificación!', 'success');
+    if (errEl) { errEl.textContent = 'Error al guardar: ' + error.message; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  closeModal('modal-address-form');
+  showToast(id ? 'Dirección actualizada' : 'Dirección guardada', 'success');
+  await loadAddresses();
+}
+
+export async function deleteAddress(id) {
+  if (!confirm('¿Eliminar esta dirección?')) return;
+  const sb = getSupabase();
+  const { error } = await sb.from('addresses').delete().eq('id', id);
+  if (!error) {
+    showToast('Dirección eliminada', 'info');
+    await loadAddresses();
   }
 }
 
-export async function initJobsEventListeners() {
-  const urgentSpecialty = document.getElementById('urgent-specialty');
-  if (urgentSpecialty) {
-    const { loadSpecialties } = await import('./professionals.js');
-    await loadSpecialties();
-  }
-}
-
-export async function rejectJob() {
-  const jobId  = store._rejectJobId;
-  const reason = document.getElementById('reject-reason')?.value.trim();
-  if (!jobId) return;
-  const sb = getSupabase();
-  const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
-  const { error } = await sb.from('jobs').update({
-    status:        'rechazado',
-    cancel_reason: reason || null
-  }).eq('id', jobId);
-  if (!error) {
-    closeModal('modal-reject-job');
-    showToast('Solicitud rechazada.', 'info');
-    if (job?.user_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.user_id, 'job_rejected',
-        'Tu solicitud no fue aceptada',
-        reason || 'El profesional no está disponible. Podés buscar otro.'
-      ));
-    }
-    store._rejectJobId = null;
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function startJob(jobId) {
-  const sb = getSupabase();
-  const now = new Date().toISOString();
-  const { error } = await sb.from('jobs').update({
-    status:         'en_proceso',
-    checked_in_at:  now
-  }).eq('id', jobId);
-
-  if (!error) {
-    // Mensaje de sistema en el chat
-    try {
-      const { data: conv } = await sb.from('conversations')
-        .select('id').or(`and(participant_one.eq.${store.currentPro.id},participant_two.neq.${store.currentPro.id}),and(participant_two.eq.${store.currentPro.id},participant_one.neq.${store.currentPro.id})`)
-        .maybeSingle();
-      // Notificar al cliente
-      const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
-      if (job?.user_id) {
-        import('./notifications.js').then(m => m.createNotification(
-          job.user_id, 'job_started',
-          '¡El profesional llegó y empezó el trabajo!',
-          'Podés seguir el progreso desde tu panel.'
-        ));
-      }
-    } catch (e) {
-      console.warn('Error in startJob notifications:', e?.message);
-    }
-    const fmt = new Date(now).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    showToast(`Check-in registrado a las ${fmt}. ¡Éxito con el trabajo!`, 'success');
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function finishJob(jobId) {
-  const sb = getSupabase();
-  // El pro marca "terminado" → espera confirmación del cliente
-  const { error } = await sb.from('jobs').update({ status: 'pendiente_confirmacion' }).eq('id', jobId);
-  if (!error) {
-    showToast('Marcaste el trabajo como terminado. Esperando confirmación del cliente.', 'success');
-    const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
-    if (job?.user_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.user_id, 'job_finished', 'El profesional terminó el trabajo',
-        'Revisá el trabajo y confirmá el cierre desde tu panel.'
-      ));
-    }
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function clientConfirmFinish(confirmed) {
-  const jobId = store._confirmingJobId;
-  if (!jobId) return;
-  const sb = getSupabase();
-  const comment = document.getElementById('confirm-finish-comment')?.value.trim();
-
-  if (confirmed) {
-    const { error } = await sb.from('jobs').update({
-      status: 'finalizado',
-      client_confirmed: true,
-      client_comment: comment || null
-    }).eq('id', jobId);
-
-    closeModal('modal-confirm-finish');
-    if (!error) {
-      showToast('¡Trabajo confirmado! Podés calificar al profesional.', 'success');
-      store._confirmingJobId = null;
-      const { loadUserDashboard } = await import('./dashboard.js');
-      await loadUserDashboard();
-      // Abrir modal de calificación automáticamente
-      const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
-      if (job?.professional_id) {
-        setTimeout(() => openRatingModal(job.professional_id, jobId), 600);
-      }
-    }
-  } else {
-    // Abrir modal de disputa
-    closeModal('modal-confirm-finish');
-    store._disputeJobId = jobId;
-    const disputeId = document.getElementById('dispute-job-id');
-    if (disputeId) disputeId.textContent = jobId;
-    showModal('modal-dispute');
-  }
-}
-
-export async function submitDispute() {
-  const jobId = store._disputeJobId;
-  const desc  = document.getElementById('dispute-desc')?.value.trim();
-  if (!jobId || !desc) { showToast('Describí el problema.', 'error'); return; }
-  const sb = getSupabase();
-  await sb.from('jobs').update({ status: 'en_disputa', dispute_desc: desc }).eq('id', jobId);
-  closeModal('modal-dispute');
-  showToast('Reporte enviado. El equipo de TECNIYA se va a comunicar.', 'info');
-  store._disputeJobId = null;
-  const { loadUserDashboard } = await import('./dashboard.js');
-  loadUserDashboard();
-}
-
-// Abrir modal de cancelación (cliente)
-export function openCancelModal(jobId, context) {
-  store._cancelJobId     = jobId;
-  store._cancelContext   = context; // 'solicitado' | 'activo'
-  const title = document.getElementById('cancel-modal-title');
-  const hint  = document.getElementById('cancel-modal-hint');
-  if (title) title.textContent = context === 'solicitado' ? 'Cancelar solicitud' : 'Cancelar trabajo';
-  if (hint)  hint.textContent  = context === 'solicitado'
-    ? 'El profesional será notificado. Tu solicitud quedará registrada como cancelada.'
-    : 'El profesional será notificado. Esta acción no se puede deshacer.';
-  const el = document.getElementById('cancel-reason');
-  if (el) el.value = '';
-  showModal('modal-cancel-job');
-}
-
-export async function cancelJob() {
-  const jobId  = store._cancelJobId;
-  const reason = document.getElementById('cancel-reason')?.value.trim();
-  if (!jobId) return;
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({
-    status:        'cancelado',
-    cancel_reason: reason || null
-  }).eq('id', jobId);
-  if (!error) {
-    closeModal('modal-cancel-job');
-    showToast('Solicitud cancelada.', 'info');
-    // Notificar al profesional si ya había uno asignado
-    const { data: job } = await sb.from('jobs').select('professional_id,description').eq('id', jobId).maybeSingle();
-    if (job?.professional_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.professional_id, 'job_rejected',
-        'Solicitud cancelada por el cliente',
-        reason || 'El cliente canceló la solicitud.'
-      ));
-    }
-    store._cancelJobId = null;
-    const { loadUserDashboard } = await import('./dashboard.js');
-    loadUserDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-// Abrir modal de rechazo (pro)
-export function openRejectModal(jobId) {
-  store._rejectJobId = jobId;
-  const el = document.getElementById('reject-reason');
-  if (el) el.value = '';
-  showModal('modal-reject-job');
-}
-
-// FEATURE 5 — Volver a contratar desde historial
-export function reHireJob(proUserId, proName, proId) {
-  openJobRequest(proId, proName, proUserId);
-}
-
-// ─── FECHA ALTERNATIVA DEL PRO ────────────────────────────────────────────────
-
-export function openProposeDateModal(jobId) {
-  store._proposeDateJobId = jobId;
-  const el = document.getElementById('pro-date-input');
-  if (el) el.value = '';
-  const sel = document.getElementById('pro-period-input');
-  if (sel) sel.value = 'mañana';
-  showModal('modal-propose-date');
-}
-
-export async function submitProposedDate() {
-  const jobId  = store._proposeDateJobId;
-  const date   = document.getElementById('pro-date-input')?.value;
-  const period = document.getElementById('pro-period-input')?.value || 'flexible';
-  if (!jobId || !date) { showToast('Elegí una fecha.', 'error'); return; }
-
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({
-    status:             'fecha_propuesta_pro',
-    pro_proposed_dates: [{ date, period }]
-  }).eq('id', jobId);
-
-  if (!error) {
-    closeModal('modal-propose-date');
-    showToast('Fecha alternativa enviada al cliente.', 'success');
-    const { data: job } = await sb.from('jobs').select('user_id').eq('id', jobId).maybeSingle();
-    if (job?.user_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.user_id, 'job_request',
-        'El profesional propone otra fecha',
-        'Revisá la nueva propuesta y confirmá o rechazala desde tu panel.'
-      ));
-    }
-    const { loadProDashboard } = await import('./dashboard.js');
-    loadProDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function approveProDate(jobId) {
-  const sb = getSupabase();
-  const { data: job } = await sb.from('jobs').select('pro_proposed_dates').eq('id', jobId).maybeSingle();
-  const slot = job?.pro_proposed_dates?.[0];
-  if (!slot) return;
-  const { error } = await sb.from('jobs').update({
-    status:           'aceptado',
-    confirmed_date:   slot.date,
-    confirmed_period: slot.period
-  }).eq('id', jobId);
-  if (!error) {
-    try {
-      const d = new Date(slot.date);
-      const fmt = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-      showToast(`Fecha confirmada: ${fmt} — ${slot.period}`, 'success');
-    } catch (e) { 
-      console.warn('Error formatting confirmed date:', e?.message);
-      showToast('Fecha confirmada.', 'success'); 
-    }
-    const { loadUserDashboard } = await import('./dashboard.js');
-    loadUserDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-export async function rejectProDate(jobId) {
-  // Cliente rechaza la fecha del pro → vuelve a solicitado para que el pro elija otra o rechace
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({
-    status: 'solicitado',
-    pro_proposed_dates: null
-  }).eq('id', jobId);
-  if (!error) {
-    showToast('Fecha rechazada. El profesional fue notificado.', 'info');
-    const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
-    if (job?.professional_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.professional_id, 'job_rejected',
-        'El cliente rechazó tu fecha propuesta',
-        'Podés proponer otra fecha o rechazar el trabajo.'
-      ));
-    }
-    const { loadUserDashboard } = await import('./dashboard.js');
-    loadUserDashboard();
-  } else showToast('Error: ' + error.message, 'error');
-}
-
-// ─── GARANTÍA POST-SERVICIO ───────────────────────────────────────────────────
-
-export function openWarrantyReport(jobId) {
-  store._warrantyJobId = jobId;
-  const el = document.getElementById('warranty-desc');
-  if (el) el.value = '';
-  showModal('modal-warranty-report');
-}
-
-export async function submitWarrantyReport() {
-  const jobId = store._warrantyJobId;
-  const desc  = document.getElementById('warranty-desc')?.value.trim();
-  if (!jobId || !desc) { showToast('Describí el problema.', 'error'); return; }
-
-  const sb = getSupabase();
-  const { error } = await sb.from('jobs').update({
-    status:       'en_disputa',
-    dispute_desc: `[GARANTÍA] ${desc}`
-  }).eq('id', jobId);
-
-  if (!error) {
-    closeModal('modal-warranty-report');
-    showToast('Reporte de garantía enviado. El equipo de TECNIYA mediará en 48h.', 'info');
-    // Notificar al pro
-    const { data: job } = await sb.from('jobs').select('professional_id').eq('id', jobId).maybeSingle();
-    if (job?.professional_id) {
-      import('./notifications.js').then(m => m.createNotification(
-        job.professional_id, 'dispute',
-        'Reporte de garantía recibido',
-        'Un cliente reportó un problema dentro del período de garantía. El equipo de TECNIYA mediará.'
-      ));
-    }
-    store._warrantyJobId = null;
-    const { loadUserDashboard } = await import('./dashboard.js');
-    loadUserDashboard();
-  } else showToast('Error: ' + error.message, 'error');
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
