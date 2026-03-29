@@ -1418,3 +1418,7 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 /* Loading overlay — logo color */
 .loading-overlay { background: var(--bg-base); }
 .loading-overlay .loader { border-top-color: var(--accent); border-right-color: rgba(91,79,255,0.3); }
+
+/* ── Star ratings (userRatings modal) ── */
+.star-rate { cursor:pointer; color:var(--gray2); transition:color 0.15s; }
+.star-rate.active, .star-rate:hover { color:var(--orange); }
