@@ -1327,6 +1327,85 @@
   </div>
 </div>
 
+
+<!-- Modal: Profesional califica al cliente -->
+<div class="modal-overlay" id="modal-rate-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-star" style="color:var(--orange);margin-right:6px;"></i>Calificar cliente</div>
+      <button class="modal-close" data-close="modal-rate-user"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray);margin-bottom:16px;">Calificá a <strong id="rate-user-name"></strong></p>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:0.8rem;color:var(--gray);margin-bottom:6px;">Calificación general</div>
+        <div id="user-rating-overall" style="display:flex;gap:8px;font-size:1.5rem;">
+          <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('overall',1)">★</span>
+          <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('overall',2)">★</span>
+          <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('overall',3)">★</span>
+          <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('overall',4)">★</span>
+          <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('overall',5)">★</span>
+        </div>
+        <input type="hidden" id="user-rating-value" value="0">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px;">Cumplimiento</div>
+          <div id="user-rating-cumplimiento" style="display:flex;gap:4px;font-size:1.1rem;">
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('cumplimiento',1)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('cumplimiento',2)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('cumplimiento',3)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('cumplimiento',4)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('cumplimiento',5)">★</span>
+          </div>
+          <input type="hidden" id="user-cumplimiento-value" value="0">
+        </div>
+        <div>
+          <div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px;">Respeto</div>
+          <div id="user-rating-respeto" style="display:flex;gap:4px;font-size:1.1rem;">
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('respeto',1)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('respeto',2)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('respeto',3)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('respeto',4)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('respeto',5)">★</span>
+          </div>
+          <input type="hidden" id="user-respeto-value" value="0">
+        </div>
+        <div>
+          <div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px;">Claridad</div>
+          <div id="user-rating-claridad" style="display:flex;gap:4px;font-size:1.1rem;">
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('claridad',1)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('claridad',2)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('claridad',3)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('claridad',4)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('claridad',5)">★</span>
+          </div>
+          <input type="hidden" id="user-claridad-value" value="0">
+        </div>
+        <div>
+          <div style="font-size:0.78rem;color:var(--gray);margin-bottom:4px;">Comunicación</div>
+          <div id="user-rating-comunicacion" style="display:flex;gap:4px;font-size:1.1rem;">
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('comunicacion',1)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('comunicacion',2)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('comunicacion',3)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('comunicacion',4)">★</span>
+            <span class="star-rate" style="cursor:pointer;color:var(--gray2);" onclick="window.setUserRating('comunicacion',5)">★</span>
+          </div>
+          <input type="hidden" id="user-comunicacion-value" value="0">
+        </div>
+      </div>
+
+      <textarea id="user-rating-comment" class="input" placeholder="Comentario opcional..." rows="3" style="width:100%;resize:none;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-rate-user')">Cancelar</button>
+      <button id="btn-submit-user-rating" class="btn btn-primary" onclick="window.submitUserRating()"><i class="fa fa-paper-plane"></i> Enviar calificación</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-rating">
   <div class="modal">
     <div class="modal-header">
