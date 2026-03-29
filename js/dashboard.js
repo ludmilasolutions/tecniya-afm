@@ -54,6 +54,11 @@ export async function loadUserDashboard() {
     setEl('user-stat-active', active.length);
     setEl('user-stat-done',   done.length);
 
+    const labelActive = document.getElementById('dash-label-active');
+    if (labelActive) labelActive.textContent = active.length
+      ? `${active.length} trabajo${active.length !== 1 ? 's' : ''} activo${active.length !== 1 ? 's' : ''}`
+      : 'Trabajos activos';
+
     const jobsEl = document.getElementById('user-jobs-list');
     if (jobsEl) {
       jobsEl.innerHTML = active.length

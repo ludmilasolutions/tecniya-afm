@@ -286,27 +286,70 @@
 
 <div class="page" id="page-user-dashboard">
   <div class="container dash-wrap">
-    <div class="dash-header">
-      <div>
-        <div class="dash-greeting">Hola, <span id="dash-user-name">Usuario</span> 👋</div>
-        <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;">Panel de cliente</p>
+
+    <!-- HERO -->
+    <div class="dash-hero">
+      <div class="dash-hero-bg" aria-hidden="true"></div>
+      <div class="dash-hero-inner">
+        <div>
+          <div class="dash-greeting">Hola, <span id="dash-user-name">Usuario</span> 👋</div>
+          <div class="dash-greeting-sub">Panel de cliente</div>
+        </div>
+        <button class="btn btn-orange btn-sm" id="btn-urgent-dash" style="flex-shrink:0;">
+          <i class="fa fa-bolt"></i>Urgente
+        </button>
       </div>
-      <button class="btn btn-orange" id="btn-urgent-dash"><i class="fa fa-bolt"></i>Técnico urgente</button>
+
+      <!-- Stats 2x2 -->
+      <div class="stats-row">
+        <div class="stat-card" onclick="document.querySelector('[data-tab=tab-mis-trabajos]')?.click()">
+          <div class="stat-num" style="color:var(--accent);" id="user-stat-active">0</div>
+          <div class="stat-label">Trabajos activos</div>
+        </div>
+        <div class="stat-card" onclick="document.querySelector('[data-tab=tab-historial]')?.click()">
+          <div class="stat-num" style="color:var(--green);" id="user-stat-done">0</div>
+          <div class="stat-label">Finalizados</div>
+        </div>
+        <div class="stat-card" onclick="document.querySelector('[data-tab=tab-favoritos]')?.click()">
+          <div class="stat-num" style="color:var(--orange);" id="user-stat-favs">0</div>
+          <div class="stat-label">Favoritos</div>
+        </div>
+        <div class="stat-card" onclick="document.querySelector('[data-tab=tab-presupuestos]')?.click()">
+          <div class="stat-num" style="color:var(--primary-light);" id="user-stat-budgets">0</div>
+          <div class="stat-label">Presupuestos</div>
+        </div>
+      </div>
+
+      <!-- Acceso rápido -->
+      <div class="dash-quick-row">
+        <button class="dash-quick-btn" onclick="window.showPage('professionals-list')">
+          <i class="fa fa-search dash-quick-icon"></i>
+          <span class="dash-quick-label">Buscar pro</span>
+        </button>
+        <button class="dash-quick-btn" onclick="document.querySelector('[data-tab=tab-direcciones]')?.click()">
+          <i class="fa fa-location-dot dash-quick-icon"></i>
+          <span class="dash-quick-label">Direcciones</span>
+        </button>
+        <button class="dash-quick-btn" onclick="document.querySelector('[data-tab=tab-historial]')?.click()">
+          <i class="fa fa-clock-rotate-left dash-quick-icon"></i>
+          <span class="dash-quick-label">Historial</span>
+        </button>
+      </div>
     </div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="user-stat-active">0</div><div class="stat-label">Trabajos activos</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="user-stat-done">0</div><div class="stat-label">Finalizados</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="user-stat-favs">0</div><div class="stat-label">Favoritos</div></div>
-      <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="user-stat-budgets">0</div><div class="stat-label">Presupuestos</div></div>
-    </div>
+
+    <!-- TABS -->
     <div class="tabs" id="user-tabs">
-      <button class="tab active" data-tab="tab-mis-trabajos">Mis Trabajos</button>
+      <button class="tab active" data-tab="tab-mis-trabajos">Mis trabajos</button>
       <button class="tab" data-tab="tab-presupuestos">Presupuestos</button>
       <button class="tab" data-tab="tab-favoritos">Favoritos</button>
       <button class="tab" data-tab="tab-direcciones">Direcciones</button>
       <button class="tab" data-tab="tab-historial">Historial</button>
     </div>
+
     <div class="tab-panel active" id="tab-mis-trabajos">
+      <div class="dash-section-header">
+        <span class="dash-section-label" id="dash-label-active">Trabajos activos</span>
+      </div>
       <div class="jobs-list" id="user-jobs-list">
         <div class="empty-state"><i class="fa fa-briefcase"></i><p>No tenés trabajos activos.<br><a href="#" id="link-search-pro" style="color:var(--accent);">Buscar un profesional</a></p></div>
       </div>
@@ -322,8 +365,8 @@
       </div>
     </div>
     <div class="tab-panel" id="tab-direcciones">
-      <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:0.9rem;color:var(--gray);">Guardá tus direcciones frecuentes para agilizar las solicitudes.</span>
+      <div class="dash-section-header" style="margin-bottom:14px;">
+        <span class="dash-section-label">Mis direcciones</span>
         <button class="btn btn-primary btn-sm" onclick="window.openAddAddressModal()"><i class="fa fa-plus"></i> Agregar</button>
       </div>
       <div id="user-addresses-list">
@@ -331,10 +374,14 @@
       </div>
     </div>
     <div class="tab-panel" id="tab-historial">
+      <div class="dash-section-header">
+        <span class="dash-section-label">Historial de trabajos</span>
+      </div>
       <div class="jobs-list" id="user-history-list">
         <div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>
       </div>
     </div>
+
   </div>
 </div>
 
