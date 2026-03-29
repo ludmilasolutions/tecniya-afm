@@ -4,8 +4,7 @@ window.__store = store;
 import { initSupabase } from './supabase.js';
 import { initAuth, redirectAfterLogin, initAuthEventListeners, chooseRole, confirmChosenRole, activateProProfile } from './auth.js';
 import { showPage, showModal, closeModal, toggleMobileMenu, toggleUserMenu, hideUserMenu,
-         initUIEvents, animateStats, showToast, scrollToSearch, switchTab, updateAuthUI,
-         updateContextualNav, updateBottomNav, updateNavBadges, setActiveNavItem, initSidebar } from './ui.js';
+         initUIEvents, animateStats, showToast, scrollToSearch, switchTab, updateAuthUI } from './ui.js';
 import { loadProfessionals, loadSpecialties, renderAllSections, showProProfile,
          toggleFilter, applyFilters, clearFilters, filterByType, initProfessionalsEvents } from './professionals.js';
 import { loadAds, openAdLink, saveAd } from './ads.js';
@@ -162,19 +161,6 @@ window.confirmChosenRole = confirmChosenRole;
 window.activateProProfile = activateProProfile;
 window.goBack = () => showPage(store.previousPage || 'home');
 
-window.switchDashTab = function(tabId, type = 'user') {
-  const prefix = type === 'pro' ? 'pro-' : '';
-  document.querySelectorAll(`#${type}-dashboard .tab-panel`).forEach(p => p.classList.remove('active'));
-  document.querySelectorAll(`#${type}-dashboard .dash-sidebar-item`).forEach(i => i.classList.remove('active'));
-  document.getElementById(tabId)?.classList.add('active');
-  const sidebarItem = document.querySelector(`#${type}-dashboard .dash-sidebar-item[data-tab="${tabId}"]`);
-  if (sidebarItem) sidebarItem.classList.add('active');
-  const sidebar = document.querySelector(`#${type}-dashboard .dash-sidebar`);
-  if (sidebar && window.innerWidth <= 768) {
-    sidebar.classList.remove('open');
-  }
-};
-
 // ─── Funciones globales de UI para registro/login ───────────────────────────
 
 window.selectRegisterRole = (role) => {
@@ -260,43 +246,12 @@ async function initApp() {
   on('nav-how',   'click', e => { e.preventDefault(); showPage('how'); });
   on('nav-sub',   'click', e => { e.preventDefault(); showSuscripcion(); });
 
-  // Navegación contextual cliente
-  on('nav-client-home',   'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); });
-  on('nav-client-search', 'click', e => { e.preventDefault(); showPage('professionals-list'); setActiveNavItem('search'); });
-  on('nav-client-jobs',   'click', e => { e.preventDefault(); store.setActivePanel('user'); import('./dashboard.js').then(m => { showPage('user-dashboard'); m.loadUserDashboard(); }); setActiveNavItem('jobs'); });
-  on('nav-client-chat',   'click', e => { e.preventDefault(); window.toggleFloatChat(); });
-
-  // Navegación contextual profesional
-  on('nav-pro-home',      'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); });
-  on('nav-pro-requests',  'click', e => { e.preventDefault(); store.setActivePanel('pro'); import('./dashboard.js').then(m => { showPage('pro-dashboard'); m.loadProDashboard(); }); setActiveNavItem('requests'); });
-  on('nav-pro-active',    'click', e => { e.preventDefault(); store.setActivePanel('pro'); import('./dashboard.js').then(m => { showPage('pro-dashboard'); m.loadProDashboard(); }); setActiveNavItem('active'); });
-  on('nav-pro-chat',      'click', e => { e.preventDefault(); window.toggleFloatChat(); });
-
-  // Bottom nav
-  on('bnav-home', 'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); });
-  on('bnav-search', 'click', e => { e.preventDefault(); showPage('professionals-list'); setActiveNavItem('search'); });
-
-  // Mobile nav contextual
   on('mobile-home-link',  'click', e => { e.preventDefault(); showPage('home');                toggleMobileMenu(); });
   on('mobile-pros-link',  'click', e => { e.preventDefault(); showPage('professionals-list');  toggleMobileMenu(); });
   on('mobile-how-link',   'click', e => { e.preventDefault(); showPage('how');                 toggleMobileMenu(); });
   on('mobile-sub-link',   'click', e => { e.preventDefault(); showSuscripcion();               toggleMobileMenu(); });
   on('mobile-login-link', 'click', e => { e.preventDefault(); showModal('modal-login');        toggleMobileMenu(); });
   on('mobile-panel-link', 'click', e => { e.preventDefault(); redirectAfterLogin();            toggleMobileMenu(); });
-
-  // Mobile nav cliente
-  on('mobile-client-home',   'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); toggleMobileMenu(); });
-  on('mobile-client-search',  'click', e => { e.preventDefault(); showPage('professionals-list'); setActiveNavItem('search'); toggleMobileMenu(); });
-  on('mobile-client-jobs',    'click', e => { e.preventDefault(); store.setActivePanel('user'); import('./dashboard.js').then(m => { showPage('user-dashboard'); m.loadUserDashboard(); }); toggleMobileMenu(); });
-  on('mobile-client-chat',    'click', e => { e.preventDefault(); window.toggleFloatChat(); toggleMobileMenu(); });
-  on('mobile-client-urgent',  'click', e => { e.preventDefault(); showUrgentModal(); toggleMobileMenu(); });
-
-  // Mobile nav profesional
-  on('mobile-pro-home',      'click', e => { e.preventDefault(); showPage('home'); setActiveNavItem('home'); toggleMobileMenu(); });
-  on('mobile-pro-requests',  'click', e => { e.preventDefault(); store.setActivePanel('pro'); import('./dashboard.js').then(m => { showPage('pro-dashboard'); m.loadProDashboard(); }); toggleMobileMenu(); });
-  on('mobile-pro-active',    'click', e => { e.preventDefault(); store.setActivePanel('pro'); import('./dashboard.js').then(m => { showPage('pro-dashboard'); m.loadProDashboard(); }); toggleMobileMenu(); });
-  on('mobile-pro-chat',      'click', e => { e.preventDefault(); window.toggleFloatChat(); toggleMobileMenu(); });
-  on('mobile-pro-config',    'click', e => { e.preventDefault(); store.setActivePanel('pro'); import('./dashboard.js').then(m => { showPage('pro-dashboard'); m.loadProDashboard(); }); toggleMobileMenu(); });
 
   // ── MENÚ USUARIO ────────────────────────────────────────────────────────
   // Toggle del avatar manejado en el listener global de ui.js (evita race condition)
@@ -451,29 +406,16 @@ async function initApp() {
   // ── DASHBOARD USUARIO ───────────────────────────────────────────────────
   on('btn-urgent-dash',  'click', showUrgentModal);
   on('btn-save-profile', 'click', saveProfile);
-  initSidebar();
 
   // Tabs del dashboard de usuario — data-tab (no data-panel)
-  document.querySelectorAll('#user-tabs .tab, #user-sidebar .dash-sidebar-item').forEach(tab => {
+  document.querySelectorAll('#user-tabs .tab').forEach(tab => {
     tab.addEventListener('click', e => {
-      const tabId = tab.dataset?.tab;
-      if (!tabId) return;
-      switchTab(e, tabId);
-      window.switchDashTab?.(tabId, 'user');
+      switchTab(e, tab.dataset.tab);
       // Cargar datos cuando se abre el tab correspondiente
-      if (tabId === 'tab-favoritos')  loadFavorites();
-      if (tabId === 'tab-historial')  loadUserHistory();
-      if (tabId === 'tab-presupuestos') loadUserBudgets();
-    });
-  });
-
-  // Tabs del dashboard profesional
-  document.querySelectorAll('#pro-tabs .tab, #pro-sidebar .dash-sidebar-item').forEach(tab => {
-    tab.addEventListener('click', e => {
-      const tabId = tab.dataset?.tab;
-      if (!tabId) return;
-      switchTab(e, tabId);
-      window.switchDashTab?.(tabId, 'pro');
+      const t = tab.dataset.tab;
+      if (t === 'tab-favoritos')  loadFavorites();
+      if (t === 'tab-historial')  loadUserHistory();
+      if (t === 'tab-presupuestos') loadUserBudgets();
     });
   });
 

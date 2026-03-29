@@ -3,17 +3,6 @@ import { getSupabase } from './supabase.js';
 import { showToast, closeModal, showPage } from './ui.js';
 import { jobItem } from './jobs.js';
 
-function updateSidebarBadge(badgeId, count) {
-  const badge = document.getElementById(badgeId);
-  if (!badge) return;
-  if (count > 0) {
-    badge.textContent = count > 99 ? '99+' : count;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
-}
-
 // ─── DASHBOARD CLIENTE ────────────────────────────────────────────────────────
 
 export async function loadUserDashboard() {
@@ -65,9 +54,6 @@ export async function loadUserDashboard() {
     setEl('user-stat-active', active.length);
     setEl('user-stat-done',   done.length);
 
-    // Actualizar badges del sidebar
-    updateSidebarBadge('user-sidebar-active-badge', active.length);
-
     const jobsEl = document.getElementById('user-jobs-list');
     if (jobsEl) {
       jobsEl.innerHTML = active.length
@@ -105,7 +91,6 @@ export async function loadFavorites() {
     if (error) console.error('loadFavorites:', error);
 
     setEl('user-stat-favs', favs?.length || 0);
-    updateSidebarBadge('user-sidebar-favs-badge', favs?.length || 0);
 
     const favsEl = document.getElementById('user-favs-grid');
     if (!favsEl) return;
@@ -249,10 +234,6 @@ export async function loadProDashboard() {
     setEl('pro-stat-new',    newJ.length);
     setEl('pro-stat-active', activeJ.length);
     setEl('pro-stat-done',   doneJ.length);
-
-    // Actualizar badges del sidebar y navegación
-    updateSidebarBadge('pro-sidebar-requests-badge', newJ.length);
-    updateSidebarBadge('pro-sidebar-requests-badge', newJ.length);
 
     renderJobList('pro-jobs-new',     newJ,    'pro');
     renderJobList('pro-jobs-active',  activeJ, 'pro');

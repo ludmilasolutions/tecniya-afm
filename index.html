@@ -54,28 +54,6 @@
       <a href="#" id="nav-how">¿Cómo funciona?</a>
       <a href="#" id="nav-sub">Suscripción</a>
     </nav>
-
-    <!-- Navegación contextual Cliente -->
-    <nav class="nav-main nav-contextual nav-client" id="nav-client" style="display:none;">
-      <a href="#" id="nav-client-home" class="active">Inicio</a>
-      <a href="#" id="nav-client-search">Buscar</a>
-      <a href="#" id="nav-client-jobs">Mis Trabajos</a>
-      <a href="#" id="nav-client-chat" class="nav-with-badge">
-        Mensajes <span class="nav-badge hidden" id="nav-client-chat-badge">0</span>
-      </a>
-    </nav>
-
-    <!-- Navegación contextual Profesional -->
-    <nav class="nav-main nav-contextual nav-pro" id="nav-pro" style="display:none;">
-      <a href="#" id="nav-pro-home" class="active">Inicio</a>
-      <a href="#" id="nav-pro-requests">
-        Solicitudes <span class="nav-badge nav-badge-orange hidden" id="nav-pro-requests-badge">0</span>
-      </a>
-      <a href="#" id="nav-pro-active">En Proceso</a>
-      <a href="#" id="nav-pro-chat" class="nav-with-badge">
-        Mensajes <span class="nav-badge hidden" id="nav-pro-chat-badge">0</span>
-      </a>
-    </nav>
     <div class="nav-actions">
       <button class="notif-btn" id="notif-btn" style="display:none;">
         <i class="fa fa-bell"></i>
@@ -89,11 +67,11 @@
         <div class="user-avatar" id="user-avatar-btn">U</div>
         <div id="user-dropdown" class="user-dropdown">
           <div class="user-dropdown-name" id="menu-user-name"></div>
-          <a href="#" id="menu-dashboard" class="user-menu-item"><i class="fa fa-gauge"></i><span id="menu-dashboard-label">Mi Panel</span></a>
+          <a href="#" id="menu-dashboard" class="user-menu-item"><i class="fa fa-gauge"></i><span id="menu-dashboard-label">Mi Panel Cliente</span></a>
           <a href="#" id="menu-switch-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-right-left"></i><span id="menu-switch-pro-label">Panel Profesional</span></a>
           <a href="#" id="menu-activate-pro" class="user-menu-item user-menu-item--pro" style="display:none;"><i class="fa fa-plus-circle"></i>Unirme como profesional</a>
           <a href="#" id="menu-profile" class="user-menu-item"><i class="fa fa-user"></i>Mi Perfil</a>
-          <a href="#" id="menu-chat" class="user-menu-item" onclick="event.preventDefault();window.hideUserMenu?.();window.toggleFloatChat();"><i class="fa fa-comments"></i>Mensajes <span class="menu-badge hidden" id="menu-chat-badge">0</span></a>
+          <a href="#" id="menu-chat" class="user-menu-item" onclick="event.preventDefault();window.hideUserMenu?.();window.toggleFloatChat();"><i class="fa fa-comments"></i>Mensajes</a>
           <a href="#" id="menu-logout" class="user-menu-item user-menu-item--danger"><i class="fa fa-right-from-bracket"></i>Salir</a>
         </div>
       </div>
@@ -101,32 +79,12 @@
     </div>
   </div>
   <div class="mobile-nav" id="mobile-nav">
-    <!-- Navegación para invitados -->
-    <div id="mobile-nav-guest">
-      <a href="#" id="mobile-home-link">Inicio</a>
-      <a href="#" id="mobile-pros-link">Profesionales</a>
-      <a href="#" id="mobile-how-link">¿Cómo funciona?</a>
-      <a href="#" id="mobile-sub-link">Suscripción</a>
-      <a href="#" id="mobile-login-link">Ingresar</a>
-    </div>
-    <!-- Navegación para clientes -->
-    <div id="mobile-nav-client" style="display:none;">
-      <a href="#" id="mobile-client-home">🏠 Inicio</a>
-      <a href="#" id="mobile-client-search">🔍 Buscar Profesional</a>
-      <a href="#" id="mobile-client-jobs">📋 Mis Trabajos</a>
-      <a href="#" id="mobile-client-chat">💬 Mensajes <span class="nav-badge hidden" id="mobile-chat-badge">0</span></a>
-      <a href="#" id="mobile-client-urgent" class="mobile-nav-urgent">🚨 Técnico Urgente</a>
-    </div>
-    <!-- Navegación para profesionales -->
-    <div id="mobile-nav-pro" style="display:none;">
-      <a href="#" id="mobile-pro-home">🏠 Inicio</a>
-      <a href="#" id="mobile-pro-requests">📨 Solicitudes <span class="nav-badge nav-badge-orange hidden" id="mobile-pro-requests-badge">0</span></a>
-      <a href="#" id="mobile-pro-active">⚙️ En Proceso</a>
-      <a href="#" id="mobile-pro-chat">💬 Mensajes <span class="nav-badge hidden" id="mobile-pro-chat-badge">0</span></a>
-      <a href="#" id="mobile-pro-config">⚙️ Configuración</a>
-    </div>
-    <!-- Panel link (visible cuando logueado) -->
-    <a href="#" id="mobile-panel-link" style="display:none;">👤 Mi Panel</a>
+    <a href="#" id="mobile-home-link">Inicio</a>
+    <a href="#" id="mobile-pros-link">Profesionales</a>
+    <a href="#" id="mobile-how-link">¿Cómo funciona?</a>
+    <a href="#" id="mobile-sub-link">Suscripción</a>
+    <a href="#" id="mobile-login-link">Ingresar</a>
+    <a href="#" id="mobile-panel-link" style="display:none;">Mi Panel</a>
   </div>
 </header>
 
@@ -328,98 +286,53 @@
 
 <div class="page" id="page-user-dashboard">
   <div class="container dash-wrap">
-    <button class="dash-sidebar-toggle" onclick="document.querySelector('#user-dashboard .dash-sidebar').classList.toggle('open')">
-      <i class="fa fa-bars"></i> Menú
-    </button>
-    <div class="dash-container">
-      <aside class="dash-sidebar" id="user-sidebar">
-        <div class="dash-sidebar-header">
-          <div class="dash-sidebar-title"><i class="fa fa-gauge"></i> Panel Cliente</div>
-        </div>
-        <div class="dash-sidebar-item active" data-tab="tab-mis-trabajos" onclick="window.switchDashTab('tab-mis-trabajos', 'user')">
-          <i class="fa fa-briefcase"></i> Mis Trabajos <span class="sidebar-badge hidden" id="user-sidebar-active-badge">0</span>
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-presupuestos" onclick="window.switchDashTab('tab-presupuestos', 'user')">
-          <i class="fa fa-file-invoice-dollar"></i> Presupuestos
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-favoritos" onclick="window.switchDashTab('tab-favoritos', 'user')">
-          <i class="fa fa-heart"></i> Favoritos <span class="sidebar-badge hidden" id="user-sidebar-favs-badge">0</span>
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-direcciones" onclick="window.switchDashTab('tab-direcciones', 'user')">
-          <i class="fa fa-location-dot"></i> Direcciones
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-historial" onclick="window.switchDashTab('tab-historial', 'user')">
-          <i class="fa fa-clock-rotate-left"></i> Historial
-        </div>
-        <div class="dash-sidebar-divider"></div>
-        <div class="dash-sidebar-item" onclick="window.showPage('profile-edit')">
-          <i class="fa fa-user-pen"></i> Mi Perfil
-        </div>
-        <div class="dash-sidebar-action">
-          <button class="btn btn-orange btn-block" onclick="window.showUrgentModal()">
-            <i class="fa fa-bolt"></i> Técnico Urgente
-          </button>
-        </div>
-      </aside>
-      <div class="dash-content">
-        <div class="dash-header">
-          <div>
-            <div class="dash-greeting">Hola, <span id="dash-user-name">Usuario</span> 👋</div>
-            <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;">Panel de cliente</p>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <div class="quick-action-card qa-urgent" onclick="window.showUrgentModal()">
-            <i class="fa fa-bolt"></i>
-            <span>Urgente</span>
-          </div>
-          <div class="quick-action-card qa-search" onclick="window.showPage('professionals-list')">
-            <i class="fa fa-search"></i>
-            <span>Buscar</span>
-          </div>
-          <div class="quick-action-card qa-new" onclick="window.showPage('professionals-list')">
-            <i class="fa fa-plus"></i>
-            <span>Nuevo</span>
-          </div>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="user-stat-active">0</div><div class="stat-label">Activos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="user-stat-done">0</div><div class="stat-label">Finalizados</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="user-stat-favs">0</div><div class="stat-label">Favoritos</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="user-stat-budgets">0</div><div class="stat-label">Presupuestos</div></div>
-        </div>
-        <div class="tab-panel active" id="tab-mis-trabajos">
-          <div class="jobs-list" id="user-jobs-list">
-            <div class="empty-state"><i class="fa fa-briefcase"></i><p>No tenés trabajos activos.<br><a href="#" id="link-search-pro" style="color:var(--accent);">Buscar un profesional</a></p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-presupuestos">
-          <div class="jobs-list" id="user-budgets-list">
-            <div class="empty-state"><i class="fa fa-file-invoice"></i><p>No tenés presupuestos recibidos.</p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-favoritos">
-          <div class="pros-grid" id="user-favs-grid">
-            <div class="empty-state" style="grid-column:1/-1;padding:40px;"><i class="fa fa-heart"></i><p>No guardaste profesionales favoritos.</p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-direcciones">
-          <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.9rem;color:var(--gray);">Guardá tus direcciones frecuentes para agilizar las solicitudes.</span>
-            <button class="btn btn-primary btn-sm" onclick="window.openAddAddressModal()"><i class="fa fa-plus"></i> Agregar</button>
-          </div>
-          <div id="user-addresses-list">
-            <div class="empty-state"><i class="fa fa-location-dot"></i><p>No tenés direcciones guardadas.</p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-historial">
-          <div class="jobs-list" id="user-history-list">
-            <div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>
-          </div>
-        </div>
+    <div class="dash-header">
+      <div>
+        <div class="dash-greeting">Hola, <span id="dash-user-name">Usuario</span> 👋</div>
+        <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;">Panel de cliente</p>
+      </div>
+      <button class="btn btn-orange" id="btn-urgent-dash"><i class="fa fa-bolt"></i>Técnico urgente</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="user-stat-active">0</div><div class="stat-label">Trabajos activos</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="user-stat-done">0</div><div class="stat-label">Finalizados</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="user-stat-favs">0</div><div class="stat-label">Favoritos</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--primary);" id="user-stat-budgets">0</div><div class="stat-label">Presupuestos</div></div>
+    </div>
+    <div class="tabs" id="user-tabs">
+      <button class="tab active" data-tab="tab-mis-trabajos">Mis Trabajos</button>
+      <button class="tab" data-tab="tab-presupuestos">Presupuestos</button>
+      <button class="tab" data-tab="tab-favoritos">Favoritos</button>
+      <button class="tab" data-tab="tab-direcciones">Direcciones</button>
+      <button class="tab" data-tab="tab-historial">Historial</button>
+    </div>
+    <div class="tab-panel active" id="tab-mis-trabajos">
+      <div class="jobs-list" id="user-jobs-list">
+        <div class="empty-state"><i class="fa fa-briefcase"></i><p>No tenés trabajos activos.<br><a href="#" id="link-search-pro" style="color:var(--accent);">Buscar un profesional</a></p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-presupuestos">
+      <div class="jobs-list" id="user-budgets-list">
+        <div class="empty-state"><i class="fa fa-file-invoice"></i><p>No tenés presupuestos recibidos.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-favoritos">
+      <div class="pros-grid" id="user-favs-grid">
+        <div class="empty-state" style="grid-column:1/-1;padding:40px;"><i class="fa fa-heart"></i><p>No guardaste profesionales favoritos.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-direcciones">
+      <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:0.9rem;color:var(--gray);">Guardá tus direcciones frecuentes para agilizar las solicitudes.</span>
+        <button class="btn btn-primary btn-sm" onclick="window.openAddAddressModal()"><i class="fa fa-plus"></i> Agregar</button>
+      </div>
+      <div id="user-addresses-list">
+        <div class="empty-state"><i class="fa fa-location-dot"></i><p>No tenés direcciones guardadas.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-historial">
+      <div class="jobs-list" id="user-history-list">
+        <div class="empty-state"><i class="fa fa-clock-rotate-left"></i><p>Tu historial aparecerá aquí.</p></div>
       </div>
     </div>
   </div>
@@ -427,141 +340,94 @@
 
 <div class="page" id="page-pro-dashboard">
   <div class="container dash-wrap">
-    <button class="dash-sidebar-toggle" onclick="document.querySelector('#pro-dashboard .dash-sidebar').classList.toggle('open')">
-      <i class="fa fa-bars"></i> Menú
-    </button>
-    <div class="dash-container">
-      <aside class="dash-sidebar" id="pro-sidebar">
-        <div class="dash-sidebar-header">
-          <div class="dash-sidebar-title"><i class="fa fa-user-tie"></i> Panel Profesional</div>
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-solicitudes" onclick="window.switchDashTab('tab-pro-solicitudes', 'pro')">
-          <i class="fa fa-inbox"></i> Solicitudes <span class="sidebar-badge hidden" id="pro-sidebar-requests-badge">0</span>
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-activos" onclick="window.switchDashTab('tab-pro-activos', 'pro')">
-          <i class="fa fa-gears"></i> En Proceso
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-finalizados" onclick="window.switchDashTab('tab-pro-finalizados', 'pro')">
-          <i class="fa fa-check-circle"></i> Finalizados
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-presupuestos" onclick="window.switchDashTab('tab-pro-presupuestos', 'pro')">
-          <i class="fa fa-file-invoice-dollar"></i> Presupuestos
-        </div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-fotos" onclick="window.switchDashTab('tab-pro-fotos', 'pro')">
-          <i class="fa fa-images"></i> Mis Fotos
-        </div>
-        <div class="dash-sidebar-divider"></div>
-        <div class="dash-sidebar-item" data-tab="tab-pro-config" onclick="window.switchDashTab('tab-pro-config', 'pro')">
-          <i class="fa fa-sliders"></i> Configuración
-        </div>
-        <div class="dash-sidebar-item" onclick="window.showPage('profile-edit')">
-          <i class="fa fa-user-pen"></i> Mi Perfil
-        </div>
-        <div class="dash-sidebar-action">
-          <button class="btn btn-orange btn-block" onclick="window.showSuscripcion()">
-            <i class="fa fa-crown"></i> Plan Destacado
-          </button>
-        </div>
-      </aside>
-      <div class="dash-content">
-        <div class="dash-header">
-          <div>
-            <div class="dash-greeting">Panel Profesional</div>
-            <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;" id="pro-dash-specialty">Tu especialidad</p>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar Perfil</button>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <div class="quick-action-card qa-budget" onclick="window.switchDashTab('tab-pro-presupuestos', 'pro')">
-            <i class="fa fa-file-invoice-dollar"></i>
-            <span>Presupuesto</span>
-          </div>
-          <div class="quick-action-card qa-photo" onclick="document.getElementById('btn-upload-photo')?.click()">
-            <i class="fa fa-camera"></i>
-            <span>Subir Foto</span>
-          </div>
-          <div class="quick-action-card qa-new" onclick="window.showSuscripcion()">
-            <i class="fa fa-crown"></i>
-            <span>Destacado</span>
-          </div>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Nuevas</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">En Proceso</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Finalizados</div></div>
-          <div class="stat-card"><div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div><div class="stat-label">Rating</div></div>
-        </div>
-        <div class="tab-panel active" id="tab-pro-solicitudes">
-          <div class="jobs-list" id="pro-jobs-new">
-            <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas.</p></div>
+    <div class="dash-header">
+      <div>
+        <div class="dash-greeting">Panel Profesional</div>
+        <p style="color:var(--gray);font-size:0.9rem;margin-top:4px;" id="pro-dash-specialty">Tu especialidad</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" id="btn-edit-pro-profile"><i class="fa fa-pencil"></i>Editar Perfil</button>
+        <button class="btn btn-orange btn-sm" id="btn-featured-pro"><i class="fa fa-crown"></i>Ser Destacado</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--orange);" id="pro-stat-new">0</div><div class="stat-label">Solicitudes nuevas</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent);" id="pro-stat-active">0</div><div class="stat-label">Trabajos activos</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green);" id="pro-stat-done">0</div><div class="stat-label">Finalizados</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#fbbf24;" id="pro-stat-rating">0</div><div class="stat-label">Puntuación promedio</div></div>
+    </div>
+    <div class="tabs" id="pro-tabs">
+      <button class="tab active" data-tab="tab-pro-solicitudes">Solicitudes</button>
+      <button class="tab" data-tab="tab-pro-activos">En proceso</button>
+      <button class="tab" data-tab="tab-pro-finalizados">Finalizados</button>
+      <button class="tab" data-tab="tab-pro-presupuestos">Presupuestos</button>
+      <button class="tab" data-tab="tab-pro-fotos">Mis Fotos</button>
+      <button class="tab" data-tab="tab-pro-config">Configuración</button>
+    </div>
+    <div class="tab-panel active" id="tab-pro-solicitudes">
+      <div class="jobs-list" id="pro-jobs-new">
+        <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-pro-activos">
+      <div class="jobs-list" id="pro-jobs-active">
+        <div class="empty-state"><i class="fa fa-gears"></i><p>No tenés trabajos en proceso.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-pro-finalizados">
+      <div class="jobs-list" id="pro-jobs-done">
+        <div class="empty-state"><i class="fa fa-check-circle"></i><p>Aún no finalizaste trabajos.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-pro-presupuestos">
+      <div style="margin-bottom:16px;"><button class="btn btn-primary btn-sm" id="btn-new-budget"><i class="fa fa-plus"></i>Nuevo Presupuesto</button></div>
+      <div class="jobs-list" id="pro-budgets-list">
+        <div class="empty-state"><i class="fa fa-file-invoice-dollar"></i><p>No enviaste presupuestos aún.</p></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-pro-fotos">
+      <div style="margin-bottom:16px;">
+        <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
+        <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
+      </div>
+      <div class="photos-grid" id="pro-work-photos">
+        <div class="photo-thumb"><i class="fa fa-image"></i></div>
+        <div class="photo-thumb"><i class="fa fa-image"></i></div>
+        <div class="photo-thumb"><i class="fa fa-image"></i></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-pro-config">
+      <div class="card" style="max-width:500px;">
+        <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
+        <div class="form-group">
+          <label class="form-label">Días laborales</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
           </div>
         </div>
-        <div class="tab-panel" id="tab-pro-activos">
-          <div class="jobs-list" id="pro-jobs-active">
-            <div class="empty-state"><i class="fa fa-gears"></i><p>No tenés trabajos en proceso.</p></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Horario desde</label>
+            <input type="time" class="form-input" id="hora-desde" value="08:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horario hasta</label>
+            <input type="time" class="form-input" id="hora-hasta" value="18:00">
           </div>
         </div>
-        <div class="tab-panel" id="tab-pro-finalizados">
-          <div class="jobs-list" id="pro-jobs-done">
-            <div class="empty-state"><i class="fa fa-check-circle"></i><p>Aún no finalizaste trabajos.</p></div>
-          </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
+            <input type="checkbox" id="urgencias" style="accent-color:var(--orange);width:16px;height:16px;">
+            Acepto trabajos urgentes
+          </label>
         </div>
-        <div class="tab-panel" id="tab-pro-presupuestos">
-          <div style="margin-bottom:16px;"><button class="btn btn-primary btn-sm" id="btn-new-budget"><i class="fa fa-plus"></i>Nuevo Presupuesto</button></div>
-          <div class="jobs-list" id="pro-budgets-list">
-            <div class="empty-state"><i class="fa fa-file-invoice-dollar"></i><p>No enviaste presupuestos aún.</p></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-pro-fotos">
-          <div style="margin-bottom:16px;">
-            <button class="btn btn-primary btn-sm" id="btn-upload-photo"><i class="fa fa-upload"></i>Subir foto</button>
-            <input type="file" id="photo-upload-input" accept="image/*" style="display:none;">
-          </div>
-          <div class="photos-grid" id="pro-work-photos">
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-            <div class="photo-thumb"><i class="fa fa-image"></i></div>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-pro-config">
-          <div class="card" style="max-width:500px;">
-            <h3 style="font-size:1rem;margin-bottom:20px;">Configuración de disponibilidad</h3>
-            <div class="form-group">
-              <label class="form-label">Días laborales</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;" id="dias-laborales">
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-lun"><input type="checkbox" id="dia-lun" value="Lunes" style="accent-color:var(--primary);">Lunes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mar"><input type="checkbox" id="dia-mar" value="Martes" style="accent-color:var(--primary);">Martes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-mie"><input type="checkbox" id="dia-mie" value="Miércoles" style="accent-color:var(--primary);">Miércoles</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-jue"><input type="checkbox" id="dia-jue" value="Jueves" style="accent-color:var(--primary);">Jueves</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-vie"><input type="checkbox" id="dia-vie" value="Viernes" style="accent-color:var(--primary);">Viernes</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-sab"><input type="checkbox" id="dia-sab" value="Sábado" style="accent-color:var(--primary);">Sábado</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;" for="dia-dom"><input type="checkbox" id="dia-dom" value="Domingo" style="accent-color:var(--primary);">Domingo</label>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Horario desde</label>
-                <input type="time" class="form-input" id="hora-desde" value="08:00">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Horario hasta</label>
-                <input type="time" class="form-input" id="hora-hasta" value="18:00">
-              </div>
-            </div>
-            <div class="form-group">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;">
-                <input type="checkbox" id="urgencias" style="accent-color:var(--orange);width:16px;height:16px;">
-                Acepto trabajos urgentes
-              </label>
-            </div>
-            <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
-          </div>
-        </div>
+        <button class="btn btn-primary btn-sm" id="btn-save-availability">Guardar configuración</button>
       </div>
     </div>
   </div>
@@ -905,32 +771,6 @@
     </div>
   </div>
 </div>
-
-<!-- Bottom Navigation Bar (Mobile) -->
-<nav id="bottom-nav" class="bottom-nav hidden">
-  <a href="#" class="bottom-nav-item active" id="bnav-home" data-page="home">
-    <i class="fa fa-home"></i>
-    <span>Inicio</span>
-  </a>
-  <a href="#" class="bottom-nav-item" id="bnav-search" data-page="professionals-list">
-    <i class="fa fa-search"></i>
-    <span>Buscar</span>
-  </a>
-  <a href="#" class="bottom-nav-item" id="bnav-messages" onclick="event.preventDefault();window.toggleFloatChat();">
-    <i class="fa fa-comment-dots"></i>
-    <span>Mensajes</span>
-    <span class="bottom-badge hidden" id="bnav-messages-badge">0</span>
-  </a>
-  <a href="#" class="bottom-nav-item" id="bnav-notifs" onclick="event.preventDefault();window.toggleNotifPanel();">
-    <i class="fa fa-bell"></i>
-    <span>Notificaciones</span>
-    <span class="bottom-badge hidden" id="bnav-notifs-badge">0</span>
-  </a>
-  <a href="#" class="bottom-nav-item" id="bnav-profile" onclick="event.preventDefault();window.showPage('user-dashboard');">
-    <i class="fa fa-user"></i>
-    <span>Perfil</span>
-  </a>
-</nav>
 
 <footer id="footer">
   <div class="container">
