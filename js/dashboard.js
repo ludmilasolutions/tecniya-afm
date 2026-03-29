@@ -189,11 +189,18 @@ export async function loadProDashboard() {
 
   const sb = getSupabase();
 
-  setEl('pro-dash-specialty', store.currentPro.specialty || 'Tu especialidad');
-  // Poblar hero del pdash
-  const _heroSpecialty = store.currentPro.specialty || 'Tu especialidad';
+  // Poblar hero del pdash — mostrar todas las especialidades
+  const _allSpecialties = store.currentPro?.specialties?.length
+    ? store.currentPro.specialties
+    : (store.currentPro?.specialty ? [store.currentPro.specialty] : ['Tu especialidad']);
   const _heroSpecEl = document.getElementById('pro-dash-specialty');
-  if (_heroSpecEl) _heroSpecEl.textContent = _heroSpecialty;
+  if (_heroSpecEl) {
+    if (_allSpecialties.length > 1) {
+      _heroSpecEl.innerHTML = _allSpecialties.map(s => '<span class="pdash-specialty-tag">'+s+'</span>').join('');
+    } else {
+      _heroSpecEl.textContent = _allSpecialties[0];
+    }
+  }
   const _pdashNameEl = document.getElementById('pdash-hero-name');
   if (_pdashNameEl) _pdashNameEl.textContent = store.currentUser.user_metadata?.full_name || 'Tu nombre';
   const _pdashAvEl = document.getElementById('pdash-avatar-initials');

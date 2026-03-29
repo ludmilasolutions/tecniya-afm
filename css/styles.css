@@ -602,8 +602,18 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
   box-shadow: 0 0 0 3px rgba(91,79,255,0.25);
 }
 .pdash-name { font-weight: 800; font-size: 1.25rem; line-height: 1.2; margin-bottom: 5px; }
-.pdash-specialty-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pdash-specialty-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .pdash-specialty { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+.pdash-specialty-tag {
+  display: inline-block;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--accent);
+  background: rgba(0,212,245,0.1);
+  border: 0.5px solid rgba(0,212,245,0.25);
+  border-radius: 99px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
 .pdash-online-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
