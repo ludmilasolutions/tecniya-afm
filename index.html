@@ -361,35 +361,34 @@
         </div>
       </div>
 
-      <!-- KPI row -->
-      <div class="pdash-kpis">
-        <div class="pdash-kpi pdash-kpi--alert" data-tab="tab-pro-solicitudes" onclick="document.querySelector('[data-tab=tab-pro-solicitudes]')?.click()">
-          <div class="pdash-kpi-icon"><i class="fa fa-inbox"></i></div>
-          <div class="pdash-kpi-body">
-            <div class="pdash-kpi-num" id="pro-stat-new">0</div>
-            <div class="pdash-kpi-label">Solicitudes nuevas</div>
+      <!-- KPI hero: solicitudes nuevas -->
+      <div class="pdash-kpi-hero" data-tab="tab-pro-solicitudes" onclick="document.querySelector('[data-tab=tab-pro-solicitudes]')?.click()">
+        <div class="pdash-kpi-hero-left">
+          <div class="pdash-kpi-hero-icon"><i class="fa fa-inbox"></i></div>
+          <div>
+            <div class="pdash-kpi-hero-num" id="pro-stat-new">0</div>
+            <div class="pdash-kpi-hero-label">Solicitudes nuevas</div>
           </div>
         </div>
-        <div class="pdash-kpi pdash-kpi--active" data-tab="tab-pro-activos" onclick="document.querySelector('[data-tab=tab-pro-activos]')?.click()">
-          <div class="pdash-kpi-icon"><i class="fa fa-gears"></i></div>
-          <div class="pdash-kpi-body">
-            <div class="pdash-kpi-num" id="pro-stat-active">0</div>
-            <div class="pdash-kpi-label">En proceso</div>
-          </div>
+        <div class="pdash-kpi-hero-cta">Ver ahora <i class="fa fa-arrow-right"></i></div>
+      </div>
+
+      <!-- KPI secundarios -->
+      <div class="pdash-kpis-mini">
+        <div class="pdash-kpi-mini pdash-kpi--active" data-tab="tab-pro-activos" onclick="document.querySelector('[data-tab=tab-pro-activos]')?.click()">
+          <div class="pdash-kpi-mini-icon"><i class="fa fa-gears"></i></div>
+          <div class="pdash-kpi-mini-num" id="pro-stat-active">0</div>
+          <div class="pdash-kpi-mini-label">En proceso</div>
         </div>
-        <div class="pdash-kpi pdash-kpi--done">
-          <div class="pdash-kpi-icon"><i class="fa fa-check-circle"></i></div>
-          <div class="pdash-kpi-body">
-            <div class="pdash-kpi-num" id="pro-stat-done">0</div>
-            <div class="pdash-kpi-label">Finalizados</div>
-          </div>
+        <div class="pdash-kpi-mini pdash-kpi--done">
+          <div class="pdash-kpi-mini-icon"><i class="fa fa-check-circle"></i></div>
+          <div class="pdash-kpi-mini-num" id="pro-stat-done">0</div>
+          <div class="pdash-kpi-mini-label">Finalizados</div>
         </div>
-        <div class="pdash-kpi pdash-kpi--rating">
-          <div class="pdash-kpi-icon"><i class="fa fa-star"></i></div>
-          <div class="pdash-kpi-body">
-            <div class="pdash-kpi-num" id="pro-stat-rating">—</div>
-            <div class="pdash-kpi-label">Puntuación</div>
-          </div>
+        <div class="pdash-kpi-mini pdash-kpi--rating">
+          <div class="pdash-kpi-mini-icon"><i class="fa fa-star"></i></div>
+          <div class="pdash-kpi-mini-num" id="pro-stat-rating">—</div>
+          <div class="pdash-kpi-mini-label">Puntuación</div>
         </div>
       </div>
     </div>
@@ -399,9 +398,11 @@
       <button class="pdash-navbtn active" data-tab="tab-pro-solicitudes">
         <i class="fa fa-inbox"></i><span>Solicitudes</span>
         <span class="pdash-badge" id="pdash-badge-new" style="display:none;"></span>
+        <span class="pdash-tab-count pdash-tab-count--alert" id="pdash-tab-count-new" style="display:none;"></span>
       </button>
       <button class="pdash-navbtn" data-tab="tab-pro-activos">
         <i class="fa fa-gears"></i><span>En proceso</span>
+        <span class="pdash-tab-count" id="pdash-tab-count-active" style="display:none;"></span>
       </button>
       <button class="pdash-navbtn" data-tab="tab-pro-finalizados">
         <i class="fa fa-check-circle"></i><span>Finalizados</span>
@@ -419,11 +420,17 @@
 
     <!-- PANELS -->
     <div class="tab-panel active" id="tab-pro-solicitudes">
+      <div class="pdash-section-header">
+        <span class="pdash-section-title" id="pdash-section-title-new">Solicitudes nuevas</span>
+      </div>
       <div class="jobs-list" id="pro-jobs-new">
         <div class="empty-state"><i class="fa fa-inbox"></i><p>No tenés solicitudes nuevas.</p></div>
       </div>
     </div>
     <div class="tab-panel" id="tab-pro-activos">
+      <div class="pdash-section-header">
+        <span class="pdash-section-title" id="pdash-section-title-active">En proceso</span>
+      </div>
       <div class="jobs-list" id="pro-jobs-active">
         <div class="empty-state"><i class="fa fa-gears"></i><p>No tenés trabajos en proceso.</p></div>
       </div>

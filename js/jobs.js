@@ -423,19 +423,25 @@ export function jobItem(j, viewAs) {
     }
   }
 
-  return `<div class="job-item" style="flex-wrap:wrap;gap:10px;padding:16px;">
-    <div class="job-icon" style="background:rgba(79,70,229,0.1);color:var(--primary);flex-shrink:0;">
-      <i class="fa ${statusIcon}"></i>
-    </div>
-    <div class="job-info" style="flex:1;min-width:180px;">
-      ${desc}
-      <div class="job-meta" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;">
-        ${specialty}${isUrgent}${confirmedDateBadge}${checkinBadge}
-        <span style="font-size:0.8rem;color:var(--gray);">${meta}</span>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+  const categoryLabel = j.specialty
+    ? `<span class="job-cat">${escHtml(j.specialty)}</span><span class="job-meta-dot"></span>`
+    : '';
+  const urgentBadge = j.is_urgent
+    ? `<span style="font-size:0.72rem;background:rgba(239,68,68,0.13);color:#ef4444;padding:2px 7px;border-radius:20px;"><i class="fa fa-bolt"></i> Urgente</span>`
+    : '';
+
+  return `<div class="job-item">
+    <div class="job-item-top">
+      <div class="job-title">${escHtml(j.description || 'Trabajo sin título')}</div>
       <span class="job-status ${statusCss}">${statusTxt}</span>
+    </div>
+    <div class="job-meta">
+      ${categoryLabel}
+      ${urgentBadge}
+      <span class="job-date-str">${dateStr}</span>
+      ${confirmedDateBadge}${checkinBadge}
+    </div>
+    <div class="job-actions">
       ${actions}
     </div>
   </div>`;

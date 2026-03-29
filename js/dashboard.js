@@ -243,6 +243,28 @@ export async function loadProDashboard() {
     setEl('pro-stat-active', activeJ.length);
     setEl('pro-stat-done',   doneJ.length);
 
+    // Section titles
+    const titleNew = document.getElementById('pdash-section-title-new');
+    if (titleNew) titleNew.textContent = newJ.length
+      ? `${newJ.length} solicitud${newJ.length !== 1 ? 'es' : ''} pendiente${newJ.length !== 1 ? 's' : ''}`
+      : 'Solicitudes nuevas';
+    const titleActive = document.getElementById('pdash-section-title-active');
+    if (titleActive) titleActive.textContent = activeJ.length
+      ? `${activeJ.length} trabajo${activeJ.length !== 1 ? 's' : ''} en proceso`
+      : 'En proceso';
+
+    // Tab counts
+    const tabCountNew = document.getElementById('pdash-tab-count-new');
+    if (tabCountNew) {
+      if (newJ.length) { tabCountNew.textContent = newJ.length; tabCountNew.style.display = 'inline-flex'; }
+      else tabCountNew.style.display = 'none';
+    }
+    const tabCountActive = document.getElementById('pdash-tab-count-active');
+    if (tabCountActive) {
+      if (activeJ.length) { tabCountActive.textContent = activeJ.length; tabCountActive.style.display = 'inline-flex'; }
+      else tabCountActive.style.display = 'none';
+    }
+
     renderJobList('pro-jobs-new',     newJ,    'pro');
     renderJobList('pro-jobs-active',  activeJ, 'pro');
     renderJobList('pro-jobs-done',    doneJ,   'pro');
