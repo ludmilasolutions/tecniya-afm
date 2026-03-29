@@ -366,7 +366,7 @@ export function jobItem(j, viewAs) {
     } else if (j.status === 'pendiente_confirmacion') {
       actions = `<span style="font-size:0.82rem;color:var(--gray);"><i class="fa fa-hourglass-half"></i> Esperando confirmación del cliente...</span>`;
     } else if (j.status === 'finalizado') {
-      const userName = escHtml(j.user_name || j.client_name || 'Cliente');
+      const userName = escHtml(j.user_name || 'Cliente');
       const rateBtn = j.pro_already_rated
         ? `<span style="font-size:0.82rem;color:var(--green);"><i class="fa fa-check-circle"></i> Cliente calificado</span>`
         : `<button class="btn btn-orange btn-sm" onclick="window.openRateUserModal('${j.id}','${j.user_id}','${userName}')"><i class="fa fa-star"></i>Calificar cliente</button>`;
@@ -669,7 +669,6 @@ export function openRatingModal(proId, jobId) {
   if (pro?.user_id) {
     userProfileId = pro.user_id;
   } else {
-    // proId puede ser directamente el profile id (cuando viene de clientConfirmFinish)
     userProfileId = proId;
   }
   
@@ -713,18 +712,15 @@ export async function submitRating() {
   }
 
   if (!professionalProfileId) {
-    // proId puede ser el user_id (profiles.id) directamente
-    // Intentar buscar en professionals por user_id primero
+    // Buscar por user_id primero, luego por id, luego usar proId directamente
     const { data: proData } = await sb.from('professionals').select('user_id').eq('user_id', proId).maybeSingle();
     if (proData?.user_id) {
       professionalProfileId = proData.user_id;
     } else {
-      // Fallback: intentar por id de la tabla professionals
       const { data: proData2 } = await sb.from('professionals').select('user_id').eq('id', proId).maybeSingle();
       if (proData2?.user_id) {
         professionalProfileId = proData2.user_id;
       } else {
-        // proId ya es directamente el profile id
         professionalProfileId = proId;
       }
     }
