@@ -591,7 +591,7 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 .pdash-hero-inner {
   position: relative; z-index: 1;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 22px 24px 0; gap: 16px; flex-wrap: wrap;
+  padding: 22px 24px 0; gap: 16px;
 }
 .pdash-identity { display: flex; align-items: center; gap: 16px; }
 .pdash-avatar {
@@ -627,7 +627,8 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 }
 .pdash-kpi[onclick] { cursor: pointer; }
 .pdash-kpi[onclick]:hover { background: rgba(255,255,255,0.04); }
-.pdash-kpi-div { width: 1px; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.pdash-kpi-div { display: none; }
+.pdash-kpi + .pdash-kpi { border-left: 1px solid rgba(255,255,255,0.06); }
 .pdash-kpi-icon {
   width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
@@ -677,14 +678,20 @@ p { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.25rem; line-heig
 }
 
 /* mobile */
-@media (max-width: 700px) {
-  .pdash-kpis { grid-template-columns: repeat(2, 1fr); }
-  .pdash-kpi-div:nth-child(4) { display: none; }
-  .pdash-hero-inner { padding: 18px 16px 0; }
-  .pdash-kpi { padding: 14px 14px; gap: 10px; }
+@media (max-width: 600px) {
+  .pdash-hero-inner { flex-direction: column; align-items: flex-start; padding: 18px 16px 0; gap: 14px; }
+  .pdash-identity { width: 100%; }
+  .pdash-hero-actions { width: 100%; justify-content: flex-start; }
+  .pdash-hero-actions .btn { flex: 1; justify-content: center; }
+  .pdash-kpis { grid-template-columns: 1fr 1fr; gap: 0; }
+  .pdash-kpi { padding: 14px 14px; gap: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .pdash-kpi + .pdash-kpi { border-left: none; }
+  .pdash-kpi:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.06); }
+  .pdash-kpi:nth-child(1), .pdash-kpi:nth-child(2) { border-top: none; }
   .pdash-navbtn span { display: none; }
-  .pdash-navbtn { padding: 10px 14px; }
-  .pdash-navbtn i { font-size: 1rem; }
+  .pdash-navbtn { padding: 10px 0; flex: 1; justify-content: center; }
+  .pdash-navbtn i { font-size: 1.05rem; }
+  .pdash-nav { gap: 0; }
 }
 
 /* ── JOBS ──────────────────────────────────────────────────────────────── */
